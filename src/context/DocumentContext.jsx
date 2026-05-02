@@ -31,16 +31,28 @@ export function DocumentProvider({ children }) {
     }))
   }, [docType])
 
-  const updateField = useCallback((fieldId, path, value, attr) => {
-    const order = MODULES[docType].fieldDefinitions.findIndex((f) => f.fieldId === fieldId)
+  const updateField = useCallback((fieldId, path, value, attr, order, keepEmpty = false) => {
+    const fieldOrder = order !== undefined
+      ? order
+      : MODULES[docType].fieldDefinitions.findIndex((f) => f.fieldId === fieldId)
     setStates((prev) => ({
       ...prev,
       [docType]: {
         ...prev[docType],
         tree:
-          value === ''
+          value === '' && !keepEmpty
             ? removeNodeById(prev[docType].tree, fieldId, path)
-            : findOrCreateNodeById(prev[docType].tree, fieldId, path, value, attr, order),
+            : findOrCreateNodeById(prev[docType].tree, fieldId, path, value, attr, fieldOrder),
+      },
+    }))
+  }, [docType])
+
+  const removeField = useCallback((fieldId, path) => {
+    setStates((prev) => ({
+      ...prev,
+      [docType]: {
+        ...prev[docType],
+        tree: removeNodeById(prev[docType].tree, fieldId, path),
       },
     }))
   }, [docType])
@@ -52,6 +64,7 @@ export function DocumentProvider({ children }) {
     setDocType: switchDocType,
     tree,
     updateField,
+    removeField,
     activeFieldId,
     setActiveFieldId,
     config: MODULES[docType],

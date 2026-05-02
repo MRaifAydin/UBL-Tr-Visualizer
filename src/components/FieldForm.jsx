@@ -27,17 +27,33 @@ function FieldInput({ fieldId, label, path, attr, wide }) {
       >
         {label}
       </label>
-      <input
-        type="text"
-        value={currentValue}
-        onFocus={() => setActiveFieldId(fieldId)}
-        onChange={(e) => updateField(fieldId, path, e.target.value, attr)}
-        className={`${w} rounded border px-2 py-1 text-xs outline-none transition-all ${
-          isActive
-            ? 'border-blue-400 ring-1 ring-blue-300 bg-white'
-            : 'border-gray-300 bg-white hover:border-gray-400 focus:border-blue-400 focus:ring-1 focus:ring-blue-300'
-        }`}
-      />
+      <div className="relative">
+        <input
+          type="text"
+          value={currentValue}
+          onFocus={() => setActiveFieldId(fieldId)}
+          onChange={(e) => updateField(fieldId, path, e.target.value, attr)}
+          className={`${w} rounded border px-2 py-1 text-xs outline-none transition-all ${
+            currentValue ? 'pr-5' : ''
+          } ${
+            isActive
+              ? 'border-blue-400 ring-1 ring-blue-300 bg-white'
+              : 'border-gray-300 bg-white hover:border-gray-400 focus:border-blue-400 focus:ring-1 focus:ring-blue-300'
+          }`}
+        />
+        {currentValue && (
+          <span
+            role="button"
+            onMouseDown={(e) => {
+              e.preventDefault()
+              updateField(fieldId, path, '', attr)
+            }}
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 text-xs cursor-pointer"
+          >
+            ✕
+          </span>
+        )}
+      </div>
     </div>
   )
 }
@@ -399,6 +415,121 @@ function DatePicker({ fieldId, label, path, attr, wide }) {
   )
 }
 
+function NumberInput({ fieldId, label, path, attr, wide }) {
+  const { tree, activeFieldId, setActiveFieldId, updateField } = useDocument()
+  const currentValue = findNodeById(tree, fieldId)?.value ?? ''
+  const isActive = activeFieldId === fieldId
+  const w = wide ? 'w-48' : 'w-36'
+
+  return (
+    <div>
+      <label
+        className={`block text-xs font-medium mb-1 transition-colors ${
+          isActive ? 'text-blue-600' : 'text-gray-500'
+        }`}
+      >
+        {label}
+      </label>
+      <div className="relative">
+        <input
+          type="text"
+          inputMode="numeric"
+          value={currentValue}
+          onFocus={() => setActiveFieldId(fieldId)}
+          onChange={(e) => {
+            const raw = e.target.value.replace(/\D/g, '')
+            updateField(fieldId, path, raw, attr)
+          }}
+          className={`${w} rounded border px-2 py-1 text-xs outline-none transition-all ${
+            currentValue ? 'pr-5' : ''
+          } ${
+            isActive
+              ? 'border-blue-400 ring-1 ring-blue-300 bg-white'
+              : 'border-gray-300 bg-white hover:border-gray-400 focus:border-blue-400 focus:ring-1 focus:ring-blue-300'
+          }`}
+        />
+        {currentValue && (
+          <span
+            role="button"
+            onMouseDown={(e) => {
+              e.preventDefault()
+              updateField(fieldId, path, '', attr)
+            }}
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 text-xs cursor-pointer"
+          >
+            ✕
+          </span>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function NotesList({ fieldId, label, path, attr }) {
+  const { tree, updateField, removeField, setActiveFieldId, config } = useDocument()
+  const [notes, setNotes] = useState([])
+  const counter = useRef(0)
+
+  const anchorOrder = config.fieldDefinitions.findIndex((f) => f.fieldId === fieldId)
+
+  function addNote() {
+    counter.current += 1
+    const id = `${fieldId}-${counter.current}`
+    const order = anchorOrder + counter.current * 0.01
+    setNotes((prev) => [...prev, { id, order }])
+    updateField(id, path, '', attr, order, true)
+  }
+
+  function removeNote(id) {
+    setNotes((prev) => prev.filter((n) => n.id !== id))
+    removeField(id, path)
+  }
+
+  function changeNote(id, order, value) {
+    updateField(id, path, value, attr, order, true)
+  }
+
+  return (
+    <div>
+      <div className="flex items-center gap-1.5 mb-1.5">
+        <label className="text-xs font-medium text-gray-500">{label}</label>
+        <button
+          type="button"
+          onClick={addNote}
+          className="w-4 h-4 flex items-center justify-center rounded border border-blue-400 text-blue-500 hover:bg-blue-50 shrink-0"
+        >
+          <svg viewBox="0 0 10 10" fill="currentColor" className="w-2.5 h-2.5">
+            <path d="M4 0h2v4h4v2H6v4H4V6H0V4h4z" />
+          </svg>
+        </button>
+      </div>
+      <div className="flex flex-col gap-1">
+        {notes.map(({ id, order }) => {
+          const value = findNodeById(tree, id)?.value ?? ''
+          return (
+            <div key={id} className="flex items-center gap-1">
+              <input
+                type="text"
+                value={value}
+                onFocus={() => setActiveFieldId(id)}
+                onChange={(e) => changeNote(id, order, e.target.value)}
+                className="w-44 rounded border border-gray-300 px-2 py-1 text-xs outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-300 bg-white"
+              />
+              <button
+                type="button"
+                onClick={() => removeNote(id)}
+                className="text-gray-400 hover:text-gray-700 text-xs leading-none"
+              >
+                ✕
+              </button>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 function TimeSpinner({ value, max, onChange, inputRef, nextRef }) {
   const [text, setText] = useState(String(value).padStart(2, '0'))
 
@@ -576,6 +707,10 @@ export default function FieldForm() {
           {group.newRow && <div key={`${group.title}-break`} className="w-full" />}
           <FieldGroup key={group.title} title={group.title}>
             {group.fields.map((field) => {
+              if (field.type === 'number')
+                return <NumberInput key={field.fieldId} {...field} wide={group.wide} />
+              if (field.type === 'notes-list')
+                return <NotesList key={field.fieldId} {...field} />
               if (field.type === 'select')
                 return <SearchableSelect key={field.fieldId} {...field} wide={group.wide} />
               if (field.type === 'date')

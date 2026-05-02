@@ -1,9 +1,9 @@
 const ESCAPE_MAP = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' }
 const escapeXml = (str) => String(str).replace(/[&<>"']/g, (c) => ESCAPE_MAP[c])
 
-/** Returns true if this node or any descendant has a non-empty value. */
+/** Returns true if this node or any descendant has a defined value (including empty string). */
 function hasContent(node) {
-  if (node.value !== undefined && node.value !== '') return true
+  if (node.value !== undefined) return true
   if (!node.children) return false
   return Object.values(node.children).some(hasContent)
 }
