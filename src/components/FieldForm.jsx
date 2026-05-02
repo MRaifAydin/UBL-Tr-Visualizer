@@ -535,6 +535,93 @@ function NotesList({ fieldId, label, path, attr }) {
   )
 }
 
+function DurationMeasureInput({ fieldId, label, path, options, fill }) {
+  const { tree, activeFieldId, setActiveFieldId, updateField } = useDocument()
+  const node = findNodeById(tree, fieldId)
+  const storedAmount = node?.value ?? ''
+  const storedUnit = node?.attr?.unitCode ?? ''
+  const [localUnit, setLocalUnit] = useState('')
+  const isActive = activeFieldId === fieldId
+
+  const displayUnit = storedUnit || localUnit
+  const displayAmount = storedAmount
+  const hasValue = displayAmount !== '' || displayUnit !== ''
+
+  function handleUnitChange(unit) {
+    setActiveFieldId(fieldId)
+    setLocalUnit(unit)
+    if (storedAmount !== '') {
+      updateField(fieldId, path, storedAmount, unit ? { unitCode: unit } : 'value')
+    }
+  }
+
+  function handleAmountChange(raw) {
+    const amount = raw.replace(/\D/g, '')
+    if (amount) {
+      updateField(fieldId, path, amount, displayUnit ? { unitCode: displayUnit } : 'value')
+    } else {
+      updateField(fieldId, path, '', 'value')
+    }
+  }
+
+  function handleClear() {
+    updateField(fieldId, path, '', 'value')
+    setLocalUnit('')
+  }
+
+  const w = fill ? 'w-full' : 'w-36'
+  const borderActive = 'border-blue-400 ring-1 ring-blue-300'
+  const borderIdle = 'border-gray-300 hover:border-gray-400'
+
+  return (
+    <div>
+      <label
+        className={`block text-xs font-medium mb-1 transition-colors ${
+          isActive ? 'text-blue-600' : 'text-gray-500'
+        }`}
+      >
+        {label}
+      </label>
+      <div className={`flex ${w}`}>
+        <select
+          value={displayUnit}
+          onChange={(e) => handleUnitChange(e.target.value)}
+          onFocus={() => setActiveFieldId(fieldId)}
+          className={`w-16 shrink-0 rounded-l border border-r-0 px-1 py-1 text-xs bg-white outline-none appearance-none text-center cursor-pointer transition-all ${
+            isActive ? borderActive : borderIdle
+          }`}
+        >
+          <option value="">—</option>
+          {options.map((o) => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
+        <div className="relative min-w-0 flex-1">
+          <input
+            type="text"
+            inputMode="numeric"
+            value={displayAmount}
+            onFocus={() => setActiveFieldId(fieldId)}
+            onChange={(e) => handleAmountChange(e.target.value)}
+            className={`w-full rounded-r border px-2 py-1 text-xs outline-none transition-all bg-white ${
+              hasValue ? 'pr-5' : ''
+            } ${isActive ? borderActive : borderIdle}`}
+          />
+          {hasValue && (
+            <span
+              role="button"
+              onMouseDown={(e) => { e.preventDefault(); handleClear() }}
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 text-xs cursor-pointer"
+            >
+              ✕
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function TimeSpinner({ value, max, onChange, inputRef, nextRef }) {
   const [text, setText] = useState(String(value).padStart(2, '0'))
 
@@ -713,6 +800,8 @@ export default function FieldForm() {
           <FieldGroup key={group.title} title={group.title} wrap={group.wrap} fullWidth={group.fullWidth}>
             {group.fields.map((field) => {
               const shared = { wide: group.wide, fill: !!group.wrap }
+              if (field.type === 'duration-measure')
+                return <DurationMeasureInput key={field.fieldId} {...field} {...shared} />
               if (field.type === 'number')
                 return <NumberInput key={field.fieldId} {...field} {...shared} />
               if (field.type === 'notes-list')

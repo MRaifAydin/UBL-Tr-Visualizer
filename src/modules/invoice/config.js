@@ -166,6 +166,60 @@ export const fieldGroups = [
       },
     ],
   },
+  {
+    title: 'Fatura Dönemi',
+    fullWidth: true,
+    wrap: true,
+    fields: [
+      {
+        fieldId: 'period-start-date',
+        label: 'Başlangıç Tarihi',
+        path: ['Invoice', 'cac:InvoicePeriod', 'cbc:StartDate'],
+        attr: 'value',
+        type: 'date',
+      },
+      {
+        fieldId: 'period-start-time',
+        label: 'Başlangıç Saati',
+        path: ['Invoice', 'cac:InvoicePeriod', 'cbc:StartTime'],
+        attr: 'value',
+        type: 'time',
+      },
+      {
+        fieldId: 'period-end-date',
+        label: 'Bitiş Tarihi',
+        path: ['Invoice', 'cac:InvoicePeriod', 'cbc:EndDate'],
+        attr: 'value',
+        type: 'date',
+      },
+      {
+        fieldId: 'period-end-time',
+        label: 'Bitiş Saati',
+        path: ['Invoice', 'cac:InvoicePeriod', 'cbc:EndTime'],
+        attr: 'value',
+        type: 'time',
+      },
+      {
+        fieldId: 'period-duration',
+        label: 'Dönem Süresi',
+        path: ['Invoice', 'cac:InvoicePeriod', 'cbc:DurationMeasure'],
+        attr: 'value',
+        type: 'duration-measure',
+        options: [
+          { value: 'ANN', label: 'Yıl' },
+          { value: 'MON', label: 'Ay' },
+          { value: 'DAY', label: 'Gün' },
+          { value: 'HUR', label: 'Saat' },
+        ],
+      },
+      {
+        fieldId: 'period-description',
+        label: 'Açıklama',
+        path: ['Invoice', 'cac:InvoicePeriod', 'cbc:Description'],
+        attr: 'value',
+      },
+    ],
+  },
 ]
 
 export const fieldDefinitions = fieldGroups.flatMap((g) => g.fields)
