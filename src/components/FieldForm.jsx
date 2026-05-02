@@ -12,11 +12,11 @@ const MIN_YEAR = 1980
 const MAX_YEAR = new Date().getFullYear() + 10
 const YEARS = Array.from({ length: MAX_YEAR - MIN_YEAR + 1 }, (_, i) => MIN_YEAR + i)
 
-function FieldInput({ fieldId, label, path, attr, wide }) {
+function FieldInput({ fieldId, label, path, attr, wide, fill }) {
   const { tree, activeFieldId, setActiveFieldId, updateField } = useDocument()
   const currentValue = findNodeById(tree, fieldId)?.value ?? ''
   const isActive = activeFieldId === fieldId
-  const w = wide ? 'w-48' : 'w-36'
+  const w = fill ? 'w-full' : wide ? 'w-48' : 'w-36'
 
   return (
     <div>
@@ -58,7 +58,7 @@ function FieldInput({ fieldId, label, path, attr, wide }) {
   )
 }
 
-function SearchableSelect({ fieldId, label, path, attr, options, wide }) {
+function SearchableSelect({ fieldId, label, path, attr, options, wide, fill }) {
   const { tree, activeFieldId, setActiveFieldId, updateField } = useDocument()
   const currentValue = findNodeById(tree, fieldId)?.value ?? ''
   const isActive = activeFieldId === fieldId
@@ -67,7 +67,7 @@ function SearchableSelect({ fieldId, label, path, attr, options, wide }) {
   const [query, setQuery] = useState('')
   const containerRef = useRef(null)
 
-  const w = wide ? 'w-48' : 'w-36'
+  const w = fill ? 'w-full' : wide ? 'w-48' : 'w-36'
   const selectedLabel = options.find((o) => o.value === currentValue)?.label ?? currentValue
 
   const filtered = options.filter(
@@ -178,7 +178,7 @@ function SearchableSelect({ fieldId, label, path, attr, options, wide }) {
   )
 }
 
-function DatePicker({ fieldId, label, path, attr, wide }) {
+function DatePicker({ fieldId, label, path, attr, wide, fill }) {
   const { tree, activeFieldId, setActiveFieldId, updateField } = useDocument()
   const currentValue = findNodeById(tree, fieldId)?.value ?? '' // yyyy-MM-dd
   const isActive = activeFieldId === fieldId
@@ -190,7 +190,7 @@ function DatePicker({ fieldId, label, path, attr, wide }) {
   const containerRef = useRef(null)
   const yearListRef = useRef(null)
 
-  const w = wide ? 'w-48' : 'w-36'
+  const w = fill ? 'w-full' : wide ? 'w-48' : 'w-36'
   const displayValue = currentValue ? currentValue.split('-').reverse().join('.') : ''
   const [selYear, selMonth, selDay] = currentValue
     ? currentValue.split('-').map(Number)
@@ -415,11 +415,11 @@ function DatePicker({ fieldId, label, path, attr, wide }) {
   )
 }
 
-function NumberInput({ fieldId, label, path, attr, wide }) {
+function NumberInput({ fieldId, label, path, attr, wide, fill }) {
   const { tree, activeFieldId, setActiveFieldId, updateField } = useDocument()
   const currentValue = findNodeById(tree, fieldId)?.value ?? ''
   const isActive = activeFieldId === fieldId
-  const w = wide ? 'w-48' : 'w-36'
+  const w = fill ? 'w-full' : wide ? 'w-48' : 'w-36'
 
   return (
     <div>
@@ -491,7 +491,7 @@ function NotesList({ fieldId, label, path, attr }) {
 
   return (
     <div>
-      <div className="flex items-center gap-1.5 mb-1.5">
+      <div className="flex items-center gap-1.5 mb-1">
         <label className="text-xs font-medium text-gray-500">{label}</label>
         <button
           type="button"
@@ -503,6 +503,11 @@ function NotesList({ fieldId, label, path, attr }) {
           </svg>
         </button>
       </div>
+      {notes.length === 0 && (
+        <div className="flex items-center h-[26px]">
+          <div className="w-full border-t border-gray-200" />
+        </div>
+      )}
       <div className="flex flex-col gap-1">
         {notes.map(({ id, order }) => {
           const value = findNodeById(tree, id)?.value ?? ''
@@ -587,7 +592,7 @@ function TimeSpinner({ value, max, onChange, inputRef, nextRef }) {
   )
 }
 
-function TimePicker({ fieldId, label, path, attr, wide }) {
+function TimePicker({ fieldId, label, path, attr, wide, fill }) {
   const { tree, activeFieldId, setActiveFieldId, updateField } = useDocument()
   const currentValue = findNodeById(tree, fieldId)?.value ?? ''
   const isActive = activeFieldId === fieldId
@@ -598,7 +603,7 @@ function TimePicker({ fieldId, label, path, attr, wide }) {
   const minRef = useRef(null)
   const secRef = useRef(null)
 
-  const w = wide ? 'w-48' : 'w-36'
+  const w = fill ? 'w-full' : wide ? 'w-48' : 'w-36'
 
   // XML değeri: "HH:MM:SS.0000000+00:00" — display: "HH:MM:SS"
   const displayValue = currentValue ? currentValue.split('.')[0] : ''
@@ -705,19 +710,20 @@ export default function FieldForm() {
       {config.fieldGroups.map((group) => (
         <>
           {group.newRow && <div key={`${group.title}-break`} className="w-full" />}
-          <FieldGroup key={group.title} title={group.title}>
+          <FieldGroup key={group.title} title={group.title} wrap={group.wrap} fullWidth={group.fullWidth}>
             {group.fields.map((field) => {
+              const shared = { wide: group.wide, fill: !!group.wrap }
               if (field.type === 'number')
-                return <NumberInput key={field.fieldId} {...field} wide={group.wide} />
+                return <NumberInput key={field.fieldId} {...field} {...shared} />
               if (field.type === 'notes-list')
                 return <NotesList key={field.fieldId} {...field} />
               if (field.type === 'select')
-                return <SearchableSelect key={field.fieldId} {...field} wide={group.wide} />
+                return <SearchableSelect key={field.fieldId} {...field} {...shared} />
               if (field.type === 'date')
-                return <DatePicker key={field.fieldId} {...field} wide={group.wide} />
+                return <DatePicker key={field.fieldId} {...field} {...shared} />
               if (field.type === 'time')
-                return <TimePicker key={field.fieldId} {...field} wide={group.wide} />
-              return <FieldInput key={field.fieldId} {...field} wide={group.wide} />
+                return <TimePicker key={field.fieldId} {...field} {...shared} />
+              return <FieldInput key={field.fieldId} {...field} {...shared} />
             })}
           </FieldGroup>
         </>
