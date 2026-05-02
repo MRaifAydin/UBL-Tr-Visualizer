@@ -1,11 +1,22 @@
+import { useEffect, useRef, useState } from 'react'
 import { useDocument } from '../context/DocumentContext.jsx'
 import { findNodeById } from '../core/treeManager.js'
 import FieldGroup from './FieldGroup.jsx'
 
-function FieldInput({ fieldId, label, path, attr }) {
+const MONTHS_TR = [
+  'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
+  'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık',
+]
+const DAYS_TR = ['Pt', 'Sa', 'Ça', 'Pe', 'Cu', 'Ct', 'Pz']
+const MIN_YEAR = 1980
+const MAX_YEAR = new Date().getFullYear() + 10
+const YEARS = Array.from({ length: MAX_YEAR - MIN_YEAR + 1 }, (_, i) => MIN_YEAR + i)
+
+function FieldInput({ fieldId, label, path, attr, wide }) {
   const { tree, activeFieldId, setActiveFieldId, updateField } = useDocument()
   const currentValue = findNodeById(tree, fieldId)?.value ?? ''
   const isActive = activeFieldId === fieldId
+  const w = wide ? 'w-48' : 'w-36'
 
   return (
     <div>
@@ -21,7 +32,7 @@ function FieldInput({ fieldId, label, path, attr }) {
         value={currentValue}
         onFocus={() => setActiveFieldId(fieldId)}
         onChange={(e) => updateField(fieldId, path, e.target.value, attr)}
-        className={`w-36 rounded border px-2 py-1 text-xs outline-none transition-all ${
+        className={`${w} rounded border px-2 py-1 text-xs outline-none transition-all ${
           isActive
             ? 'border-blue-400 ring-1 ring-blue-300 bg-white'
             : 'border-gray-300 bg-white hover:border-gray-400 focus:border-blue-400 focus:ring-1 focus:ring-blue-300'
@@ -31,18 +42,379 @@ function FieldInput({ fieldId, label, path, attr }) {
   )
 }
 
+function SearchableSelect({ fieldId, label, path, attr, options, wide }) {
+  const { tree, activeFieldId, setActiveFieldId, updateField } = useDocument()
+  const currentValue = findNodeById(tree, fieldId)?.value ?? ''
+  const isActive = activeFieldId === fieldId
+
+  const [open, setOpen] = useState(false)
+  const [query, setQuery] = useState('')
+  const containerRef = useRef(null)
+
+  const w = wide ? 'w-48' : 'w-36'
+  const selectedLabel = options.find((o) => o.value === currentValue)?.label ?? currentValue
+
+  const filtered = options.filter(
+    (o) =>
+      o.label.toLowerCase().includes(query.toLowerCase()) ||
+      o.value.toLowerCase().includes(query.toLowerCase()),
+  )
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setOpen(false)
+        setQuery('')
+      }
+    }
+    if (open) document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [open])
+
+  function handleSelect(option) {
+    updateField(fieldId, path, option.value, attr)
+    setOpen(false)
+    setQuery('')
+  }
+
+  function handleOpen() {
+    setActiveFieldId(fieldId)
+    setOpen(true)
+    setQuery('')
+  }
+
+  return (
+    <div ref={containerRef} className="relative">
+      <label
+        className={`block text-xs font-medium mb-1 transition-colors ${
+          isActive ? 'text-blue-600' : 'text-gray-500'
+        }`}
+      >
+        {label}
+      </label>
+
+      {open ? (
+        <input
+          autoFocus
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Ara..."
+          className={`${w} rounded border px-2 py-1 text-xs outline-none border-blue-400 ring-1 ring-blue-300 bg-white`}
+        />
+      ) : (
+        <button
+          type="button"
+          onClick={handleOpen}
+          className={`${w} rounded border px-2 py-1 text-xs text-left flex items-center justify-between transition-all ${
+            isActive
+              ? 'border-blue-400 ring-1 ring-blue-300 bg-white'
+              : 'border-gray-300 bg-white hover:border-gray-400'
+          }`}
+        >
+          <span className={currentValue ? 'text-gray-800' : 'text-gray-400'}>
+            {currentValue ? selectedLabel : 'Seçiniz'}
+          </span>
+          {currentValue ? (
+            <span
+              role="button"
+              onMouseDown={(e) => {
+                e.stopPropagation()
+                updateField(fieldId, path, '', attr)
+              }}
+              className="w-3 h-3 shrink-0 flex items-center justify-center text-gray-400 hover:text-gray-700"
+            >
+              ✕
+            </span>
+          ) : (
+            <svg className="w-3 h-3 text-gray-400 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+              <path
+                fillRule="evenodd"
+                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                clipRule="evenodd"
+              />
+            </svg>
+          )}
+        </button>
+      )}
+
+      {open && (
+        <ul className="absolute z-10 mt-1 w-64 max-h-52 overflow-y-auto overflow-x-hidden rounded border border-gray-200 bg-white shadow-md text-xs">
+          {filtered.length === 0 ? (
+            <li className="px-2 py-1.5 text-gray-400">Sonuç bulunamadı</li>
+          ) : (
+            filtered.map((option) => (
+              <li
+                key={option.value}
+                onMouseDown={() => handleSelect(option)}
+                className={`px-2 py-1.5 cursor-pointer hover:bg-blue-50 flex justify-between gap-2 ${
+                  option.value === currentValue ? 'bg-blue-50 font-medium text-blue-700' : 'text-gray-700'
+                }`}
+              >
+                <span>{option.label}</span>
+                <span className="text-gray-400 font-mono shrink-0">{option.value}</span>
+              </li>
+            ))
+          )}
+        </ul>
+      )}
+    </div>
+  )
+}
+
+function DatePicker({ fieldId, label, path, attr, wide }) {
+  const { tree, activeFieldId, setActiveFieldId, updateField } = useDocument()
+  const currentValue = findNodeById(tree, fieldId)?.value ?? '' // yyyy-MM-dd
+  const isActive = activeFieldId === fieldId
+
+  const [open, setOpen] = useState(false)
+  const [view, setView] = useState('calendar') // 'calendar' | 'months' | 'years'
+  const [viewYear, setViewYear] = useState(() => new Date().getFullYear())
+  const [viewMonth, setViewMonth] = useState(() => new Date().getMonth())
+  const containerRef = useRef(null)
+  const yearListRef = useRef(null)
+
+  const w = wide ? 'w-48' : 'w-36'
+  const displayValue = currentValue ? currentValue.split('-').reverse().join('.') : ''
+  const [selYear, selMonth, selDay] = currentValue
+    ? currentValue.split('-').map(Number)
+    : [null, null, null]
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setOpen(false)
+        setView('calendar')
+      }
+    }
+    if (open) document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [open])
+
+  // Seçili yılı yıl listesinin ortasına kaydır
+  useEffect(() => {
+    if (view === 'years' && yearListRef.current) {
+      const el = yearListRef.current.querySelector('[data-selected="true"]')
+      if (el) el.scrollIntoView({ block: 'center', behavior: 'instant' })
+    }
+  }, [view])
+
+  function handleOpen() {
+    setActiveFieldId(fieldId)
+    if (currentValue) {
+      setViewYear(selYear)
+      setViewMonth(selMonth - 1)
+    } else {
+      const now = new Date()
+      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+      updateField(fieldId, path, todayStr, attr)
+      setViewYear(now.getFullYear())
+      setViewMonth(now.getMonth())
+    }
+    setView('calendar')
+    setOpen(true)
+  }
+
+  function handleSelectDay(day) {
+    const mm = String(viewMonth + 1).padStart(2, '0')
+    const dd = String(day).padStart(2, '0')
+    updateField(fieldId, path, `${viewYear}-${mm}-${dd}`, attr)
+    setOpen(false)
+    setView('calendar')
+  }
+
+  function prevMonth() {
+    if (viewMonth === 0) { setViewMonth(11); setViewYear((y) => Math.max(MIN_YEAR, y - 1)) }
+    else setViewMonth((m) => m - 1)
+  }
+
+  function nextMonth() {
+    if (viewMonth === 11) { setViewMonth(0); setViewYear((y) => Math.min(MAX_YEAR, y + 1)) }
+    else setViewMonth((m) => m + 1)
+  }
+
+  function prevYear() { setViewYear((y) => Math.max(MIN_YEAR, y - 1)) }
+  function nextYear() { setViewYear((y) => Math.min(MAX_YEAR, y + 1)) }
+
+  const startOffset = (new Date(viewYear, viewMonth, 1).getDay() + 6) % 7
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate()
+  const today = new Date()
+  const cells = [
+    ...Array(startOffset).fill(null),
+    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+  ]
+
+  const navBtn = 'px-1 py-0.5 rounded hover:bg-gray-100 text-gray-600 leading-none'
+
+  return (
+    <div ref={containerRef} className="relative">
+      <label
+        className={`block text-xs font-medium mb-1 transition-colors ${
+          isActive ? 'text-blue-600' : 'text-gray-500'
+        }`}
+      >
+        {label}
+      </label>
+
+      <button
+        type="button"
+        onClick={handleOpen}
+        className={`${w} rounded border px-2 py-1 text-xs text-left flex items-center justify-between transition-all ${
+          isActive || open
+            ? 'border-blue-400 ring-1 ring-blue-300 bg-white'
+            : 'border-gray-300 bg-white hover:border-gray-400'
+        }`}
+      >
+        <span className={displayValue ? 'text-gray-800' : 'text-gray-400'}>
+          {displayValue || 'gg.aa.yyyy'}
+        </span>
+        {currentValue ? (
+          <span
+            role="button"
+            onMouseDown={(e) => {
+              e.stopPropagation()
+              updateField(fieldId, path, '', attr)
+            }}
+            className="w-3 h-3 shrink-0 flex items-center justify-center text-gray-400 hover:text-gray-700"
+          >
+            ✕
+          </span>
+        ) : (
+          <svg className="w-3.5 h-3.5 text-gray-400 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+          </svg>
+        )}
+      </button>
+
+      {open && (
+        <div className="absolute z-10 mt-1 bg-white border border-gray-200 rounded shadow-md p-2 w-52 text-xs select-none">
+
+          {/* Başlık — tüm view'larda aynı */}
+          <div className="flex items-center justify-between mb-2 px-0.5">
+            <div className="flex gap-0.5">
+              <button type="button" onClick={prevYear} className={navBtn}>«</button>
+              <button type="button" onClick={prevMonth} className={navBtn}>‹</button>
+            </div>
+            <div className="flex gap-1 items-center font-medium text-gray-700">
+              <button
+                type="button"
+                onMouseDown={() => setView((v) => v === 'months' ? 'calendar' : 'months')}
+                className="hover:text-blue-600 hover:bg-blue-50 px-1 rounded"
+              >
+                {MONTHS_TR[viewMonth]}
+              </button>
+              <button
+                type="button"
+                onMouseDown={() => setView((v) => v === 'years' ? 'calendar' : 'years')}
+                className="hover:text-blue-600 hover:bg-blue-50 px-1 rounded"
+              >
+                {viewYear}
+              </button>
+            </div>
+            <div className="flex gap-0.5">
+              <button type="button" onClick={nextMonth} className={navBtn}>›</button>
+              <button type="button" onClick={nextYear} className={navBtn}>»</button>
+            </div>
+          </div>
+
+          {/* Ay seçimi */}
+          {view === 'months' && (
+            <div className="grid grid-cols-3 gap-1">
+              {MONTHS_TR.map((m, i) => (
+                <button
+                  key={m}
+                  type="button"
+                  onMouseDown={() => { setViewMonth(i); setView('calendar') }}
+                  className={`py-1 rounded text-center transition-colors ${
+                    i === viewMonth
+                      ? 'bg-blue-500 text-white font-medium'
+                      : 'hover:bg-gray-100 text-gray-700'
+                  }`}
+                >
+                  {m.slice(0, 3)}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Yıl listesi */}
+          {view === 'years' && (
+            <div ref={yearListRef} className="max-h-40 overflow-y-auto">
+              {YEARS.map((y) => (
+                <button
+                  key={y}
+                  type="button"
+                  data-selected={y === viewYear ? 'true' : undefined}
+                  onMouseDown={() => { setViewYear(y); setView('months') }}
+                  className={`w-full py-0.5 rounded text-center transition-colors ${
+                    y === viewYear
+                      ? 'bg-blue-500 text-white font-medium'
+                      : 'hover:bg-gray-100 text-gray-700'
+                  }`}
+                >
+                  {y}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Takvim */}
+          {view === 'calendar' && (
+            <>
+              <div className="grid grid-cols-7 text-center text-[10px] text-gray-400 mb-1">
+                {DAYS_TR.map((d) => <div key={d}>{d}</div>)}
+              </div>
+              <div className="grid grid-cols-7 text-center">
+                {cells.map((day, i) => {
+                  if (!day) return <div key={i} />
+                  const isSelected =
+                    day === selDay && viewMonth + 1 === selMonth && viewYear === selYear
+                  const isToday =
+                    day === today.getDate() &&
+                    viewMonth === today.getMonth() &&
+                    viewYear === today.getFullYear()
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      onMouseDown={() => handleSelectDay(day)}
+                      className={`py-0.5 rounded transition-colors ${
+                        isSelected
+                          ? 'bg-blue-500 text-white font-medium'
+                          : isToday
+                          ? 'ring-1 ring-blue-300 text-blue-600 hover:bg-blue-50'
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      {day}
+                    </button>
+                  )
+                })}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function FieldForm() {
   const { config } = useDocument()
 
   return (
-    <div className="flex flex-wrap gap-3 content-start">
+    <div className="flex flex-wrap gap-3 content-start items-start">
       {config.fieldGroups.map((group) => (
         <>
           {group.newRow && <div key={`${group.title}-break`} className="w-full" />}
           <FieldGroup key={group.title} title={group.title}>
-            {group.fields.map((field) => (
-              <FieldInput key={field.fieldId} {...field} />
-            ))}
+            {group.fields.map((field) => {
+              if (field.type === 'select')
+                return <SearchableSelect key={field.fieldId} {...field} wide={group.wide} />
+              if (field.type === 'date')
+                return <DatePicker key={field.fieldId} {...field} wide={group.wide} />
+              return <FieldInput key={field.fieldId} {...field} wide={group.wide} />
+            })}
           </FieldGroup>
         </>
       ))}
