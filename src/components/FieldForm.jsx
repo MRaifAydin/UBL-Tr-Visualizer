@@ -399,6 +399,173 @@ function DatePicker({ fieldId, label, path, attr, wide }) {
   )
 }
 
+function TimeSpinner({ value, max, onChange, inputRef, nextRef }) {
+  const [text, setText] = useState(String(value).padStart(2, '0'))
+
+  useEffect(() => {
+    setText(String(value).padStart(2, '0'))
+  }, [value])
+
+  function commit(raw) {
+    const n = Math.min(max, Math.max(0, parseInt(raw, 10) || 0))
+    onChange(n)
+    setText(String(n).padStart(2, '0'))
+  }
+
+  return (
+    <div className="flex flex-col items-center gap-0.5">
+      <button
+        type="button"
+        onClick={() => onChange((value + 1) % (max + 1))}
+        className="px-2 py-0.5 rounded hover:bg-gray-100 text-gray-500 leading-none"
+      >
+        ▲
+      </button>
+      <input
+        ref={inputRef}
+        type="text"
+        inputMode="numeric"
+        maxLength={2}
+        value={text}
+        onChange={(e) => {
+          const raw = e.target.value.replace(/\D/g, '').slice(0, 2)
+          setText(raw)
+          if (raw.length === 2) commit(raw)
+        }}
+        onFocus={(e) => e.target.select()}
+        onBlur={(e) => commit(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'ArrowUp') { e.preventDefault(); onChange((value + 1) % (max + 1)) }
+          if (e.key === 'ArrowDown') { e.preventDefault(); onChange((value - 1 + max + 1) % (max + 1)) }
+          if (e.key === 'Tab' && !e.shiftKey && nextRef?.current) {
+            e.preventDefault()
+            nextRef.current.focus()
+            nextRef.current.select()
+          }
+        }}
+        className="w-8 text-center font-mono text-sm font-semibold text-gray-800 border-b border-gray-300 outline-none focus:border-blue-400 bg-transparent"
+      />
+      <button
+        type="button"
+        onClick={() => onChange((value - 1 + max + 1) % (max + 1))}
+        className="px-2 py-0.5 rounded hover:bg-gray-100 text-gray-500 leading-none"
+      >
+        ▼
+      </button>
+    </div>
+  )
+}
+
+function TimePicker({ fieldId, label, path, attr, wide }) {
+  const { tree, activeFieldId, setActiveFieldId, updateField } = useDocument()
+  const currentValue = findNodeById(tree, fieldId)?.value ?? ''
+  const isActive = activeFieldId === fieldId
+
+  const [open, setOpen] = useState(false)
+  const containerRef = useRef(null)
+  const hourRef = useRef(null)
+  const minRef = useRef(null)
+  const secRef = useRef(null)
+
+  const w = wide ? 'w-48' : 'w-36'
+
+  // XML değeri: "HH:MM:SS.0000000+00:00" — display: "HH:MM:SS"
+  const displayValue = currentValue ? currentValue.split('.')[0] : ''
+
+  function parseTime(val) {
+    if (!val) return [0, 0, 0]
+    const parts = val.split('.')[0].split(':')
+    return [
+      parseInt(parts[0] || '0', 10),
+      parseInt(parts[1] || '0', 10),
+      parseInt(parts[2] || '0', 10),
+    ]
+  }
+
+  const [h, m, s] = parseTime(currentValue)
+
+  function saveTime(newH, newM, newS) {
+    const hh = String(newH).padStart(2, '0')
+    const mm = String(newM).padStart(2, '0')
+    const ss = String(newS).padStart(2, '0')
+    updateField(fieldId, path, `${hh}:${mm}:${ss}.0000000+00:00`, attr)
+  }
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setOpen(false)
+      }
+    }
+    if (open) document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [open])
+
+  function handleOpen() {
+    setActiveFieldId(fieldId)
+    if (!currentValue) {
+      const now = new Date()
+      saveTime(now.getHours(), now.getMinutes(), now.getSeconds())
+    }
+    setOpen(true)
+  }
+
+  return (
+    <div ref={containerRef} className="relative">
+      <label
+        className={`block text-xs font-medium mb-1 transition-colors ${
+          isActive ? 'text-blue-600' : 'text-gray-500'
+        }`}
+      >
+        {label}
+      </label>
+
+      <button
+        type="button"
+        onClick={handleOpen}
+        className={`${w} rounded border px-2 py-1 text-xs text-left flex items-center justify-between transition-all ${
+          isActive || open
+            ? 'border-blue-400 ring-1 ring-blue-300 bg-white'
+            : 'border-gray-300 bg-white hover:border-gray-400'
+        }`}
+      >
+        <span className={displayValue ? 'text-gray-800' : 'text-gray-400'}>
+          {displayValue || 'SS:DD:SN'}
+        </span>
+        {currentValue ? (
+          <span
+            role="button"
+            onMouseDown={(e) => {
+              e.stopPropagation()
+              updateField(fieldId, path, '', attr)
+            }}
+            className="w-3 h-3 shrink-0 flex items-center justify-center text-gray-400 hover:text-gray-700"
+          >
+            ✕
+          </span>
+        ) : (
+          <svg className="w-3.5 h-3.5 text-gray-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12,6 12,12 16,14" />
+          </svg>
+        )}
+      </button>
+
+      {open && (
+        <div className="absolute z-10 mt-1 bg-white border border-gray-200 rounded shadow-md p-3 text-xs select-none">
+          <div className="flex items-center gap-1">
+            <TimeSpinner value={h} max={23} onChange={(v) => saveTime(v, m, s)} inputRef={hourRef} nextRef={minRef} />
+            <span className="text-gray-400 font-bold text-base pb-0.5">:</span>
+            <TimeSpinner value={m} max={59} onChange={(v) => saveTime(h, v, s)} inputRef={minRef} nextRef={secRef} />
+            <span className="text-gray-400 font-bold text-base pb-0.5">:</span>
+            <TimeSpinner value={s} max={59} onChange={(v) => saveTime(h, m, v)} inputRef={secRef} />
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function FieldForm() {
   const { config } = useDocument()
 
@@ -413,6 +580,8 @@ export default function FieldForm() {
                 return <SearchableSelect key={field.fieldId} {...field} wide={group.wide} />
               if (field.type === 'date')
                 return <DatePicker key={field.fieldId} {...field} wide={group.wide} />
+              if (field.type === 'time')
+                return <TimePicker key={field.fieldId} {...field} wide={group.wide} />
               return <FieldInput key={field.fieldId} {...field} wide={group.wide} />
             })}
           </FieldGroup>

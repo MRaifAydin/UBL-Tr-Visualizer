@@ -49,6 +49,13 @@ export const fieldGroups = [
         type: 'date',
       },
       {
+        fieldId: 'invoice-issue-time',
+        label: 'Düzenleme Saati',
+        path: ['Invoice', 'cbc:IssueTime'],
+        attr: 'value',
+        type: 'time',
+      },
+      {
         fieldId: 'invoice-type-code',
         label: 'Fatura Tipi',
         path: ['Invoice', 'InvoiceTypeCode'],
