@@ -298,14 +298,14 @@ function DatePicker({ fieldId, label, path, attr, wide }) {
             <div className="flex gap-1 items-center font-medium text-gray-700">
               <button
                 type="button"
-                onMouseDown={() => setView((v) => v === 'months' ? 'calendar' : 'months')}
+                onClick={() => setView((v) => v === 'months' ? 'calendar' : 'months')}
                 className="hover:text-blue-600 hover:bg-blue-50 px-1 rounded"
               >
                 {MONTHS_TR[viewMonth]}
               </button>
               <button
                 type="button"
-                onMouseDown={() => setView((v) => v === 'years' ? 'calendar' : 'years')}
+                onClick={() => setView((v) => v === 'years' ? 'calendar' : 'years')}
                 className="hover:text-blue-600 hover:bg-blue-50 px-1 rounded"
               >
                 {viewYear}
@@ -324,7 +324,7 @@ function DatePicker({ fieldId, label, path, attr, wide }) {
                 <button
                   key={m}
                   type="button"
-                  onMouseDown={() => { setViewMonth(i); setView('calendar') }}
+                  onClick={() => { setViewMonth(i); setView('calendar') }}
                   className={`py-1 rounded text-center transition-colors ${
                     i === viewMonth
                       ? 'bg-blue-500 text-white font-medium'
@@ -345,7 +345,7 @@ function DatePicker({ fieldId, label, path, attr, wide }) {
                   key={y}
                   type="button"
                   data-selected={y === viewYear ? 'true' : undefined}
-                  onMouseDown={() => { setViewYear(y); setView('months') }}
+                  onClick={() => { setViewYear(y); setView('months') }}
                   className={`w-full py-0.5 rounded text-center transition-colors ${
                     y === viewYear
                       ? 'bg-blue-500 text-white font-medium'
