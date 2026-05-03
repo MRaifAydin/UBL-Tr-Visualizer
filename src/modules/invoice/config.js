@@ -103,6 +103,17 @@ function makePartyItems(prefix, base) {
   ]
 }
 
+function makePartyGroup(title, prefix, pathBase) {
+  return {
+    title,
+    wrap: true,
+    items: [
+      ...makePartyItems(prefix, pathBase),
+      { title: 'Şube', wrap: true, items: makePartyItems(`${prefix}-branch`, [...pathBase, 'cac:AgentParty']) },
+    ],
+  }
+}
+
 function makeDocumentReferenceGroup(title, prefix, pathBase) {
   const IP = [...pathBase, 'cac:IssuerParty']
   return {
@@ -129,14 +140,7 @@ function makeDocumentReferenceGroup(title, prefix, pathBase) {
           { fieldId: `${prefix}-period-description`, label: 'Açıklama',         path: [...pathBase, 'cac:ValidityPeriod', 'cbc:Description'],     attr: 'value' },
         ],
       },
-      {
-        title: 'Düzenleyen',
-        wrap: true,
-        items: [
-          ...makePartyItems(`${prefix}-issuer`, IP),
-          { title: 'Şube', wrap: true, items: makePartyItems(`${prefix}-branch`, [...IP, 'cac:AgentParty']) },
-        ],
-      },
+      makePartyGroup('Düzenleyen', `${prefix}-issuer`, IP),
     ],
   }
 }
@@ -456,6 +460,33 @@ export const fieldGroups = [
   {
     ...makeDocumentReferenceGroup('İlave Doküman', 'additional-docref', ['Invoice', 'cac:AdditionalDocumentReference']),
     fullWidth: true,
+  },
+  {
+    title: 'Mali Mühür-İmza',
+    fullWidth: true,
+    wrap: true,
+    fields: [
+      { fieldId: 'signature-id', label: 'Referans Numarası', path: ['Invoice', 'cac:Signature', 'cbc:ID'], attr: 'value' },
+    ],
+    subgroups: [
+      makePartyGroup('İmza Sahibi', 'signature-party', ['Invoice', 'cac:Signature', 'cac:SignatoryParty']),
+      {
+        title: 'Dijital İmza',
+        wrap: true,
+        fields: [
+          { fieldId: 'signature-dig-embedded', label: 'Belge Eki', path: ['Invoice', 'cac:Signature', 'cac:DigitalSignatureAttachment', 'cbc:EmbeddedDocumentBinaryObject'], attr: 'value' },
+        ],
+        subgroups: [
+          {
+            title: 'Dış Referans Eki',
+            wrap: true,
+            fields: [
+              { fieldId: 'signature-dig-ext-uri', label: 'Adres', path: ['Invoice', 'cac:Signature', 'cac:DigitalSignatureAttachment', 'cac:ExternalReference', 'cbc:URI'], attr: 'value' },
+            ],
+          },
+        ],
+      },
+    ],
   },
 ]
 
