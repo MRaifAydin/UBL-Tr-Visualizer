@@ -12,10 +12,10 @@ const MIN_YEAR = 1980
 const MAX_YEAR = new Date().getFullYear() + 10
 const YEARS = Array.from({ length: MAX_YEAR - MIN_YEAR + 1 }, (_, i) => MIN_YEAR + i)
 
-function FieldInput({ fieldId, label, path, attr, wide, fill }) {
+function FieldInput({ fieldId, label, path, attr, wide, fill, disabled }) {
   const { tree, activeFieldId, setActiveFieldId, updateField } = useDocument()
   const currentValue = findNodeById(tree, fieldId)?.value ?? ''
-  const isActive = activeFieldId === fieldId
+  const isActive = activeFieldId === fieldId && !disabled
   const w = fill ? 'w-full' : wide ? 'w-48' : 'w-36'
 
   return (
@@ -31,17 +31,20 @@ function FieldInput({ fieldId, label, path, attr, wide, fill }) {
         <input
           type="text"
           value={currentValue}
-          onFocus={() => setActiveFieldId(fieldId)}
-          onChange={(e) => updateField(fieldId, path, e.target.value, attr)}
+          disabled={disabled}
+          onFocus={() => !disabled && setActiveFieldId(fieldId)}
+          onChange={(e) => !disabled && updateField(fieldId, path, e.target.value, attr)}
           className={`${w} rounded border px-2 py-1 text-xs outline-none transition-all ${
-            currentValue ? 'pr-5' : ''
+            !disabled && currentValue ? 'pr-5' : ''
           } ${
-            isActive
+            disabled
+              ? 'border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed'
+              : isActive
               ? 'border-blue-400 ring-1 ring-blue-300 bg-white'
               : 'border-gray-300 bg-white hover:border-gray-400 focus:border-blue-400 focus:ring-1 focus:ring-blue-300'
           }`}
         />
-        {currentValue && (
+        {!disabled && currentValue && (
           <span
             role="button"
             onMouseDown={(e) => {
@@ -789,6 +792,38 @@ function TimePicker({ fieldId, label, path, attr, wide, fill }) {
   )
 }
 
+function renderField(field, shared) {
+  if (field.type === 'duration-measure')
+    return <DurationMeasureInput key={field.fieldId} {...field} {...shared} />
+  if (field.type === 'number')
+    return <NumberInput key={field.fieldId} {...field} {...shared} />
+  if (field.type === 'notes-list')
+    return <NotesList key={field.fieldId} {...field} />
+  if (field.type === 'select')
+    return <SearchableSelect key={field.fieldId} {...field} {...shared} />
+  if (field.type === 'date')
+    return <DatePicker key={field.fieldId} {...field} {...shared} />
+  if (field.type === 'time')
+    return <TimePicker key={field.fieldId} {...field} {...shared} />
+  return <FieldInput key={field.fieldId} {...field} {...shared} />
+}
+
+function renderGroupChildren(group) {
+  const shared = { wide: group.wide, fill: !!group.wrap }
+  return (
+    <>
+      {group.fields.map((field) => renderField(field, shared))}
+      {group.subgroups?.map((sub) => (
+        <div key={sub.title} className={group.wrap ? 'col-span-4' : ''}>
+          <FieldGroup title={sub.title} wrap={sub.wrap} fullWidth>
+            {renderGroupChildren(sub)}
+          </FieldGroup>
+        </div>
+      ))}
+    </>
+  )
+}
+
 export default function FieldForm() {
   const { config } = useDocument()
 
@@ -798,22 +833,7 @@ export default function FieldForm() {
         <>
           {group.newRow && <div key={`${group.title}-break`} className="w-full" />}
           <FieldGroup key={group.title} title={group.title} wrap={group.wrap} fullWidth={group.fullWidth}>
-            {group.fields.map((field) => {
-              const shared = { wide: group.wide, fill: !!group.wrap }
-              if (field.type === 'duration-measure')
-                return <DurationMeasureInput key={field.fieldId} {...field} {...shared} />
-              if (field.type === 'number')
-                return <NumberInput key={field.fieldId} {...field} {...shared} />
-              if (field.type === 'notes-list')
-                return <NotesList key={field.fieldId} {...field} />
-              if (field.type === 'select')
-                return <SearchableSelect key={field.fieldId} {...field} {...shared} />
-              if (field.type === 'date')
-                return <DatePicker key={field.fieldId} {...field} {...shared} />
-              if (field.type === 'time')
-                return <TimePicker key={field.fieldId} {...field} {...shared} />
-              return <FieldInput key={field.fieldId} {...field} {...shared} />
-            })}
+            {renderGroupChildren(group)}
           </FieldGroup>
         </>
       ))}

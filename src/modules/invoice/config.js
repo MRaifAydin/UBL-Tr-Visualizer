@@ -251,7 +251,115 @@ export const fieldGroups = [
         attr: 'value',
       },
     ],
+    subgroups: [
+      {
+        title: 'Döküman Referansı',
+        wrap: true,
+        fields: [
+          {
+            fieldId: 'order-docref-id',
+            label: 'Sıra Numarası',
+            path: ['Invoice', 'cac:OrderReference', 'cac:DocumentReference', 'cbc:ID'],
+            attr: 'value',
+          },
+          {
+            fieldId: 'order-docref-issue-date',
+            label: 'Düzenleme Tarihi',
+            path: ['Invoice', 'cac:OrderReference', 'cac:DocumentReference', 'cbc:IssueDate'],
+            attr: 'value',
+            type: 'date',
+          },
+          {
+            fieldId: 'order-docref-type-code',
+            label: 'Uygulama Yanıtı',
+            path: ['Invoice', 'cac:OrderReference', 'cac:DocumentReference', 'cbc:DocumentTypeCode'],
+            attr: 'value',
+            disabled: true,
+          },
+          {
+            fieldId: 'order-docref-type',
+            label: 'Belge Tipi',
+            path: ['Invoice', 'cac:OrderReference', 'cac:DocumentReference', 'cbc:DocumentType'],
+            attr: 'value',
+          },
+          {
+            fieldId: 'order-docref-description',
+            label: 'Açıklama',
+            path: ['Invoice', 'cac:OrderReference', 'cac:DocumentReference', 'cbc:DocumentDescription'],
+            attr: 'value',
+          },
+          {
+            fieldId: 'order-docref-attachment',
+            label: 'Ek',
+            path: ['Invoice', 'cac:OrderReference', 'cac:DocumentReference', 'cac:Attachment'],
+            attr: 'value',
+          },
+        ],
+        subgroups: [
+          {
+            title: 'Geçerlilik Dönemi',
+            wrap: true,
+            fields: [
+              {
+                fieldId: 'order-docref-period-start-date',
+                label: 'Başlangıç Tarihi',
+                path: ['Invoice', 'cac:OrderReference', 'cac:DocumentReference', 'cac:ValidityPeriod', 'cbc:StartDate'],
+                attr: 'value',
+                type: 'date',
+              },
+              {
+                fieldId: 'order-docref-period-start-time',
+                label: 'Başlangıç Saati',
+                path: ['Invoice', 'cac:OrderReference', 'cac:DocumentReference', 'cac:ValidityPeriod', 'cbc:StartTime'],
+                attr: 'value',
+                type: 'time',
+              },
+              {
+                fieldId: 'order-docref-period-end-date',
+                label: 'Bitiş Tarihi',
+                path: ['Invoice', 'cac:OrderReference', 'cac:DocumentReference', 'cac:ValidityPeriod', 'cbc:EndDate'],
+                attr: 'value',
+                type: 'date',
+              },
+              {
+                fieldId: 'order-docref-period-end-time',
+                label: 'Bitiş Saati',
+                path: ['Invoice', 'cac:OrderReference', 'cac:DocumentReference', 'cac:ValidityPeriod', 'cbc:EndTime'],
+                attr: 'value',
+                type: 'time',
+              },
+              {
+                fieldId: 'order-docref-period-duration',
+                label: 'Dönem Süresi',
+                path: ['Invoice', 'cac:OrderReference', 'cac:DocumentReference', 'cac:ValidityPeriod', 'cbc:DurationMeasure'],
+                attr: 'value',
+                type: 'duration-measure',
+                options: [
+                  { value: 'ANN', label: 'Yıl' },
+                  { value: 'MON', label: 'Ay' },
+                  { value: 'DAY', label: 'Gün' },
+                  { value: 'HUR', label: 'Saat' },
+                ],
+              },
+              {
+                fieldId: 'order-docref-period-description',
+                label: 'Açıklama',
+                path: ['Invoice', 'cac:OrderReference', 'cac:DocumentReference', 'cac:ValidityPeriod', 'cbc:Description'],
+                attr: 'value',
+              },
+            ],
+          },
+        ],
+      },
+    ],
   },
 ]
 
-export const fieldDefinitions = fieldGroups.flatMap((g) => g.fields)
+function collectFields(groups) {
+  return groups.flatMap((g) => [
+    ...g.fields,
+    ...(g.subgroups ? collectFields(g.subgroups) : []),
+  ])
+}
+
+export const fieldDefinitions = collectFields(fieldGroups)
