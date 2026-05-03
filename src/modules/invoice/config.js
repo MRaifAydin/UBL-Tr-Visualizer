@@ -437,6 +437,26 @@ export const fieldGroups = [
       },
     ],
   },
+  {
+    ...makeDocumentReferenceGroup('İrsaliye Bilgileri', 'despatch-docref', ['Invoice', 'cac:DespatchDocumentReference']),
+    fullWidth: true,
+  },
+  {
+    ...makeDocumentReferenceGroup('Alındı Bilgileri', 'receipt-docref', ['Invoice', 'cac:ReceiptDocumentReference']),
+    fullWidth: true,
+  },
+  {
+    ...makeDocumentReferenceGroup('Başlangıç Dokümanı Bilgileri', 'originator-docref', ['Invoice', 'cac:OriginatorDocumentReference']),
+    fullWidth: true,
+  },
+  {
+    ...makeDocumentReferenceGroup('Kontrat Dokümanı Bilgileri', 'contract-docref', ['Invoice', 'cac:ContractDocumentReference']),
+    fullWidth: true,
+  },
+  {
+    ...makeDocumentReferenceGroup('İlave Doküman', 'additional-docref', ['Invoice', 'cac:AdditionalDocumentReference']),
+    fullWidth: true,
+  },
 ]
 
 function collectFields(groups) {
