@@ -103,6 +103,60 @@ function makePartyItems(prefix, base) {
   ]
 }
 
+function makeDocumentReferenceGroup(title, prefix, pathBase) {
+  const IP = [...pathBase, 'cac:IssuerParty']
+  return {
+    title,
+    wrap: true,
+    fields: [
+      { fieldId: `${prefix}-id`,          label: 'Sıra Numarası',    path: [...pathBase, 'cbc:ID'],                  attr: 'value' },
+      { fieldId: `${prefix}-issue-date`,  label: 'Düzenleme Tarihi', path: [...pathBase, 'cbc:IssueDate'],           attr: 'value', type: 'date' },
+      { fieldId: `${prefix}-type-code`,   label: 'Uygulama Yanıtı',  path: [...pathBase, 'cbc:DocumentTypeCode'],    attr: 'value', disabled: true },
+      { fieldId: `${prefix}-type`,        label: 'Belge Tipi',       path: [...pathBase, 'cbc:DocumentType'],        attr: 'value' },
+      { fieldId: `${prefix}-description`, label: 'Açıklama',         path: [...pathBase, 'cbc:DocumentDescription'], attr: 'value' },
+      { fieldId: `${prefix}-attachment`,  label: 'Ek',               path: [...pathBase, 'cac:Attachment'],          attr: 'value' },
+    ],
+    subgroups: [
+      {
+        title: 'Geçerlilik Dönemi',
+        wrap: true,
+        fields: [
+          { fieldId: `${prefix}-period-start-date`,  label: 'Başlangıç Tarihi', path: [...pathBase, 'cac:ValidityPeriod', 'cbc:StartDate'],       attr: 'value', type: 'date' },
+          { fieldId: `${prefix}-period-start-time`,  label: 'Başlangıç Saati',  path: [...pathBase, 'cac:ValidityPeriod', 'cbc:StartTime'],       attr: 'value', type: 'time' },
+          { fieldId: `${prefix}-period-end-date`,    label: 'Bitiş Tarihi',     path: [...pathBase, 'cac:ValidityPeriod', 'cbc:EndDate'],         attr: 'value', type: 'date' },
+          { fieldId: `${prefix}-period-end-time`,    label: 'Bitiş Saati',      path: [...pathBase, 'cac:ValidityPeriod', 'cbc:EndTime'],         attr: 'value', type: 'time' },
+          { fieldId: `${prefix}-period-duration`,    label: 'Dönem Süresi',     path: [...pathBase, 'cac:ValidityPeriod', 'cbc:DurationMeasure'], attr: 'value', type: 'duration-measure', options: DURATION_MEASURE_OPTIONS },
+          { fieldId: `${prefix}-period-description`, label: 'Açıklama',         path: [...pathBase, 'cac:ValidityPeriod', 'cbc:Description'],     attr: 'value' },
+        ],
+      },
+      {
+        title: 'Düzenleyen',
+        wrap: true,
+        items: [
+          ...makePartyItems(`${prefix}-issuer`, IP),
+          { title: 'Şube', wrap: true, items: makePartyItems(`${prefix}-branch`, [...IP, 'cac:AgentParty']) },
+        ],
+      },
+    ],
+  }
+}
+
+function makeAllowanceChargeGroup(prefix, pathBase) {
+  return {
+    title: 'Iskonto-Artırım',
+    wrap: true,
+    fields: [
+      { fieldId: `${prefix}-charge-indicator`, label: 'Yön',           path: [...pathBase, 'cbc:ChargeIndicator'],         attr: 'value', type: 'select', options: [{ value: '+', label: 'Artı' }, { value: '-', label: 'Eksi' }] },
+      { fieldId: `${prefix}-reason`,           label: 'Nedeni',        path: [...pathBase, 'cbc:AllowanceChargeReason'],   attr: 'value' },
+      { fieldId: `${prefix}-multiplier`,       label: 'Oranı',         path: [...pathBase, 'cbc:MultiplierFactorNumeric'], attr: 'value', type: 'number' },
+      { fieldId: `${prefix}-sequence`,         label: 'Sıra Numarası', path: [...pathBase, 'cbc:SequenceNumeric'],         attr: 'value', type: 'number' },
+      { fieldId: `${prefix}-amount`,           label: 'Tutarı',        path: [...pathBase, 'cbc:Amount'],                  attr: 'value', type: 'number' },
+      { fieldId: `${prefix}-base-amount`,      label: 'Matrah',        path: [...pathBase, 'cbc:BaseAmount'],              attr: 'value', type: 'number' },
+      { fieldId: `${prefix}-per-unit-amount`,  label: 'Adet',          path: [...pathBase, 'cbc:PerUnitAmount'],           attr: 'value', type: 'number' },
+    ],
+  }
+}
+
 export const fieldGroups = [
   {
     title: 'Belge Genel Bilgileri',
@@ -350,113 +404,35 @@ export const fieldGroups = [
       },
     ],
     subgroups: [
+      makeDocumentReferenceGroup(
+        'Döküman Referansı',
+        'order-docref',
+        ['Invoice', 'cac:OrderReference', 'cac:DocumentReference']
+      ),
+    ],
+  },
+  {
+    title: 'Diğer İlişkili Belgeler',
+    fullWidth: true,
+    wrap: true,
+    fields: [],
+    subgroups: [
+      makeDocumentReferenceGroup('İlişkili Fatura',             'billing-inv',          ['Invoice', 'cac:BillingReference', 'cac:InvoiceDocumentReference']),
+      makeDocumentReferenceGroup('Yurtdışı İlişkili Fatura',    'billing-selfbill-inv', ['Invoice', 'cac:BillingReference', 'cac:SelfBilledInvoiceDocumentReference']),
+      makeDocumentReferenceGroup('CreditNote Belgesi',          'billing-cn',           ['Invoice', 'cac:BillingReference', 'cac:CreditNoteDocumentReference']),
+      makeDocumentReferenceGroup('Yurtdışı CreditNote Belgesi', 'billing-selfbill-cn',  ['Invoice', 'cac:BillingReference', 'cac:SelfBilledCreditNoteDocumentReference']),
+      makeDocumentReferenceGroup('DebitNote Belgesi',           'billing-dn',           ['Invoice', 'cac:BillingReference', 'cac:DebitNoteDocumentReference']),
+      makeDocumentReferenceGroup('Hatırlatma Belgesi',          'billing-rem',          ['Invoice', 'cac:BillingReference', 'cac:ReminderDocumentReference']),
+      makeDocumentReferenceGroup('Ek Belge Referansı',          'billing-add',          ['Invoice', 'cac:BillingReference', 'cac:AdditionalDocumentReference']),
       {
-        title: 'Döküman Referansı',
+        title: 'İlişkili Kalem',
         wrap: true,
         fields: [
-          {
-            fieldId: 'order-docref-id',
-            label: 'Sıra Numarası',
-            path: ['Invoice', 'cac:OrderReference', 'cac:DocumentReference', 'cbc:ID'],
-            attr: 'value',
-          },
-          {
-            fieldId: 'order-docref-issue-date',
-            label: 'Düzenleme Tarihi',
-            path: ['Invoice', 'cac:OrderReference', 'cac:DocumentReference', 'cbc:IssueDate'],
-            attr: 'value',
-            type: 'date',
-          },
-          {
-            fieldId: 'order-docref-type-code',
-            label: 'Uygulama Yanıtı',
-            path: ['Invoice', 'cac:OrderReference', 'cac:DocumentReference', 'cbc:DocumentTypeCode'],
-            attr: 'value',
-            disabled: true,
-          },
-          {
-            fieldId: 'order-docref-type',
-            label: 'Belge Tipi',
-            path: ['Invoice', 'cac:OrderReference', 'cac:DocumentReference', 'cbc:DocumentType'],
-            attr: 'value',
-          },
-          {
-            fieldId: 'order-docref-description',
-            label: 'Açıklama',
-            path: ['Invoice', 'cac:OrderReference', 'cac:DocumentReference', 'cbc:DocumentDescription'],
-            attr: 'value',
-          },
-          {
-            fieldId: 'order-docref-attachment',
-            label: 'Ek',
-            path: ['Invoice', 'cac:OrderReference', 'cac:DocumentReference', 'cac:Attachment'],
-            attr: 'value',
-          },
+          { fieldId: 'billing-line-id',     label: 'ID',    path: ['Invoice', 'cac:BillingReference', 'cac:BillingReferenceLine', 'cbc:ID'],     attr: 'value' },
+          { fieldId: 'billing-line-amount', label: 'Tutar', path: ['Invoice', 'cac:BillingReference', 'cac:BillingReferenceLine', 'cbc:Amount'], attr: 'value', type: 'duration-measure', attrKey: 'currencyID', options: [{ value: 'TRY', label: 'Türk Lirası' }, { value: 'USD', label: 'Dolar' }, { value: 'EUR', label: 'Euro' }] },
         ],
         subgroups: [
-          {
-            title: 'Geçerlilik Dönemi',
-            wrap: true,
-            fields: [
-              {
-                fieldId: 'order-docref-period-start-date',
-                label: 'Başlangıç Tarihi',
-                path: ['Invoice', 'cac:OrderReference', 'cac:DocumentReference', 'cac:ValidityPeriod', 'cbc:StartDate'],
-                attr: 'value',
-                type: 'date',
-              },
-              {
-                fieldId: 'order-docref-period-start-time',
-                label: 'Başlangıç Saati',
-                path: ['Invoice', 'cac:OrderReference', 'cac:DocumentReference', 'cac:ValidityPeriod', 'cbc:StartTime'],
-                attr: 'value',
-                type: 'time',
-              },
-              {
-                fieldId: 'order-docref-period-end-date',
-                label: 'Bitiş Tarihi',
-                path: ['Invoice', 'cac:OrderReference', 'cac:DocumentReference', 'cac:ValidityPeriod', 'cbc:EndDate'],
-                attr: 'value',
-                type: 'date',
-              },
-              {
-                fieldId: 'order-docref-period-end-time',
-                label: 'Bitiş Saati',
-                path: ['Invoice', 'cac:OrderReference', 'cac:DocumentReference', 'cac:ValidityPeriod', 'cbc:EndTime'],
-                attr: 'value',
-                type: 'time',
-              },
-              {
-                fieldId: 'order-docref-period-duration',
-                label: 'Dönem Süresi',
-                path: ['Invoice', 'cac:OrderReference', 'cac:DocumentReference', 'cac:ValidityPeriod', 'cbc:DurationMeasure'],
-                attr: 'value',
-                type: 'duration-measure',
-                options: DURATION_MEASURE_OPTIONS,
-              },
-              {
-                fieldId: 'order-docref-period-description',
-                label: 'Açıklama',
-                path: ['Invoice', 'cac:OrderReference', 'cac:DocumentReference', 'cac:ValidityPeriod', 'cbc:Description'],
-                attr: 'value',
-              },
-            ],
-          },
-          (() => {
-            const IP = ['Invoice', 'cac:OrderReference', 'cac:DocumentReference', 'cac:IssuerParty']
-            return {
-              title: 'Düzenleyen',
-              wrap: true,
-              items: [
-                ...makePartyItems('issuer', IP),
-                {
-                  title: 'Şube',
-                  wrap: true,
-                  items: makePartyItems('branch', [...IP, 'cac:AgentParty']),
-                },
-              ],
-            }
-          })(),
+          makeAllowanceChargeGroup('billing-line-ac', ['Invoice', 'cac:BillingReference', 'cac:BillingReferenceLine', 'cac:AllowanceCharge']),
         ],
       },
     ],
