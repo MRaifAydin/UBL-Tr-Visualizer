@@ -538,11 +538,11 @@ function NotesList({ fieldId, label, path, attr }) {
   )
 }
 
-function DurationMeasureInput({ fieldId, label, path, options, fill }) {
+function DurationMeasureInput({ fieldId, label, path, options, fill, attrKey = 'unitCode' }) {
   const { tree, activeFieldId, setActiveFieldId, updateField } = useDocument()
   const node = findNodeById(tree, fieldId)
   const storedAmount = node?.value ?? ''
-  const storedUnit = node?.attr?.unitCode ?? ''
+  const storedUnit = node?.attr?.[attrKey] ?? ''
   const [localUnit, setLocalUnit] = useState('')
   const isActive = activeFieldId === fieldId
 
@@ -554,14 +554,14 @@ function DurationMeasureInput({ fieldId, label, path, options, fill }) {
     setActiveFieldId(fieldId)
     setLocalUnit(unit)
     if (storedAmount !== '') {
-      updateField(fieldId, path, storedAmount, unit ? { unitCode: unit } : 'value')
+      updateField(fieldId, path, storedAmount, unit ? { [attrKey]: unit } : 'value')
     }
   }
 
   function handleAmountChange(raw) {
     const amount = raw.replace(/\D/g, '')
     if (amount) {
-      updateField(fieldId, path, amount, displayUnit ? { unitCode: displayUnit } : 'value')
+      updateField(fieldId, path, amount, displayUnit ? { [attrKey]: displayUnit } : 'value')
     } else {
       updateField(fieldId, path, '', 'value')
     }
@@ -810,11 +810,25 @@ function renderField(field, shared) {
 
 function renderGroupChildren(group) {
   const shared = { wide: group.wide, fill: !!group.wrap }
+  const colSpan = group.wrap ? 'col-span-4' : ''
+
+  if (group.items) {
+    return group.items.map((item) =>
+      item.title ? (
+        <div key={item.title} className={colSpan}>
+          <FieldGroup title={item.title} wrap={item.wrap} fullWidth>
+            {renderGroupChildren(item)}
+          </FieldGroup>
+        </div>
+      ) : renderField(item, shared)
+    )
+  }
+
   return (
     <>
       {group.fields.map((field) => renderField(field, shared))}
       {group.subgroups?.map((sub) => (
-        <div key={sub.title} className={group.wrap ? 'col-span-4' : ''}>
+        <div key={sub.title} className={colSpan}>
           <FieldGroup title={sub.title} wrap={sub.wrap} fullWidth>
             {renderGroupChildren(sub)}
           </FieldGroup>

@@ -1,5 +1,43 @@
 export const rootTag = 'Invoice'
 
+const DURATION_MEASURE_OPTIONS = [
+  { value: 'ANN', label: 'Yıl' },
+  { value: 'MON', label: 'Ay' },
+  { value: 'DAY', label: 'Gün' },
+  { value: 'HUR', label: 'Saat' },
+]
+
+function makeAddressGroup(prefix, pathBase) {
+  return {
+    title: 'Adres',
+    wrap: true,
+    fields: [
+      { fieldId: `${prefix}-id`,        label: 'Sabit Tanımlama Numarası', path: [...pathBase, 'cbc:ID'],                   attr: 'value' },
+      { fieldId: `${prefix}-postbox`,   label: 'Posta Kutusu',             path: [...pathBase, 'cbc:Postbox'],              attr: 'value' },
+      { fieldId: `${prefix}-room`,      label: 'İç Kapı No',               path: [...pathBase, 'cbc:Room'],                 attr: 'value' },
+      { fieldId: `${prefix}-street`,    label: 'Cadde-Sokak Adı',          path: [...pathBase, 'cbc:StreetName'],           attr: 'value' },
+      { fieldId: `${prefix}-block`,     label: 'Blok Adı',                 path: [...pathBase, 'cbc:BlockName'],            attr: 'value' },
+      { fieldId: `${prefix}-building`,  label: 'Bina',                     path: [...pathBase, 'cbc:BuildingName'],         attr: 'value' },
+      { fieldId: `${prefix}-bnum`,      label: 'Dış Kapı No',              path: [...pathBase, 'cbc:BuildingNumber'],       attr: 'value' },
+      { fieldId: `${prefix}-citysub`,   label: 'İlçe-Semt Adı',            path: [...pathBase, 'cbc:CitySubdivisionName'], attr: 'value' },
+      { fieldId: `${prefix}-city`,      label: 'İl Adı',                   path: [...pathBase, 'cbc:CityName'],             attr: 'value' },
+      { fieldId: `${prefix}-postal`,    label: 'Posta Kodu',               path: [...pathBase, 'cbc:PostalZone'],           attr: 'value' },
+      { fieldId: `${prefix}-region`,    label: 'Kasaba-Köy Adı',           path: [...pathBase, 'cbc:Region'],               attr: 'value' },
+      { fieldId: `${prefix}-district`,  label: 'Mahalle Adı',              path: [...pathBase, 'cbc:District'],             attr: 'value' },
+    ],
+    subgroups: [
+      {
+        title: 'Ülke',
+        wrap: true,
+        fields: [
+          { fieldId: `${prefix}-country-code`, label: 'Ülke Kodu', path: [...pathBase, 'cac:Country', 'cbc:IdentificationCode'], attr: 'value' },
+          { fieldId: `${prefix}-country-name`, label: 'Ülke Adı',  path: [...pathBase, 'cac:Country', 'cbc:Name'],               attr: 'value' },
+        ],
+      },
+    ],
+  }
+}
+
 export const fieldGroups = [
   {
     title: 'Belge Genel Bilgileri',
@@ -205,12 +243,7 @@ export const fieldGroups = [
         path: ['Invoice', 'cac:InvoicePeriod', 'cbc:DurationMeasure'],
         attr: 'value',
         type: 'duration-measure',
-        options: [
-          { value: 'ANN', label: 'Yıl' },
-          { value: 'MON', label: 'Ay' },
-          { value: 'DAY', label: 'Gün' },
-          { value: 'HUR', label: 'Saat' },
-        ],
+        options: DURATION_MEASURE_OPTIONS,
       },
       {
         fieldId: 'period-description',
@@ -334,12 +367,7 @@ export const fieldGroups = [
                 path: ['Invoice', 'cac:OrderReference', 'cac:DocumentReference', 'cac:ValidityPeriod', 'cbc:DurationMeasure'],
                 attr: 'value',
                 type: 'duration-measure',
-                options: [
-                  { value: 'ANN', label: 'Yıl' },
-                  { value: 'MON', label: 'Ay' },
-                  { value: 'DAY', label: 'Gün' },
-                  { value: 'HUR', label: 'Saat' },
-                ],
+                options: DURATION_MEASURE_OPTIONS,
               },
               {
                 fieldId: 'order-docref-period-description',
@@ -349,6 +377,65 @@ export const fieldGroups = [
               },
             ],
           },
+          (() => {
+            const IP = ['Invoice', 'cac:OrderReference', 'cac:DocumentReference', 'cac:IssuerParty']
+            return {
+              title: 'Düzenleyen',
+              wrap: true,
+              items: [
+                { fieldId: 'issuer-website',       label: 'Web Sitesi',    path: [...IP, 'cbc:WebsiteURI'],                 attr: 'value' },
+                { fieldId: 'issuer-endpoint',      label: 'EndpointID',    path: [...IP, 'cbc:EndpointID'],                 attr: 'value', disabled: true },
+                { fieldId: 'issuer-industry-code', label: 'Faaliyet Kodu', path: [...IP, 'cbc:IndustryClassificationCode'], attr: 'value' },
+                {
+                  fieldId: 'issuer-party-id',
+                  label: 'Kimlik Bilgisi',
+                  path: [...IP, 'cac:PartyIdentification'],
+                  attr: 'value',
+                  type: 'duration-measure',
+                  attrKey: 'schemeID',
+                  options: [
+                    { value: 'TCKN', label: 'Kimlik Numarası' },
+                    { value: 'VKN',  label: 'Vergi Numarası' },
+                  ],
+                },
+                { fieldId: 'issuer-party-name', label: 'Kurum İsmi', path: [...IP, 'cac:PartyName', 'cbc:Name'], attr: 'value' },
+                makeAddressGroup('issuer-postal', [...IP, 'cac:PostalAddress']),
+                {
+                  title: 'Depo Bilgisi',
+                  wrap: true,
+                  fields: [
+                    { fieldId: 'issuer-loc-id', label: 'ID', path: [...IP, 'cac:PhysicalLocation', 'cbc:ID'], attr: 'value' },
+                  ],
+                  subgroups: [
+                    makeAddressGroup('issuer-loc', [...IP, 'cac:PhysicalLocation', 'cac:Address']),
+                  ],
+                },
+                {
+                  title: 'Vergi Dairesi',
+                  wrap: true,
+                  fields: [
+                    { fieldId: 'issuer-tax-reg-name',   label: 'Yabancı Ülke Kurumu Ünvanı',           path: [...IP, 'cac:PartyTaxScheme', 'cbc:RegistrationName'], attr: 'value' },
+                    { fieldId: 'issuer-tax-company-id', label: 'Yabancı Ülke Kurumu Vergi Kayıt Kodu', path: [...IP, 'cac:PartyTaxScheme', 'cbc:CompanyID'],        attr: 'value' },
+                  ],
+                  subgroups: [
+                    {
+                      title: 'Vergi Şeması',
+                      wrap: true,
+                      fields: [
+                        { fieldId: 'issuer-tax-scheme-id',   label: 'ID',               path: [...IP, 'cac:PartyTaxScheme', 'cac:TaxScheme', 'cbc:ID'],          attr: 'value' },
+                        { fieldId: 'issuer-tax-scheme-name', label: 'Vergi Dairesi Adı', path: [...IP, 'cac:PartyTaxScheme', 'cac:TaxScheme', 'cbc:Name'],        attr: 'value' },
+                        { fieldId: 'issuer-tax-scheme-type', label: 'Vergi Tipi Kodu',   path: [...IP, 'cac:PartyTaxScheme', 'cac:TaxScheme', 'cbc:TaxTypeCode'], attr: 'value', disabled: true },
+                      ],
+                    },
+                  ],
+                },
+                { fieldId: 'issuer-other-reg', label: 'Diğer Kayıtlı Olduğu Yerler', path: [], attr: 'value', disabled: true },
+                { fieldId: 'issuer-contact',   label: 'İletişim',                    path: [], attr: 'value', disabled: true },
+                { fieldId: 'issuer-person',    label: 'Şahıs',                       path: [], attr: 'value', disabled: true },
+                { fieldId: 'issuer-branch',    label: 'Şube',                        path: [], attr: 'value', disabled: true },
+              ],
+            }
+          })(),
         ],
       },
     ],
@@ -356,10 +443,17 @@ export const fieldGroups = [
 ]
 
 function collectFields(groups) {
-  return groups.flatMap((g) => [
-    ...g.fields,
-    ...(g.subgroups ? collectFields(g.subgroups) : []),
-  ])
+  return groups.flatMap((g) => {
+    if (g.items) {
+      const fields = g.items.filter((i) => i.fieldId)
+      const subs   = g.items.filter((i) => i.title)
+      return [...fields, ...collectFields(subs)]
+    }
+    return [
+      ...g.fields,
+      ...(g.subgroups ? collectFields(g.subgroups) : []),
+    ]
+  })
 }
 
 export const fieldDefinitions = collectFields(fieldGroups)
