@@ -167,6 +167,7 @@ export const fieldGroups = [
     wide: true,
     fullWidth: true,
     wrap: true,
+    defaultOpen: true,
     fields: [
       {
         fieldId: 'invoice-profile-id',

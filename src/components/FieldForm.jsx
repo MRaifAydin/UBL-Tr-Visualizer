@@ -847,7 +847,7 @@ export default function FieldForm() {
       {config.fieldGroups.map((group) => (
         <>
           {group.newRow && <div key={`${group.title}-break`} className="w-full" />}
-          <FieldGroup key={group.title} title={group.title} wrap={group.wrap} fullWidth={group.fullWidth}>
+          <FieldGroup key={group.title} title={group.title} wrap={group.wrap} fullWidth={group.fullWidth} collapsible defaultOpen={!!group.defaultOpen}>
             {renderGroupChildren(group)}
           </FieldGroup>
         </>

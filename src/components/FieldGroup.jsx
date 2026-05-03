@@ -15,8 +15,8 @@ const DEPTH_STYLES = [
   { container: 'bg-teal-50/50 border border-gray-200',     label: 'text-teal-600',    arrow: 'text-teal-500' },
 ]
 
-export default function FieldGroup({ title, children, wrap, fullWidth, collapsible, depth = 0 }) {
-  const [open, setOpen] = useState(false)
+export default function FieldGroup({ title, children, wrap, fullWidth, collapsible, defaultOpen = false, depth = 0 }) {
+  const [open, setOpen] = useState(defaultOpen)
   const isOpen = !collapsible || open
   const style = DEPTH_STYLES[Math.min(depth, DEPTH_STYLES.length - 1)]
 
