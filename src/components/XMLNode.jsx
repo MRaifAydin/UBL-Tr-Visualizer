@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 function containsFieldId(node, fieldId) {
   if (node.fieldId === fieldId) return true
@@ -6,16 +6,36 @@ function containsFieldId(node, fieldId) {
   return Object.values(node.children).some((child) => containsFieldId(child, fieldId))
 }
 
-export default function XMLNode({ node, activeFieldId }) {
-  const [isOpen, setIsOpen] = useState(true)
+export default function XMLNode({ node, activeFieldId, depth = 0, collapseSignal = 0 }) {
+  const [manualOpen, setManualOpen] = useState(true)
+  const headerRef = useRef(null)
+
+  const hasChildren = !!node?.children && Object.keys(node.children).length > 0
+  const isActive = !!activeFieldId && node?.fieldId === activeFieldId
+  const isAncestor =
+    !isActive && !!activeFieldId && hasChildren && !!node && containsFieldId(node, activeFieldId)
+  const isHighlighted = isActive || isAncestor
+  const isOpen = manualOpen
+
+  useEffect(() => {
+    if (depth >= 1) setManualOpen(false)
+  }, [collapseSignal])
+
+  // When a field is focused, open any collapsed ancestor on the path to it
+  useEffect(() => {
+    if (isAncestor) setManualOpen(true)
+  }, [activeFieldId])
+
+  // Scroll after ancestors have re-rendered open
+  useEffect(() => {
+    if (!isActive) return
+    const id = setTimeout(() => {
+      headerRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+    }, 50)
+    return () => clearTimeout(id)
+  }, [activeFieldId])
 
   if (!node || !node.tag) return null
-
-  const hasChildren = node.children && Object.keys(node.children).length > 0
-  const isActive = !!activeFieldId && node.fieldId === activeFieldId
-  const isAncestor =
-    !isActive && !!activeFieldId && hasChildren && containsFieldId(node, activeFieldId)
-  const isHighlighted = isActive || isAncestor
 
   const xmlAttrs =
     node.attr && typeof node.attr === 'object' ? Object.entries(node.attr) : []
@@ -30,8 +50,9 @@ export default function XMLNode({ node, activeFieldId }) {
     >
       {/* Node header */}
       <div
+        ref={isActive ? headerRef : null}
         className={`flex items-center gap-1 py-0.5 flex-wrap ${hasChildren ? 'cursor-pointer select-none' : ''}`}
-        onClick={() => hasChildren && setIsOpen((o) => !o)}
+        onClick={() => { if (hasChildren) setManualOpen((o) => !o) }}
       >
         <span className="w-3 text-xs text-gray-400 shrink-0">
           {hasChildren ? (isOpen ? '▾' : '▸') : ''}
@@ -83,7 +104,7 @@ export default function XMLNode({ node, activeFieldId }) {
             {Object.entries(node.children)
               .sort(([, a], [, b]) => (a._order ?? Infinity) - (b._order ?? Infinity))
               .map(([key, child]) => (
-                <XMLNode key={key} node={child} activeFieldId={activeFieldId} />
+                <XMLNode key={key} node={child} activeFieldId={activeFieldId} depth={depth + 1} collapseSignal={collapseSignal} />
               ))}
           </div>
           {/* Closing tag after children */}
