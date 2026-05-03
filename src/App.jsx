@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from 'react'
 import { useDocument } from './context/DocumentContext.jsx'
 import InvoicePage from './pages/InvoicePage.jsx'
 
@@ -19,9 +20,20 @@ const PAGES = {
 
 export default function App() {
   const { docType, setDocType } = useDocument()
+  const [infoOpen, setInfoOpen] = useState(false)
+  const modalRef = useRef(null)
+
+  useEffect(() => {
+    if (!infoOpen) return
+    function handle(e) {
+      if (modalRef.current && !modalRef.current.contains(e.target)) setInfoOpen(false)
+    }
+    document.addEventListener('mousedown', handle)
+    return () => document.removeEventListener('mousedown', handle)
+  }, [infoOpen])
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="flex h-screen bg-gray-50">
 
       <nav className="w-16 shrink-0 flex flex-col items-center gap-2 bg-gray-900 pt-4 pb-4">
         <div className="w-9 h-9 rounded-lg bg-blue-500 flex items-center justify-center mb-4 shrink-0">
@@ -45,6 +57,30 @@ export default function App() {
             <span className="text-[9px] font-medium leading-none">{label}</span>
           </button>
         ))}
+
+        <div className="mt-auto relative" ref={modalRef}>
+          <button
+            onClick={() => setInfoOpen((o) => !o)}
+            title="Yasal Uyarı"
+            className={`w-11 h-11 rounded-xl flex flex-col items-center justify-center gap-0.5 transition-colors ${
+              infoOpen ? 'bg-gray-700 text-white' : 'text-gray-400 hover:bg-gray-700 hover:text-white'
+            }`}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+              <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm8.706-1.442c1.146-.573 2.437.463 2.126 1.706l-.709 2.836.042-.02a.75.75 0 01.67 1.34l-.04.022c-1.147.573-2.438-.463-2.127-1.706l.71-2.836-.042.02a.75.75 0 11-.671-1.34l.041-.022zM12 9a.75.75 0 100-1.5.75.75 0 000 1.5z" clipRule="evenodd" />
+            </svg>
+            <span className="text-[9px] font-medium leading-none">Bilgi</span>
+          </button>
+
+          {infoOpen && (
+            <div className="absolute left-full bottom-0 ml-3 w-72 bg-white rounded-lg shadow-xl border border-gray-200 p-4 z-50">
+              <p className="text-xs font-semibold text-gray-700 mb-2">Yasal Uyarı</p>
+              <p className="text-xs text-gray-500 leading-relaxed">
+                Bu araç açık kaynaklı bir projedir ve sadece UBL-TR XML dosyalarını görselleştirmek için kullanılır. Üretilen belgeler resmi belge niteliği taşımaz. Hata veya eksikliklerden geliştirici sorumlu tutulamaz.
+              </p>
+            </div>
+          )}
+        </div>
       </nav>
 
       {PAGES[docType]}
