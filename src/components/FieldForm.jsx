@@ -816,7 +816,7 @@ function renderGroupChildren(group) {
     return group.items.map((item) =>
       item.title ? (
         <div key={item.title} className={colSpan}>
-          <FieldGroup title={item.title} wrap={item.wrap} fullWidth>
+          <FieldGroup title={item.title} wrap={item.wrap} fullWidth collapsible>
             {renderGroupChildren(item)}
           </FieldGroup>
         </div>
@@ -829,7 +829,7 @@ function renderGroupChildren(group) {
       {group.fields.map((field) => renderField(field, shared))}
       {group.subgroups?.map((sub) => (
         <div key={sub.title} className={colSpan}>
-          <FieldGroup title={sub.title} wrap={sub.wrap} fullWidth>
+          <FieldGroup title={sub.title} wrap={sub.wrap} fullWidth collapsible>
             {renderGroupChildren(sub)}
           </FieldGroup>
         </div>

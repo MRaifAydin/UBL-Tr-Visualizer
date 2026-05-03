@@ -38,6 +38,71 @@ function makeAddressGroup(prefix, pathBase) {
   }
 }
 
+function makePartyItems(prefix, base) {
+  return [
+    { fieldId: `${prefix}-website`,       label: 'Web Sitesi',    path: [...base, 'cbc:WebsiteURI'],                 attr: 'value' },
+    { fieldId: `${prefix}-endpoint`,      label: 'EndpointID',    path: [...base, 'cbc:EndpointID'],                 attr: 'value', disabled: true },
+    { fieldId: `${prefix}-industry-code`, label: 'Faaliyet Kodu', path: [...base, 'cbc:IndustryClassificationCode'], attr: 'value' },
+    { fieldId: `${prefix}-party-id`, label: 'Kimlik Bilgisi', path: [...base, 'cac:PartyIdentification'],
+      attr: 'value', type: 'duration-measure', attrKey: 'schemeID',
+      options: [{ value: 'TCKN', label: 'Kimlik Numarası' }, { value: 'VKN', label: 'Vergi Numarası' }] },
+    { fieldId: `${prefix}-party-name`, label: 'Kurum İsmi', path: [...base, 'cac:PartyName', 'cbc:Name'], attr: 'value' },
+    makeAddressGroup(`${prefix}-postal`, [...base, 'cac:PostalAddress']),
+    { title: 'Depo Bilgisi', wrap: true,
+      fields: [{ fieldId: `${prefix}-loc-id`, label: 'ID', path: [...base, 'cac:PhysicalLocation', 'cbc:ID'], attr: 'value' }],
+      subgroups: [makeAddressGroup(`${prefix}-loc`, [...base, 'cac:PhysicalLocation', 'cac:Address'])] },
+    { title: 'Vergi Dairesi', wrap: true,
+      fields: [
+        { fieldId: `${prefix}-tax-reg-name`,   label: 'Yabancı Ülke Kurumu Ünvanı',           path: [...base, 'cac:PartyTaxScheme', 'cbc:RegistrationName'], attr: 'value' },
+        { fieldId: `${prefix}-tax-company-id`, label: 'Yabancı Ülke Kurumu Vergi Kayıt Kodu', path: [...base, 'cac:PartyTaxScheme', 'cbc:CompanyID'],        attr: 'value' },
+      ],
+      subgroups: [{ title: 'Vergi Şeması', wrap: true, fields: [
+        { fieldId: `${prefix}-tax-scheme-id`,   label: 'ID',               path: [...base, 'cac:PartyTaxScheme', 'cac:TaxScheme', 'cbc:ID'],          attr: 'value' },
+        { fieldId: `${prefix}-tax-scheme-name`, label: 'Vergi Dairesi Adı', path: [...base, 'cac:PartyTaxScheme', 'cac:TaxScheme', 'cbc:Name'],        attr: 'value' },
+        { fieldId: `${prefix}-tax-scheme-type`, label: 'Vergi Tipi Kodu',   path: [...base, 'cac:PartyTaxScheme', 'cac:TaxScheme', 'cbc:TaxTypeCode'], attr: 'value', disabled: true },
+      ]}] },
+    { fieldId: `${prefix}-other-reg`, label: 'Diğer Kayıtlı Olduğu Yerler', path: [], attr: 'value', disabled: true },
+    { title: 'İletişim', wrap: true,
+      fields: [
+        { fieldId: `${prefix}-contact-id`,    label: 'Id',               path: [...base, 'cac:Contact', 'cbc:ID'],             attr: 'value' },
+        { fieldId: `${prefix}-contact-name`,  label: 'İsim',             path: [...base, 'cac:Contact', 'cbc:Name'],           attr: 'value' },
+        { fieldId: `${prefix}-contact-tel`,   label: 'Telefon Numarası', path: [...base, 'cac:Contact', 'cbc:Telephone'],      attr: 'value' },
+        { fieldId: `${prefix}-contact-fax`,   label: 'Fax Numarası',     path: [...base, 'cac:Contact', 'cbc:Telefax'],        attr: 'value' },
+        { fieldId: `${prefix}-contact-email`, label: 'E-Posta Adresi',   path: [...base, 'cac:Contact', 'cbc:ElectronicMail'], attr: 'value' },
+        { fieldId: `${prefix}-contact-note`,  label: 'Not',              path: [...base, 'cac:Contact', 'cbc:Note'],           attr: 'value' },
+      ],
+      subgroups: [{ title: 'Diğer Bilgiler', wrap: true, fields: [
+        { fieldId: `${prefix}-contact-other-ch-code`, label: 'İletişim Numarası Kodu', path: [...base, 'cac:Contact', 'cac:OtherCommunication', 'cbc:ChannelCode'], attr: 'value' },
+        { fieldId: `${prefix}-contact-other-ch`,      label: 'İletişim Kanal Adı',     path: [...base, 'cac:Contact', 'cac:OtherCommunication', 'cbc:Channel'],     attr: 'value' },
+        { fieldId: `${prefix}-contact-other-value`,   label: 'Değer',                  path: [...base, 'cac:Contact', 'cac:OtherCommunication', 'cbc:Value'],       attr: 'value' },
+      ]}] },
+    { title: 'Şahıs', wrap: true,
+      fields: [
+        { fieldId: `${prefix}-person-first`,      label: 'Ad',                        path: [...base, 'cac:Person', 'cbc:FirstName'],                 attr: 'value' },
+        { fieldId: `${prefix}-person-family`,     label: 'Soyad',                     path: [...base, 'cac:Person', 'cbc:FamilyName'],                attr: 'value' },
+        { fieldId: `${prefix}-person-title`,      label: 'Ünvan',                     path: [...base, 'cac:Person', 'cbc:Title'],                     attr: 'value' },
+        { fieldId: `${prefix}-person-middle`,     label: 'Diğer Adı',                 path: [...base, 'cac:Person', 'cbc:MiddleName'],                attr: 'value' },
+        { fieldId: `${prefix}-person-suffix`,     label: 'Ad Ön Eki',                 path: [...base, 'cac:Person', 'cbc:NameSuffix'],                attr: 'value' },
+        { fieldId: `${prefix}-person-nat`,        label: 'Milliyeti',                 path: [...base, 'cac:Person', 'cbc:NationalityID'],             attr: 'value' },
+        { fieldId: `${prefix}-person-id-doc-ref`, label: 'Kimlik Dökümanı Referansı', path: [...base, 'cac:Person', 'cac:IdentityDocumentReference'], attr: 'value', disabled: true },
+      ],
+      subgroups: [{ title: 'Hesap Bilgileri', wrap: true,
+        fields: [
+          { fieldId: `${prefix}-person-acc-id`,   label: 'Hesap Numarası', path: [...base, 'cac:Person', 'cac:FinancialAccount', 'cbc:ID'],          attr: 'value' },
+          { fieldId: `${prefix}-person-acc-cur`,  label: 'Para Birimi',    path: [...base, 'cac:Person', 'cac:FinancialAccount', 'cbc:CurrencyCode'], attr: 'value' },
+          { fieldId: `${prefix}-person-acc-note`, label: 'Not',            path: [...base, 'cac:Person', 'cac:FinancialAccount', 'cbc:PaymentNote'],  attr: 'value' },
+        ],
+        subgroups: [{ title: 'Banka-Şube Bilgileri', wrap: true,
+          fields: [{ fieldId: `${prefix}-person-branch-name`, label: 'Adı', path: [...base, 'cac:Person', 'cac:FinancialAccount', 'cac:FinancialInstitutionBranch', 'cbc:Name'], attr: 'value' }],
+          subgroups: [{ title: 'Banka Bilgileri', wrap: true,
+            fields: [{ fieldId: `${prefix}-person-bank-name`, label: 'Adı', path: [...base, 'cac:Person', 'cac:FinancialAccount', 'cac:FinancialInstitutionBranch', 'cac:FinancialInstitution', 'cbc:Name'], attr: 'value' }],
+          }],
+        }],
+      }],
+    },
+  ]
+}
+
 export const fieldGroups = [
   {
     title: 'Belge Genel Bilgileri',
@@ -383,56 +448,12 @@ export const fieldGroups = [
               title: 'Düzenleyen',
               wrap: true,
               items: [
-                { fieldId: 'issuer-website',       label: 'Web Sitesi',    path: [...IP, 'cbc:WebsiteURI'],                 attr: 'value' },
-                { fieldId: 'issuer-endpoint',      label: 'EndpointID',    path: [...IP, 'cbc:EndpointID'],                 attr: 'value', disabled: true },
-                { fieldId: 'issuer-industry-code', label: 'Faaliyet Kodu', path: [...IP, 'cbc:IndustryClassificationCode'], attr: 'value' },
+                ...makePartyItems('issuer', IP),
                 {
-                  fieldId: 'issuer-party-id',
-                  label: 'Kimlik Bilgisi',
-                  path: [...IP, 'cac:PartyIdentification'],
-                  attr: 'value',
-                  type: 'duration-measure',
-                  attrKey: 'schemeID',
-                  options: [
-                    { value: 'TCKN', label: 'Kimlik Numarası' },
-                    { value: 'VKN',  label: 'Vergi Numarası' },
-                  ],
-                },
-                { fieldId: 'issuer-party-name', label: 'Kurum İsmi', path: [...IP, 'cac:PartyName', 'cbc:Name'], attr: 'value' },
-                makeAddressGroup('issuer-postal', [...IP, 'cac:PostalAddress']),
-                {
-                  title: 'Depo Bilgisi',
+                  title: 'Şube',
                   wrap: true,
-                  fields: [
-                    { fieldId: 'issuer-loc-id', label: 'ID', path: [...IP, 'cac:PhysicalLocation', 'cbc:ID'], attr: 'value' },
-                  ],
-                  subgroups: [
-                    makeAddressGroup('issuer-loc', [...IP, 'cac:PhysicalLocation', 'cac:Address']),
-                  ],
+                  items: makePartyItems('branch', [...IP, 'cac:AgentParty']),
                 },
-                {
-                  title: 'Vergi Dairesi',
-                  wrap: true,
-                  fields: [
-                    { fieldId: 'issuer-tax-reg-name',   label: 'Yabancı Ülke Kurumu Ünvanı',           path: [...IP, 'cac:PartyTaxScheme', 'cbc:RegistrationName'], attr: 'value' },
-                    { fieldId: 'issuer-tax-company-id', label: 'Yabancı Ülke Kurumu Vergi Kayıt Kodu', path: [...IP, 'cac:PartyTaxScheme', 'cbc:CompanyID'],        attr: 'value' },
-                  ],
-                  subgroups: [
-                    {
-                      title: 'Vergi Şeması',
-                      wrap: true,
-                      fields: [
-                        { fieldId: 'issuer-tax-scheme-id',   label: 'ID',               path: [...IP, 'cac:PartyTaxScheme', 'cac:TaxScheme', 'cbc:ID'],          attr: 'value' },
-                        { fieldId: 'issuer-tax-scheme-name', label: 'Vergi Dairesi Adı', path: [...IP, 'cac:PartyTaxScheme', 'cac:TaxScheme', 'cbc:Name'],        attr: 'value' },
-                        { fieldId: 'issuer-tax-scheme-type', label: 'Vergi Tipi Kodu',   path: [...IP, 'cac:PartyTaxScheme', 'cac:TaxScheme', 'cbc:TaxTypeCode'], attr: 'value', disabled: true },
-                      ],
-                    },
-                  ],
-                },
-                { fieldId: 'issuer-other-reg', label: 'Diğer Kayıtlı Olduğu Yerler', path: [], attr: 'value', disabled: true },
-                { fieldId: 'issuer-contact',   label: 'İletişim',                    path: [], attr: 'value', disabled: true },
-                { fieldId: 'issuer-person',    label: 'Şahıs',                       path: [], attr: 'value', disabled: true },
-                { fieldId: 'issuer-branch',    label: 'Şube',                        path: [], attr: 'value', disabled: true },
               ],
             }
           })(),
