@@ -50,7 +50,7 @@ function makePartyItems(prefix, base) {
     makeAddressGroup(`${prefix}-postal`, [...base, 'cac:PostalAddress']),
     { title: 'Depo Bilgisi', wrap: true,
       fields: [{ fieldId: `${prefix}-loc-id`, label: 'ID', path: [...base, 'cac:PhysicalLocation', 'cbc:ID'], attr: 'value' }],
-      subgroups: [makeAddressGroup(`${prefix}-loc`, [...base, 'cac:PhysicalLocation', 'cac:Address'])] },
+      subgroups: [makeAddressGroup(`${prefix}-loc-addr`, [...base, 'cac:PhysicalLocation', 'cac:Address'])] },
     { title: 'Vergi Dairesi', wrap: true,
       fields: [
         { fieldId: `${prefix}-tax-reg-name`,   label: 'Yabancı Ülke Kurumu Ünvanı',           path: [...base, 'cac:PartyTaxScheme', 'cbc:RegistrationName'], attr: 'value' },

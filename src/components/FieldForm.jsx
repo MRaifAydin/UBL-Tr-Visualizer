@@ -808,16 +808,17 @@ function renderField(field, shared) {
   return <FieldInput key={field.fieldId} {...field} {...shared} />
 }
 
-function renderGroupChildren(group) {
+function renderGroupChildren(group, depth = 0) {
   const shared = { wide: group.wide, fill: !!group.wrap }
   const colSpan = group.wrap ? 'col-span-4' : ''
+  const childDepth = depth + 1
 
   if (group.items) {
     return group.items.map((item) =>
       item.title ? (
         <div key={item.title} className={colSpan}>
-          <FieldGroup title={item.title} wrap={item.wrap} fullWidth collapsible>
-            {renderGroupChildren(item)}
+          <FieldGroup title={item.title} wrap={item.wrap} fullWidth collapsible depth={childDepth}>
+            {renderGroupChildren(item, childDepth)}
           </FieldGroup>
         </div>
       ) : renderField(item, shared)
@@ -829,8 +830,8 @@ function renderGroupChildren(group) {
       {group.fields.map((field) => renderField(field, shared))}
       {group.subgroups?.map((sub) => (
         <div key={sub.title} className={colSpan}>
-          <FieldGroup title={sub.title} wrap={sub.wrap} fullWidth collapsible>
-            {renderGroupChildren(sub)}
+          <FieldGroup title={sub.title} wrap={sub.wrap} fullWidth collapsible depth={childDepth}>
+            {renderGroupChildren(sub, childDepth)}
           </FieldGroup>
         </div>
       ))}
