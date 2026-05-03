@@ -220,6 +220,38 @@ export const fieldGroups = [
       },
     ],
   },
+  {
+    title: 'Sipariş Bilgisi',
+    fullWidth: true,
+    wrap: true,
+    fields: [
+      {
+        fieldId: 'order-id',
+        label: 'Sipariş Numarası',
+        path: ['Invoice', 'cac:OrderReference', 'cbc:ID'],
+        attr: 'value',
+      },
+      {
+        fieldId: 'order-sales-id',
+        label: 'Satıcı Sipariş Numarası',
+        path: ['Invoice', 'cac:OrderReference', 'cbc:SalesOrderID'],
+        attr: 'value',
+      },
+      {
+        fieldId: 'order-issue-date',
+        label: 'Sipariş Tarihi',
+        path: ['Invoice', 'cac:OrderReference', 'cbc:IssueDate'],
+        attr: 'value',
+        type: 'date',
+      },
+      {
+        fieldId: 'order-type-code',
+        label: 'Sipariş Tipi',
+        path: ['Invoice', 'cac:OrderReference', 'cbc:OrderTypeCode'],
+        attr: 'value',
+      },
+    ],
+  },
 ]
 
 export const fieldDefinitions = fieldGroups.flatMap((g) => g.fields)
