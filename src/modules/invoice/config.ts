@@ -532,6 +532,127 @@ export const fieldGroups: FieldGroupConfig[] = [
       },
     ],
   },
+  {
+    title: 'Alıcı',
+    fullWidth: true,
+    wrap: true,
+    fields: [],
+    subgroups: [
+      makePartyGroup(
+        'Taraf',
+        'customer-party',
+        ['Invoice', 'cac:AccountingCustomerParty', 'cac:Party'],
+      ),
+      {
+        title: 'Teslimat İrtibatı',
+        wrap: true,
+        fields: [
+          { fieldId: 'customer-delivery-id',    label: 'Id',               path: ['Invoice', 'cac:AccountingCustomerParty', 'cac:DeliveryContact', 'cbc:ID'],             attr: 'value' },
+          { fieldId: 'customer-delivery-name',  label: 'İsim',             path: ['Invoice', 'cac:AccountingCustomerParty', 'cac:DeliveryContact', 'cbc:Name'],           attr: 'value' },
+          { fieldId: 'customer-delivery-tel',   label: 'Telefon Numarası', path: ['Invoice', 'cac:AccountingCustomerParty', 'cac:DeliveryContact', 'cbc:Telephone'],      attr: 'value' },
+          { fieldId: 'customer-delivery-fax',   label: 'Fax Numarası',     path: ['Invoice', 'cac:AccountingCustomerParty', 'cac:DeliveryContact', 'cbc:Telefax'],        attr: 'value' },
+          { fieldId: 'customer-delivery-email', label: 'E-Posta Adresi',   path: ['Invoice', 'cac:AccountingCustomerParty', 'cac:DeliveryContact', 'cbc:ElectronicMail'], attr: 'value' },
+          { fieldId: 'customer-delivery-note',  label: 'Not',              path: ['Invoice', 'cac:AccountingCustomerParty', 'cac:DeliveryContact', 'cbc:Note'],           attr: 'value' },
+        ],
+        subgroups: [
+          {
+            title: 'Diğer Bilgiler',
+            wrap: true,
+            fields: [
+              { fieldId: 'customer-delivery-other-ch-code', label: 'İletişim Numarası Kodu', path: ['Invoice', 'cac:AccountingCustomerParty', 'cac:DeliveryContact', 'cac:OtherCommunication', 'cbc:ChannelCode'], attr: 'value' },
+              { fieldId: 'customer-delivery-other-ch',      label: 'İletişim Kanal Adı',     path: ['Invoice', 'cac:AccountingCustomerParty', 'cac:DeliveryContact', 'cac:OtherCommunication', 'cbc:Channel'],     attr: 'value' },
+              { fieldId: 'customer-delivery-other-value',   label: 'Değer',                  path: ['Invoice', 'cac:AccountingCustomerParty', 'cac:DeliveryContact', 'cac:OtherCommunication', 'cbc:Value'],       attr: 'value' },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    title: 'Mal/Hizmet Alıcı',
+    fullWidth: true,
+    wrap: true,
+    fields: [],
+    subgroups: [
+      makePartyGroup(
+        'Taraf',
+        'buyer-party',
+        ['Invoice', 'cac:BuyerCustomerParty', 'cac:Party'],
+      ),
+      {
+        title: 'Teslimat İrtibatı',
+        wrap: true,
+        fields: [
+          { fieldId: 'buyer-delivery-id',    label: 'Id',               path: ['Invoice', 'cac:BuyerCustomerParty', 'cac:DeliveryContact', 'cbc:ID'],             attr: 'value' },
+          { fieldId: 'buyer-delivery-name',  label: 'İsim',             path: ['Invoice', 'cac:BuyerCustomerParty', 'cac:DeliveryContact', 'cbc:Name'],           attr: 'value' },
+          { fieldId: 'buyer-delivery-tel',   label: 'Telefon Numarası', path: ['Invoice', 'cac:BuyerCustomerParty', 'cac:DeliveryContact', 'cbc:Telephone'],      attr: 'value' },
+          { fieldId: 'buyer-delivery-fax',   label: 'Fax Numarası',     path: ['Invoice', 'cac:BuyerCustomerParty', 'cac:DeliveryContact', 'cbc:Telefax'],        attr: 'value' },
+          { fieldId: 'buyer-delivery-email', label: 'E-Posta Adresi',   path: ['Invoice', 'cac:BuyerCustomerParty', 'cac:DeliveryContact', 'cbc:ElectronicMail'], attr: 'value' },
+          { fieldId: 'buyer-delivery-note',  label: 'Not',              path: ['Invoice', 'cac:BuyerCustomerParty', 'cac:DeliveryContact', 'cbc:Note'],           attr: 'value' },
+        ],
+        subgroups: [
+          {
+            title: 'Diğer Bilgiler',
+            wrap: true,
+            fields: [
+              { fieldId: 'buyer-delivery-other-ch-code', label: 'İletişim Numarası Kodu', path: ['Invoice', 'cac:BuyerCustomerParty', 'cac:DeliveryContact', 'cac:OtherCommunication', 'cbc:ChannelCode'], attr: 'value' },
+              { fieldId: 'buyer-delivery-other-ch',      label: 'İletişim Kanal Adı',     path: ['Invoice', 'cac:BuyerCustomerParty', 'cac:DeliveryContact', 'cac:OtherCommunication', 'cbc:Channel'],     attr: 'value' },
+              { fieldId: 'buyer-delivery-other-value',   label: 'Değer',                  path: ['Invoice', 'cac:BuyerCustomerParty', 'cac:DeliveryContact', 'cac:OtherCommunication', 'cbc:Value'],       attr: 'value' },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    title: 'Mal/Hizmet Sağlayan',
+    fullWidth: true,
+    wrap: true,
+    fields: [],
+    subgroups: [
+      makePartyGroup(
+        'Taraf',
+        'seller-party',
+        ['Invoice', 'cac:SellerSupplierParty', 'cac:Party'],
+      ),
+      {
+        title: 'Sevkiyat İrtibatı',
+        wrap: true,
+        fields: [
+          { fieldId: 'seller-despatch-id',    label: 'Id',               path: ['Invoice', 'cac:SellerSupplierParty', 'cac:DespatchContact', 'cbc:ID'],             attr: 'value' },
+          { fieldId: 'seller-despatch-name',  label: 'İsim',             path: ['Invoice', 'cac:SellerSupplierParty', 'cac:DespatchContact', 'cbc:Name'],           attr: 'value' },
+          { fieldId: 'seller-despatch-tel',   label: 'Telefon Numarası', path: ['Invoice', 'cac:SellerSupplierParty', 'cac:DespatchContact', 'cbc:Telephone'],      attr: 'value' },
+          { fieldId: 'seller-despatch-fax',   label: 'Fax Numarası',     path: ['Invoice', 'cac:SellerSupplierParty', 'cac:DespatchContact', 'cbc:Telefax'],        attr: 'value' },
+          { fieldId: 'seller-despatch-email', label: 'E-Posta Adresi',   path: ['Invoice', 'cac:SellerSupplierParty', 'cac:DespatchContact', 'cbc:ElectronicMail'], attr: 'value' },
+          { fieldId: 'seller-despatch-note',  label: 'Not',              path: ['Invoice', 'cac:SellerSupplierParty', 'cac:DespatchContact', 'cbc:Note'],           attr: 'value' },
+        ],
+        subgroups: [
+          {
+            title: 'Diğer Bilgiler',
+            wrap: true,
+            fields: [
+              { fieldId: 'seller-despatch-other-ch-code', label: 'İletişim Numarası Kodu', path: ['Invoice', 'cac:SellerSupplierParty', 'cac:DespatchContact', 'cac:OtherCommunication', 'cbc:ChannelCode'], attr: 'value' },
+              { fieldId: 'seller-despatch-other-ch',      label: 'İletişim Kanal Adı',     path: ['Invoice', 'cac:SellerSupplierParty', 'cac:DespatchContact', 'cac:OtherCommunication', 'cbc:Channel'],     attr: 'value' },
+              { fieldId: 'seller-despatch-other-value',   label: 'Değer',                  path: ['Invoice', 'cac:SellerSupplierParty', 'cac:DespatchContact', 'cac:OtherCommunication', 'cbc:Value'],       attr: 'value' },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    title: 'Vergi Temsilcisi',
+    fullWidth: true,
+    wrap: true,
+    fields: [],
+    subgroups: [
+      makePartyGroup(
+        'Taraf',
+        'tax-rep-party',
+        ['Invoice', 'cac:TaxRepresentativeParty'],
+      ),
+    ],
+  },
 ]
 
 function collectFields(groups: FieldGroupConfig[]): FieldDefinition[] {
