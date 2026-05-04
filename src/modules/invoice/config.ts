@@ -180,6 +180,19 @@ function makeDocumentReferenceGroup(title: string, prefix: string, pathBase: str
   }
 }
 
+function makeExchangeRateGroup(title: string, prefix: string, pathBase: string[]): FieldGroupConfig {
+  return {
+    title,
+    wrap: true,
+    fields: [
+      { fieldId: `${prefix}-source`, label: 'Kaynak Para Birimi Kodu', path: [...pathBase, 'cbc:SourceCurrencyCode'], attr: 'value', type: 'select', options: CURRENCY_OPTIONS },
+      { fieldId: `${prefix}-target`, label: 'Hedef Para Birimi Kodu',  path: [...pathBase, 'cbc:TargetCurrencyCode'], attr: 'value', type: 'select', options: CURRENCY_OPTIONS },
+      { fieldId: `${prefix}-rate`,   label: 'Döviz Kuru',              path: [...pathBase, 'cbc:CalculationRate'],    attr: 'value', type: 'number' },
+      { fieldId: `${prefix}-date`,   label: 'Kur Tarihi',              path: [...pathBase, 'cbc:Date'],               attr: 'value', type: 'date' },
+    ],
+  }
+}
+
 function makeAllowanceChargeGroup(prefix: string, pathBase: string[]): FieldGroupConfig {
   return {
     title: 'Iskonto-Artırım',
@@ -904,6 +917,10 @@ export const fieldGroups: FieldGroupConfig[] = [
       makeAllowanceChargeGroup('invoice-allowance', ['Invoice', 'cac:AllowanceCharge']),
     ],
   },
+  { ...makeExchangeRateGroup('Vergi Döviz Kuru',            'tax-exchange',         ['Invoice', 'cac:TaxExchangeRate']),                fullWidth: true },
+  { ...makeExchangeRateGroup('Fiyatlandırma Döviz Kuru',    'pricing-exchange',     ['Invoice', 'cac:PricingExchangeRate']),            fullWidth: true },
+  { ...makeExchangeRateGroup('Ödeme Döviz Kuru',            'payment-exchange',     ['Invoice', 'cac:PaymentExchangeRate']),            fullWidth: true },
+  { ...makeExchangeRateGroup('Alternatif Ödeme Döviz Kuru', 'alt-payment-exchange', ['Invoice', 'cac:PaymentAlternativeExchangeRate']), fullWidth: true },
 ]
 
 function collectFields(groups: FieldGroupConfig[]): FieldDefinition[] {

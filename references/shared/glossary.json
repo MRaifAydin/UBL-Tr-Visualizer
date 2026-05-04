@@ -123,5 +123,9 @@
   "cac:PaymentTerms": "Ödeme Koşulları",
   "cac:SettlementPeriod": "Ödeme Dönemi",
   "cac:Shipment": "Yük/Kargo Bilgileri",
-  "cac:ReturnAddress": "İade Adresi"
+  "cac:ReturnAddress": "İade Adresi",
+  "cbc:SourceCurrencyCode": "Kaynak Para Birimi Kodu",
+  "cbc:TargetCurrencyCode": "Hedef Para Birimi Kodu",
+  "cbc:CalculationRate": "Döviz Kuru",
+  "cbc:Date": "Tarih"
 }
