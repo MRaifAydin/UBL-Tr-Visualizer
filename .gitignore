@@ -134,3 +134,9 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# Referans dökümanlar (XSD/PDF). glossary.json commit edilir.
+references/*/xsd/
+references/*/pdf/
+references/.DS_Store
+references/invoice/.DS_Store

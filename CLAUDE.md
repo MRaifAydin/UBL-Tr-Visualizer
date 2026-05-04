@@ -60,3 +60,17 @@ src/
 - Yeni belge tipi eklerken `src/modules/` altında klasör oluştur ve `modules/index.ts`'e kaydet
 - Yeni component/dosya oluştururken `.tsx` (JSX içerenler) veya `.ts` (saf TS) kullan — `.jsx`/`.js` kullanma
 - Kod değişikliklerinden sonra `npx tsc --noEmit` ile tip kontrolünü doğrula
+
+## Referans dökümanlar ve `/alan-ekle` skill'i
+
+XSD ve PDF kılavuzları `references/` klasörü altında modül-bazlı tutulur:
+
+```
+references/
+  shared/glossary.json            — modüller arası ortak terim sözlüğü (commit edilir)
+  <modül>/xsd/                    — XSD dosyaları (gitignore'lu)
+  <modül>/pdf/                    — kılavuz PDF'leri (gitignore'lu)
+  <modül>/glossary.json           — modüle özgü terim sözlüğü (commit edilir)
+```
+
+Yeni alan eklemek için `/alan-ekle` skill'i kullanılır. Skill XSD'yi parse eder, mevcut factory'leri (makeAddressGroup, makePartyGroup, makeDocumentReferenceGroup, makeAllowanceChargeGroup) tanır, glossary'yi günceller, önce öneri sunar, onay sonrası `config.ts`'i değiştirir. Klasör yoksa skill ilk kullanımda kullanıcıyı yönlendirerek oluşturur.
