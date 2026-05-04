@@ -36,6 +36,7 @@ export interface FieldDefinition {
   options?: SelectOption[]
   attrKey?: string
   disabled?: boolean
+  _order?: number
 }
 
 export type GroupItem = FieldDefinition | FieldGroupConfig
@@ -50,6 +51,9 @@ export interface FieldGroupConfig {
   wrap?: boolean
   defaultOpen?: boolean
   newRow?: boolean
+  repeatable?: boolean
+  instanceMarker?: string
+  addLabel?: string
 }
 
 export interface ModuleConfig {
@@ -71,6 +75,7 @@ export interface DocumentContextValue {
     keepEmpty?: boolean,
   ) => void
   removeField: (fieldId: string, path: string[]) => void
+  removeSubtree: (path: string[]) => void
   activeFieldId: string | null
   setActiveFieldId: (id: string | null) => void
   config: ModuleConfig

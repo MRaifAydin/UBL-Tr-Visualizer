@@ -894,10 +894,21 @@ export const fieldGroups: FieldGroupConfig[] = [
       },
     ],
   },
+  {
+    title: 'Iskonto/Artırım',
+    fullWidth: true,
+    repeatable: true,
+    instanceMarker: 'cac:AllowanceCharge',
+    addLabel: 'Yeni İskonto/Artırım Ekle',
+    items: [
+      makeAllowanceChargeGroup('invoice-allowance', ['Invoice', 'cac:AllowanceCharge']),
+    ],
+  },
 ]
 
 function collectFields(groups: FieldGroupConfig[]): FieldDefinition[] {
   return groups.flatMap((g) => {
+    if (g.repeatable) return []
     if (g.items) {
       const fields = g.items.filter(isFieldDefinition)
       const subs = g.items.filter((i): i is FieldGroupConfig => !isFieldDefinition(i))

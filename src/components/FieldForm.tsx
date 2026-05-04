@@ -8,6 +8,7 @@ import {
 import { useDocument } from '../context/DocumentContext'
 import { findNodeById } from '../core/treeManager'
 import FieldGroup from './FieldGroup'
+import RepeatableFieldGroup from './RepeatableFieldGroup'
 import type {
   FieldAttr,
   FieldDefinition,
@@ -33,7 +34,7 @@ interface SharedFieldProps {
 
 interface FieldProps extends FieldDefinition, SharedFieldProps {}
 
-function FieldInput({ fieldId, label, path, attr, wide, fill, disabled }: FieldProps) {
+function FieldInput({ fieldId, label, path, attr, wide, fill, disabled, _order }: FieldProps) {
   const { tree, activeFieldId, setActiveFieldId, updateField } = useDocument()
   const currentValue = findNodeById(tree, fieldId)?.value ?? ''
   const isActive = activeFieldId === fieldId && !disabled
@@ -54,7 +55,7 @@ function FieldInput({ fieldId, label, path, attr, wide, fill, disabled }: FieldP
           value={currentValue}
           disabled={disabled}
           onFocus={() => !disabled && setActiveFieldId(fieldId)}
-          onChange={(e) => !disabled && updateField(fieldId, path, e.target.value, attr)}
+          onChange={(e) => !disabled && updateField(fieldId, path, e.target.value, attr, _order)}
           className={`${w} rounded border px-2 py-1 text-xs outline-none transition-all ${
             !disabled && currentValue ? 'pr-5' : ''
           } ${
@@ -70,7 +71,7 @@ function FieldInput({ fieldId, label, path, attr, wide, fill, disabled }: FieldP
             role="button"
             onMouseDown={(e) => {
               e.preventDefault()
-              updateField(fieldId, path, '', attr)
+              updateField(fieldId, path, '', attr, _order)
             }}
             className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 text-xs cursor-pointer"
           >
@@ -82,7 +83,7 @@ function FieldInput({ fieldId, label, path, attr, wide, fill, disabled }: FieldP
   )
 }
 
-function SearchableSelect({ fieldId, label, path, attr, options, wide, fill }: FieldProps) {
+function SearchableSelect({ fieldId, label, path, attr, options, wide, fill, _order }: FieldProps) {
   const { tree, activeFieldId, setActiveFieldId, updateField } = useDocument()
   const currentValue = findNodeById(tree, fieldId)?.value ?? ''
   const isActive = activeFieldId === fieldId
@@ -113,7 +114,7 @@ function SearchableSelect({ fieldId, label, path, attr, options, wide, fill }: F
   }, [open])
 
   function handleSelect(option: SelectOption) {
-    updateField(fieldId, path, option.value, attr)
+    updateField(fieldId, path, option.value, attr, _order)
     setOpen(false)
     setQuery('')
   }
@@ -161,7 +162,7 @@ function SearchableSelect({ fieldId, label, path, attr, options, wide, fill }: F
               role="button"
               onMouseDown={(e) => {
                 e.stopPropagation()
-                updateField(fieldId, path, '', attr)
+                updateField(fieldId, path, '', attr, _order)
               }}
               className="w-3 h-3 shrink-0 flex items-center justify-center text-gray-400 hover:text-gray-700"
             >
@@ -205,7 +206,7 @@ function SearchableSelect({ fieldId, label, path, attr, options, wide, fill }: F
 
 type CalendarView = 'calendar' | 'months' | 'years'
 
-function DatePicker({ fieldId, label, path, attr, wide, fill }: FieldProps) {
+function DatePicker({ fieldId, label, path, attr, wide, fill, _order }: FieldProps) {
   const { tree, activeFieldId, setActiveFieldId, updateField } = useDocument()
   const currentValue = findNodeById(tree, fieldId)?.value ?? ''
   const isActive = activeFieldId === fieldId
@@ -250,7 +251,7 @@ function DatePicker({ fieldId, label, path, attr, wide, fill }: FieldProps) {
     } else {
       const now = new Date()
       const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
-      updateField(fieldId, path, todayStr, attr)
+      updateField(fieldId, path, todayStr, attr, _order)
       setViewYear(now.getFullYear())
       setViewMonth(now.getMonth())
     }
@@ -261,7 +262,7 @@ function DatePicker({ fieldId, label, path, attr, wide, fill }: FieldProps) {
   function handleSelectDay(day: number) {
     const mm = String(viewMonth + 1).padStart(2, '0')
     const dd = String(day).padStart(2, '0')
-    updateField(fieldId, path, `${viewYear}-${mm}-${dd}`, attr)
+    updateField(fieldId, path, `${viewYear}-${mm}-${dd}`, attr, _order)
     setOpen(false)
     setView('calendar')
   }
@@ -316,7 +317,7 @@ function DatePicker({ fieldId, label, path, attr, wide, fill }: FieldProps) {
             role="button"
             onMouseDown={(e) => {
               e.stopPropagation()
-              updateField(fieldId, path, '', attr)
+              updateField(fieldId, path, '', attr, _order)
             }}
             className="w-3 h-3 shrink-0 flex items-center justify-center text-gray-400 hover:text-gray-700"
           >
@@ -439,7 +440,7 @@ function DatePicker({ fieldId, label, path, attr, wide, fill }: FieldProps) {
   )
 }
 
-function NumberInput({ fieldId, label, path, attr, wide, fill }: FieldProps) {
+function NumberInput({ fieldId, label, path, attr, wide, fill, _order }: FieldProps) {
   const { tree, activeFieldId, setActiveFieldId, updateField } = useDocument()
   const currentValue = findNodeById(tree, fieldId)?.value ?? ''
   const isActive = activeFieldId === fieldId
@@ -462,7 +463,7 @@ function NumberInput({ fieldId, label, path, attr, wide, fill }: FieldProps) {
           onFocus={() => setActiveFieldId(fieldId)}
           onChange={(e) => {
             const raw = e.target.value.replace(/\D/g, '')
-            updateField(fieldId, path, raw, attr)
+            updateField(fieldId, path, raw, attr, _order)
           }}
           className={`${w} rounded border px-2 py-1 text-xs outline-none transition-all ${
             currentValue ? 'pr-5' : ''
@@ -477,7 +478,7 @@ function NumberInput({ fieldId, label, path, attr, wide, fill }: FieldProps) {
             role="button"
             onMouseDown={(e) => {
               e.preventDefault()
-              updateField(fieldId, path, '', attr)
+              updateField(fieldId, path, '', attr, _order)
             }}
             className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 text-xs cursor-pointer"
           >
@@ -571,6 +572,7 @@ function DurationMeasureInput({
   options,
   fill,
   attrKey = 'unitCode',
+  _order,
 }: FieldProps) {
   const { tree, activeFieldId, setActiveFieldId, updateField } = useDocument()
   const node = findNodeById(tree, fieldId)
@@ -592,21 +594,21 @@ function DurationMeasureInput({
     setActiveFieldId(fieldId)
     setLocalUnit(unit)
     if (storedAmount !== '') {
-      updateField(fieldId, path, storedAmount, buildAttr(unit))
+      updateField(fieldId, path, storedAmount, buildAttr(unit), _order)
     }
   }
 
   function handleAmountChange(raw: string) {
     const amount = raw.replace(/\D/g, '')
     if (amount) {
-      updateField(fieldId, path, amount, buildAttr(displayUnit))
+      updateField(fieldId, path, amount, buildAttr(displayUnit), _order)
     } else {
-      updateField(fieldId, path, '', 'value')
+      updateField(fieldId, path, '', 'value', _order)
     }
   }
 
   function handleClear() {
-    updateField(fieldId, path, '', 'value')
+    updateField(fieldId, path, '', 'value', _order)
     setLocalUnit('')
   }
 
@@ -728,7 +730,7 @@ function TimeSpinner({ value, max, onChange, inputRef, nextRef }: TimeSpinnerPro
   )
 }
 
-function TimePicker({ fieldId, label, path, attr, wide, fill }: FieldProps) {
+function TimePicker({ fieldId, label, path, attr, wide, fill, _order }: FieldProps) {
   const { tree, activeFieldId, setActiveFieldId, updateField } = useDocument()
   const currentValue = findNodeById(tree, fieldId)?.value ?? ''
   const isActive = activeFieldId === fieldId
@@ -759,7 +761,7 @@ function TimePicker({ fieldId, label, path, attr, wide, fill }: FieldProps) {
     const hh = String(newH).padStart(2, '0')
     const mm = String(newM).padStart(2, '0')
     const ss = String(newS).padStart(2, '0')
-    updateField(fieldId, path, `${hh}:${mm}:${ss}.0000000+00:00`, attr)
+    updateField(fieldId, path, `${hh}:${mm}:${ss}.0000000+00:00`, attr, _order)
   }
 
   useEffect(() => {
@@ -808,7 +810,7 @@ function TimePicker({ fieldId, label, path, attr, wide, fill }: FieldProps) {
             role="button"
             onMouseDown={(e) => {
               e.stopPropagation()
-              updateField(fieldId, path, '', attr)
+              updateField(fieldId, path, '', attr, _order)
             }}
             className="w-3 h-3 shrink-0 flex items-center justify-center text-gray-400 hover:text-gray-700"
           >
@@ -837,7 +839,7 @@ function TimePicker({ fieldId, label, path, attr, wide, fill }: FieldProps) {
   )
 }
 
-function renderField(field: FieldDefinition, shared: SharedFieldProps) {
+export function renderField(field: FieldDefinition, shared: SharedFieldProps) {
   if (field.type === 'duration-measure')
     return <DurationMeasureInput key={field.fieldId} {...field} {...shared} />
   if (field.type === 'number')
@@ -857,6 +859,13 @@ function renderItem(item: GroupItem, shared: SharedFieldProps, colSpan: string, 
   if (isFieldDefinition(item)) {
     return renderField(item, shared)
   }
+  if (item.repeatable) {
+    return (
+      <div key={item.title} className={colSpan}>
+        <RepeatableFieldGroup group={item} depth={childDepth} />
+      </div>
+    )
+  }
   return (
     <div key={item.title} className={colSpan}>
       <FieldGroup title={item.title} wrap={item.wrap} fullWidth collapsible depth={childDepth}>
@@ -866,7 +875,7 @@ function renderItem(item: GroupItem, shared: SharedFieldProps, colSpan: string, 
   )
 }
 
-function renderGroupChildren(group: FieldGroupConfig, depth = 0) {
+export function renderGroupChildren(group: FieldGroupConfig, depth = 0) {
   const shared: SharedFieldProps = { wide: group.wide, fill: !!group.wrap }
   const colSpan = group.wrap ? 'col-span-4' : ''
   const childDepth = depth + 1
@@ -878,13 +887,22 @@ function renderGroupChildren(group: FieldGroupConfig, depth = 0) {
   return (
     <>
       {(group.fields ?? []).map((field) => renderField(field, shared))}
-      {group.subgroups?.map((sub) => (
-        <div key={sub.title} className={colSpan}>
-          <FieldGroup title={sub.title} wrap={sub.wrap} fullWidth collapsible depth={childDepth}>
-            {renderGroupChildren(sub, childDepth)}
-          </FieldGroup>
-        </div>
-      ))}
+      {group.subgroups?.map((sub) => {
+        if (sub.repeatable) {
+          return (
+            <div key={sub.title} className={colSpan}>
+              <RepeatableFieldGroup group={sub} depth={childDepth} />
+            </div>
+          )
+        }
+        return (
+          <div key={sub.title} className={colSpan}>
+            <FieldGroup title={sub.title} wrap={sub.wrap} fullWidth collapsible depth={childDepth}>
+              {renderGroupChildren(sub, childDepth)}
+            </FieldGroup>
+          </div>
+        )
+      })}
     </>
   )
 }
@@ -897,9 +915,13 @@ export default function FieldForm() {
       {config.fieldGroups.map((group) => (
         <Fragment key={group.title}>
           {group.newRow && <div className="w-full" />}
-          <FieldGroup title={group.title} wrap={group.wrap} fullWidth={group.fullWidth} collapsible defaultOpen={!!group.defaultOpen}>
-            {renderGroupChildren(group)}
-          </FieldGroup>
+          {group.repeatable ? (
+            <RepeatableFieldGroup group={group} depth={0} />
+          ) : (
+            <FieldGroup title={group.title} wrap={group.wrap} fullWidth={group.fullWidth} collapsible defaultOpen={!!group.defaultOpen}>
+              {renderGroupChildren(group)}
+            </FieldGroup>
+          )}
         </Fragment>
       ))}
     </div>

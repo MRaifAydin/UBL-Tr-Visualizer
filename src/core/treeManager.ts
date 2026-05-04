@@ -48,8 +48,10 @@ function _traverse(
 
   const key = isLeaf ? `${segment}__${fieldId}` : segment
 
+  const tag = isLeaf ? segment : segment.split('#')[0]
+
   if (!node.children[key]) {
-    node.children[key] = { tag: segment, children: {}, _order: order }
+    node.children[key] = { tag, children: {}, _order: order }
   } else {
     node.children[key]._order = Math.min(node.children[key]._order ?? Infinity, order)
   }
@@ -88,6 +90,42 @@ function _prune(node: TreeNode, fieldId: string, path: string[], depth: number):
 
   if (childEmpty) {
     if (depth > 0) delete node.children[segment]
+  }
+
+  if (depth === 0) return false
+  return Object.keys(node.children).length === 0
+}
+
+/**
+ * Verilen path'e karşılık gelen ara node'u (ve onun altındaki tüm subtree'yi)
+ * tamamen siler. Repeatable group instance'ları silinirken kullanılır.
+ * Yukarı doğru boş kalan ara node'ları `_prune` ile aynı mantıkta temizler.
+ */
+export function removeSubtree(tree: Tree, path: string[]): Tree {
+  if (path.length === 0) return tree
+  const newTree = structuredClone(tree) as Tree
+  _pruneSubtree(newTree as TreeNode, path, 0)
+  return newTree
+}
+
+function _pruneSubtree(node: TreeNode, path: string[], depth: number): boolean {
+  if (!node.children) return false
+
+  const segment = path[depth]
+
+  if (depth === path.length - 1) {
+    delete node.children[segment]
+    if (depth === 0) return false
+    return Object.keys(node.children).length === 0
+  }
+
+  const child = node.children[segment]
+  if (!child) return false
+
+  const childEmpty = _pruneSubtree(child, path, depth + 1)
+
+  if (childEmpty && depth > 0) {
+    delete node.children[segment]
   }
 
   if (depth === 0) return false

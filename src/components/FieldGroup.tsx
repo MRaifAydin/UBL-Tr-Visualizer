@@ -23,6 +23,7 @@ interface FieldGroupProps {
   collapsible?: boolean
   defaultOpen?: boolean
   depth?: number
+  headerExtra?: ReactNode
 }
 
 export default function FieldGroup({
@@ -33,6 +34,7 @@ export default function FieldGroup({
   collapsible,
   defaultOpen = false,
   depth = 0,
+  headerExtra,
 }: FieldGroupProps) {
   const [open, setOpen] = useState(defaultOpen)
   const isOpen = !collapsible || open
@@ -50,19 +52,24 @@ export default function FieldGroup({
         <p className={`text-[10px] font-semibold uppercase tracking-wider ${style.label}`}>
           {title}
         </p>
-        {collapsible && (
-          <svg
-            className={`w-3 h-3 transition-transform shrink-0 ${style.arrow} ${open ? 'rotate-180' : ''}`}
-            viewBox="0 0 20 20"
-            fill="currentColor"
-          >
-            <path
-              fillRule="evenodd"
-              d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-              clipRule="evenodd"
-            />
-          </svg>
-        )}
+        <div className="flex items-center gap-2">
+          {headerExtra && (
+            <div onClick={(e) => e.stopPropagation()}>{headerExtra}</div>
+          )}
+          {collapsible && (
+            <svg
+              className={`w-3 h-3 transition-transform shrink-0 ${style.arrow} ${open ? 'rotate-180' : ''}`}
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                clipRule="evenodd"
+              />
+            </svg>
+          )}
+        </div>
       </div>
       {isOpen && (
         <div className={wrap ? 'grid grid-cols-4 gap-2.5' : 'flex flex-col gap-2.5'}>

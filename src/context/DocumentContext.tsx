@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react'
-import { findOrCreateNodeById, removeNodeById } from '../core/treeManager'
+import { findOrCreateNodeById, removeNodeById, removeSubtree } from '../core/treeManager'
 import { MODULES } from '../modules'
 import type { DocumentContextValue, FieldAttr, Tree } from '../types'
 
@@ -78,6 +78,19 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
     [docType],
   )
 
+  const removeSubtreeAtPath = useCallback(
+    (path: string[]) => {
+      setStates((prev) => ({
+        ...prev,
+        [docType]: {
+          ...prev[docType],
+          tree: removeSubtree(prev[docType].tree, path),
+        },
+      }))
+    },
+    [docType],
+  )
+
   const { tree, activeFieldId } = states[docType]
 
   const value: DocumentContextValue = {
@@ -86,6 +99,7 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
     tree,
     updateField,
     removeField,
+    removeSubtree: removeSubtreeAtPath,
     activeFieldId,
     setActiveFieldId,
     config: MODULES[docType],
