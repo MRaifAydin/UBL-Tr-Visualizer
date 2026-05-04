@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { useDocument } from '../context/DocumentContext.jsx'
-import { treeToXml } from '../core/xmlSerializer.js'
-import FieldForm from '../components/FieldForm.jsx'
-import XMLNode from '../components/XMLNode.jsx'
+import { useDocument } from '../context/DocumentContext'
+import { treeToXml } from '../core/xmlSerializer'
+import FieldForm from '../components/FieldForm'
+import XMLNode from '../components/XMLNode'
+import type { ModuleConfig, Tree } from '../types'
 
-function downloadXml(tree, config, docType) {
+function downloadXml(tree: Tree, config: ModuleConfig, docType: string) {
   const xml = treeToXml(tree, config.rootTag)
   if (!xml) return
 
@@ -18,7 +19,11 @@ function downloadXml(tree, config, docType) {
   URL.revokeObjectURL(url)
 }
 
-export default function DocumentPageLayout({ title }) {
+interface DocumentPageLayoutProps {
+  title: string
+}
+
+export default function DocumentPageLayout({ title }: DocumentPageLayoutProps) {
   const { docType, tree, config, activeFieldId, setActiveFieldId } = useDocument()
   const [collapseSignal, setCollapseSignal] = useState(0)
 
@@ -29,11 +34,10 @@ export default function DocumentPageLayout({ title }) {
   return (
     <div className="flex flex-1 min-w-0 overflow-hidden">
 
-      {/* Form kolonu */}
       <aside
         className="flex-1 min-w-0 flex flex-col bg-white border-r border-gray-200"
         onMouseDown={(e) => {
-          if (e.target.tagName !== 'INPUT') setActiveFieldId(null)
+          if ((e.target as HTMLElement).tagName !== 'INPUT') setActiveFieldId(null)
         }}
       >
         <div className="px-5 h-[53px] border-b border-gray-200 shrink-0 flex items-center">
@@ -44,7 +48,6 @@ export default function DocumentPageLayout({ title }) {
         </div>
       </aside>
 
-      {/* XML önizleme kolonu */}
       <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
         <header className="bg-white border-b border-gray-200 px-5 h-[53px] shrink-0 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -58,7 +61,11 @@ export default function DocumentPageLayout({ title }) {
             </span>
             {hasContent && (
               <button
-                onClick={() => { setCollapseSignal((n) => n + 1); setActiveFieldId(null); document.activeElement?.blur() }}
+                onClick={() => {
+                  setCollapseSignal((n) => n + 1)
+                  setActiveFieldId(null)
+                  ;(document.activeElement as HTMLElement | null)?.blur()
+                }}
                 title="Alt grupları kapat"
                 className="flex items-center justify-center w-5 h-5 rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
               >

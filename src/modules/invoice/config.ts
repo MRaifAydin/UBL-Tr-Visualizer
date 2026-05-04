@@ -1,3 +1,10 @@
+import type {
+  FieldDefinition,
+  FieldGroupConfig,
+  GroupItem,
+} from '../../types'
+import { isFieldDefinition } from '../../types'
+
 export const rootTag = 'Invoice'
 
 const DURATION_MEASURE_OPTIONS = [
@@ -7,7 +14,7 @@ const DURATION_MEASURE_OPTIONS = [
   { value: 'HUR', label: 'Saat' },
 ]
 
-function makeAddressGroup(prefix, pathBase) {
+function makeAddressGroup(prefix: string, pathBase: string[]): FieldGroupConfig {
   return {
     title: 'Adres',
     wrap: true,
@@ -38,7 +45,7 @@ function makeAddressGroup(prefix, pathBase) {
   }
 }
 
-function makePartyItems(prefix, base) {
+function makePartyItems(prefix: string, base: string[]): GroupItem[] {
   return [
     { fieldId: `${prefix}-website`,       label: 'Web Sitesi',    path: [...base, 'cbc:WebsiteURI'],                 attr: 'value' },
     { fieldId: `${prefix}-endpoint`,      label: 'EndpointID',    path: [...base, 'cbc:EndpointID'],                 attr: 'value', disabled: true },
@@ -103,7 +110,7 @@ function makePartyItems(prefix, base) {
   ]
 }
 
-function makePartyGroup(title, prefix, pathBase) {
+function makePartyGroup(title: string, prefix: string, pathBase: string[]): FieldGroupConfig {
   return {
     title,
     wrap: true,
@@ -114,7 +121,7 @@ function makePartyGroup(title, prefix, pathBase) {
   }
 }
 
-function makeDocumentReferenceGroup(title, prefix, pathBase) {
+function makeDocumentReferenceGroup(title: string, prefix: string, pathBase: string[]): FieldGroupConfig {
   const IP = [...pathBase, 'cac:IssuerParty']
   return {
     title,
@@ -145,7 +152,7 @@ function makeDocumentReferenceGroup(title, prefix, pathBase) {
   }
 }
 
-function makeAllowanceChargeGroup(prefix, pathBase) {
+function makeAllowanceChargeGroup(prefix: string, pathBase: string[]): FieldGroupConfig {
   return {
     title: 'Iskonto-Artırım',
     wrap: true,
@@ -161,7 +168,7 @@ function makeAllowanceChargeGroup(prefix, pathBase) {
   }
 }
 
-export const fieldGroups = [
+export const fieldGroups: FieldGroupConfig[] = [
   {
     title: 'Belge Genel Bilgileri',
     wide: true,
@@ -491,18 +498,18 @@ export const fieldGroups = [
   },
 ]
 
-function collectFields(groups) {
+function collectFields(groups: FieldGroupConfig[]): FieldDefinition[] {
   return groups.flatMap((g) => {
     if (g.items) {
-      const fields = g.items.filter((i) => i.fieldId)
-      const subs   = g.items.filter((i) => i.title)
+      const fields = g.items.filter(isFieldDefinition)
+      const subs = g.items.filter((i): i is FieldGroupConfig => !isFieldDefinition(i))
       return [...fields, ...collectFields(subs)]
     }
     return [
-      ...g.fields,
+      ...(g.fields ?? []),
       ...(g.subgroups ? collectFields(g.subgroups) : []),
     ]
   })
 }
 
-export const fieldDefinitions = collectFields(fieldGroups)
+export const fieldDefinitions: FieldDefinition[] = collectFields(fieldGroups)

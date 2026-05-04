@@ -1,14 +1,27 @@
 import { useState, useEffect, useRef } from 'react'
+import type { TreeNode } from '../types'
 
-function containsFieldId(node, fieldId) {
+function containsFieldId(node: TreeNode, fieldId: string): boolean {
   if (node.fieldId === fieldId) return true
   if (!node.children) return false
   return Object.values(node.children).some((child) => containsFieldId(child, fieldId))
 }
 
-export default function XMLNode({ node, activeFieldId, depth = 0, collapseSignal = 0 }) {
+interface XMLNodeProps {
+  node: TreeNode
+  activeFieldId: string | null
+  depth?: number
+  collapseSignal?: number
+}
+
+export default function XMLNode({
+  node,
+  activeFieldId,
+  depth = 0,
+  collapseSignal = 0,
+}: XMLNodeProps) {
   const [manualOpen, setManualOpen] = useState(true)
-  const headerRef = useRef(null)
+  const headerRef = useRef<HTMLDivElement | null>(null)
 
   const hasChildren = !!node?.children && Object.keys(node.children).length > 0
   const isActive = !!activeFieldId && node?.fieldId === activeFieldId
@@ -21,12 +34,10 @@ export default function XMLNode({ node, activeFieldId, depth = 0, collapseSignal
     if (depth >= 1) setManualOpen(false)
   }, [collapseSignal])
 
-  // When a field is focused, open any collapsed ancestor on the path to it
   useEffect(() => {
     if (isAncestor) setManualOpen(true)
   }, [activeFieldId])
 
-  // Scroll after ancestors have re-rendered open
   useEffect(() => {
     if (!isActive) return
     const id = setTimeout(() => {
@@ -48,7 +59,6 @@ export default function XMLNode({ node, activeFieldId, depth = 0, collapseSignal
                      'border-gray-200'
       }`}
     >
-      {/* Node header */}
       <div
         ref={isActive ? headerRef : null}
         className={`flex items-center gap-1 py-0.5 flex-wrap ${hasChildren ? 'cursor-pointer select-none' : ''}`}
@@ -75,7 +85,6 @@ export default function XMLNode({ node, activeFieldId, depth = 0, collapseSignal
           &gt;
         </span>
 
-        {/* Leaf: value + inline closing tag */}
         {!hasChildren && (
           <>
             {node.value !== undefined && node.value !== '' && (
@@ -89,7 +98,6 @@ export default function XMLNode({ node, activeFieldId, depth = 0, collapseSignal
           </>
         )}
 
-        {/* Collapsed container: inline ellipsis + closing tag */}
         {hasChildren && !isOpen && (
           <span className="font-mono text-sm text-gray-400">
             …&lt;/{node.tag}&gt;
@@ -97,17 +105,15 @@ export default function XMLNode({ node, activeFieldId, depth = 0, collapseSignal
         )}
       </div>
 
-      {/* Recursive children */}
       {hasChildren && isOpen && (
         <>
           <div className="ml-6">
-            {Object.entries(node.children)
+            {Object.entries(node.children!)
               .sort(([, a], [, b]) => (a._order ?? Infinity) - (b._order ?? Infinity))
               .map(([key, child]) => (
                 <XMLNode key={key} node={child} activeFieldId={activeFieldId} depth={depth + 1} collapseSignal={collapseSignal} />
               ))}
           </div>
-          {/* Closing tag after children */}
           <div className="flex items-center gap-1 py-0.5 pl-4">
             <span className={`font-mono text-sm ${isHighlighted ? 'text-blue-600' : 'text-gray-500'}`}>
               &lt;/{node.tag}&gt;

@@ -1,3 +1,5 @@
+import type { Tree, TreeNode, FieldAttr } from '../types'
+
 /**
  * Yaprak node'lar `tag__fieldId` anahtarıyla saklanır; bu sayede aynı tag'e
  * sahip birden fazla sibling (farklı fieldId) çakışmadan yan yana durabilir.
@@ -8,13 +10,28 @@
  * XMLNode bu değere göre kardeş node'ları sıralar → XML çıktısı her zaman
  * fieldDefinitions sıralamasına uyar, kullanıcının giriş sırası fark etmez.
  */
-export function findOrCreateNodeById(tree, fieldId, path, value, attr, order = 0) {
-  const newTree = structuredClone(tree)
-  _traverse(newTree, fieldId, path, value, attr, order, 0)
+export function findOrCreateNodeById(
+  tree: Tree,
+  fieldId: string,
+  path: string[],
+  value: string,
+  attr: FieldAttr | undefined,
+  order = 0,
+): Tree {
+  const newTree = structuredClone(tree) as Tree
+  _traverse(newTree as TreeNode, fieldId, path, value, attr, order, 0)
   return newTree
 }
 
-function _traverse(node, fieldId, path, value, attr, order, depth) {
+function _traverse(
+  node: TreeNode,
+  fieldId: string,
+  path: string[],
+  value: string,
+  attr: FieldAttr | undefined,
+  order: number,
+  depth: number,
+): TreeNode {
   if (depth === path.length) {
     node.fieldId = fieldId
     node.value = value
@@ -34,7 +51,6 @@ function _traverse(node, fieldId, path, value, attr, order, depth) {
   if (!node.children[key]) {
     node.children[key] = { tag: segment, children: {}, _order: order }
   } else {
-    // Ara node: en erken geçen field'ın sırası geçerli
     node.children[key]._order = Math.min(node.children[key]._order ?? Infinity, order)
   }
 
@@ -46,13 +62,13 @@ function _traverse(node, fieldId, path, value, attr, order, depth) {
  * Yaprak node'u siler ve yukarı doğru boş kalan ara node'ları temizler.
  * Root tag node'u (tree.children'ın doğrudan çocukları) hiçbir zaman silinmez.
  */
-export function removeNodeById(tree, fieldId, path) {
-  const newTree = structuredClone(tree)
-  _prune(newTree, fieldId, path, 0)
+export function removeNodeById(tree: Tree, fieldId: string, path: string[]): Tree {
+  const newTree = structuredClone(tree) as Tree
+  _prune(newTree as TreeNode, fieldId, path, 0)
   return newTree
 }
 
-function _prune(node, fieldId, path, depth) {
+function _prune(node: TreeNode, fieldId: string, path: string[], depth: number): boolean {
   if (!node.children) return false
 
   const segment = path[depth]
@@ -81,11 +97,11 @@ function _prune(node, fieldId, path, depth) {
 /**
  * Tree içinde fieldId'ye göre node'u döndürür (read-only arama).
  */
-export function findNodeById(tree, fieldId) {
-  return _find(tree, fieldId)
+export function findNodeById(tree: Tree, fieldId: string): TreeNode | null {
+  return _find(tree as TreeNode, fieldId)
 }
 
-function _find(node, fieldId) {
+function _find(node: TreeNode, fieldId: string): TreeNode | null {
   if (node.fieldId === fieldId) return node
   if (!node.children) return null
 

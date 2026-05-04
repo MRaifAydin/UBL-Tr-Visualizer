@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 
 const DEPTH_STYLES = [
   { container: 'bg-white border border-gray-200',          label: 'text-gray-400',    arrow: 'text-gray-400' },
@@ -15,7 +15,25 @@ const DEPTH_STYLES = [
   { container: 'bg-teal-50/50 border border-gray-200',     label: 'text-teal-600',    arrow: 'text-teal-500' },
 ]
 
-export default function FieldGroup({ title, children, wrap, fullWidth, collapsible, defaultOpen = false, depth = 0 }) {
+interface FieldGroupProps {
+  title: string
+  children: ReactNode
+  wrap?: boolean
+  fullWidth?: boolean
+  collapsible?: boolean
+  defaultOpen?: boolean
+  depth?: number
+}
+
+export default function FieldGroup({
+  title,
+  children,
+  wrap,
+  fullWidth,
+  collapsible,
+  defaultOpen = false,
+  depth = 0,
+}: FieldGroupProps) {
   const [open, setOpen] = useState(defaultOpen)
   const isOpen = !collapsible || open
   const style = DEPTH_STYLES[Math.min(depth, DEPTH_STYLES.length - 1)]

@@ -1,7 +1,21 @@
-import { useEffect, useRef, useState } from 'react'
-import { useDocument } from '../context/DocumentContext.jsx'
-import { findNodeById } from '../core/treeManager.js'
-import FieldGroup from './FieldGroup.jsx'
+import {
+  Fragment,
+  useEffect,
+  useRef,
+  useState,
+  type RefObject,
+} from 'react'
+import { useDocument } from '../context/DocumentContext'
+import { findNodeById } from '../core/treeManager'
+import FieldGroup from './FieldGroup'
+import type {
+  FieldAttr,
+  FieldDefinition,
+  FieldGroupConfig,
+  GroupItem,
+  SelectOption,
+} from '../types'
+import { isFieldDefinition } from '../types'
 
 const MONTHS_TR = [
   'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
@@ -12,7 +26,14 @@ const MIN_YEAR = 1980
 const MAX_YEAR = new Date().getFullYear() + 10
 const YEARS = Array.from({ length: MAX_YEAR - MIN_YEAR + 1 }, (_, i) => MIN_YEAR + i)
 
-function FieldInput({ fieldId, label, path, attr, wide, fill, disabled }) {
+interface SharedFieldProps {
+  wide?: boolean
+  fill?: boolean
+}
+
+interface FieldProps extends FieldDefinition, SharedFieldProps {}
+
+function FieldInput({ fieldId, label, path, attr, wide, fill, disabled }: FieldProps) {
   const { tree, activeFieldId, setActiveFieldId, updateField } = useDocument()
   const currentValue = findNodeById(tree, fieldId)?.value ?? ''
   const isActive = activeFieldId === fieldId && !disabled
@@ -61,27 +82,28 @@ function FieldInput({ fieldId, label, path, attr, wide, fill, disabled }) {
   )
 }
 
-function SearchableSelect({ fieldId, label, path, attr, options, wide, fill }) {
+function SearchableSelect({ fieldId, label, path, attr, options, wide, fill }: FieldProps) {
   const { tree, activeFieldId, setActiveFieldId, updateField } = useDocument()
   const currentValue = findNodeById(tree, fieldId)?.value ?? ''
   const isActive = activeFieldId === fieldId
 
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
-  const containerRef = useRef(null)
+  const containerRef = useRef<HTMLDivElement | null>(null)
 
   const w = fill ? 'w-full' : wide ? 'w-48' : 'w-36'
-  const selectedLabel = options.find((o) => o.value === currentValue)?.label ?? currentValue
+  const opts: SelectOption[] = options ?? []
+  const selectedLabel = opts.find((o) => o.value === currentValue)?.label ?? currentValue
 
-  const filtered = options.filter(
+  const filtered = opts.filter(
     (o) =>
       o.label.toLowerCase().includes(query.toLowerCase()) ||
       o.value.toLowerCase().includes(query.toLowerCase()),
   )
 
   useEffect(() => {
-    function handleClickOutside(e) {
-      if (containerRef.current && !containerRef.current.contains(e.target)) {
+    function handleClickOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setOpen(false)
         setQuery('')
       }
@@ -90,7 +112,7 @@ function SearchableSelect({ fieldId, label, path, attr, options, wide, fill }) {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [open])
 
-  function handleSelect(option) {
+  function handleSelect(option: SelectOption) {
     updateField(fieldId, path, option.value, attr)
     setOpen(false)
     setQuery('')
@@ -181,27 +203,30 @@ function SearchableSelect({ fieldId, label, path, attr, options, wide, fill }) {
   )
 }
 
-function DatePicker({ fieldId, label, path, attr, wide, fill }) {
+type CalendarView = 'calendar' | 'months' | 'years'
+
+function DatePicker({ fieldId, label, path, attr, wide, fill }: FieldProps) {
   const { tree, activeFieldId, setActiveFieldId, updateField } = useDocument()
-  const currentValue = findNodeById(tree, fieldId)?.value ?? '' // yyyy-MM-dd
+  const currentValue = findNodeById(tree, fieldId)?.value ?? ''
   const isActive = activeFieldId === fieldId
 
   const [open, setOpen] = useState(false)
-  const [view, setView] = useState('calendar') // 'calendar' | 'months' | 'years'
-  const [viewYear, setViewYear] = useState(() => new Date().getFullYear())
-  const [viewMonth, setViewMonth] = useState(() => new Date().getMonth())
-  const containerRef = useRef(null)
-  const yearListRef = useRef(null)
+  const [view, setView] = useState<CalendarView>('calendar')
+  const [viewYear, setViewYear] = useState<number>(() => new Date().getFullYear())
+  const [viewMonth, setViewMonth] = useState<number>(() => new Date().getMonth())
+  const containerRef = useRef<HTMLDivElement | null>(null)
+  const yearListRef = useRef<HTMLDivElement | null>(null)
 
   const w = fill ? 'w-full' : wide ? 'w-48' : 'w-36'
   const displayValue = currentValue ? currentValue.split('-').reverse().join('.') : ''
-  const [selYear, selMonth, selDay] = currentValue
-    ? currentValue.split('-').map(Number)
-    : [null, null, null]
+  const parsed = currentValue ? currentValue.split('-').map(Number) : [0, 0, 0]
+  const selYear = currentValue ? parsed[0] : null
+  const selMonth = currentValue ? parsed[1] : null
+  const selDay = currentValue ? parsed[2] : null
 
   useEffect(() => {
-    function handleClickOutside(e) {
-      if (containerRef.current && !containerRef.current.contains(e.target)) {
+    function handleClickOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setOpen(false)
         setView('calendar')
       }
@@ -210,17 +235,16 @@ function DatePicker({ fieldId, label, path, attr, wide, fill }) {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [open])
 
-  // Seçili yılı yıl listesinin ortasına kaydır
   useEffect(() => {
     if (view === 'years' && yearListRef.current) {
-      const el = yearListRef.current.querySelector('[data-selected="true"]')
-      if (el) el.scrollIntoView({ block: 'center', behavior: 'instant' })
+      const el = yearListRef.current.querySelector<HTMLElement>('[data-selected="true"]')
+      if (el) el.scrollIntoView({ block: 'center', behavior: 'instant' as ScrollBehavior })
     }
   }, [view])
 
   function handleOpen() {
     setActiveFieldId(fieldId)
-    if (currentValue) {
+    if (currentValue && selYear !== null && selMonth !== null) {
       setViewYear(selYear)
       setViewMonth(selMonth - 1)
     } else {
@@ -234,7 +258,7 @@ function DatePicker({ fieldId, label, path, attr, wide, fill }) {
     setOpen(true)
   }
 
-  function handleSelectDay(day) {
+  function handleSelectDay(day: number) {
     const mm = String(viewMonth + 1).padStart(2, '0')
     const dd = String(day).padStart(2, '0')
     updateField(fieldId, path, `${viewYear}-${mm}-${dd}`, attr)
@@ -258,7 +282,7 @@ function DatePicker({ fieldId, label, path, attr, wide, fill }) {
   const startOffset = (new Date(viewYear, viewMonth, 1).getDay() + 6) % 7
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate()
   const today = new Date()
-  const cells = [
+  const cells: (number | null)[] = [
     ...Array(startOffset).fill(null),
     ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
   ]
@@ -308,7 +332,6 @@ function DatePicker({ fieldId, label, path, attr, wide, fill }) {
       {open && (
         <div className="absolute z-10 mt-1 bg-white border border-gray-200 rounded shadow-md p-2 w-52 text-xs select-none">
 
-          {/* Başlık — tüm view'larda aynı */}
           <div className="flex items-center justify-between mb-2 px-0.5">
             <div className="flex gap-0.5">
               <button type="button" onClick={prevYear} className={navBtn}>«</button>
@@ -336,7 +359,6 @@ function DatePicker({ fieldId, label, path, attr, wide, fill }) {
             </div>
           </div>
 
-          {/* Ay seçimi */}
           {view === 'months' && (
             <div className="grid grid-cols-3 gap-1">
               {MONTHS_TR.map((m, i) => (
@@ -356,7 +378,6 @@ function DatePicker({ fieldId, label, path, attr, wide, fill }) {
             </div>
           )}
 
-          {/* Yıl listesi */}
           {view === 'years' && (
             <div ref={yearListRef} className="max-h-40 overflow-y-auto">
               {YEARS.map((y) => (
@@ -377,7 +398,6 @@ function DatePicker({ fieldId, label, path, attr, wide, fill }) {
             </div>
           )}
 
-          {/* Takvim */}
           {view === 'calendar' && (
             <>
               <div className="grid grid-cols-7 text-center text-[10px] text-gray-400 mb-1">
@@ -387,6 +407,7 @@ function DatePicker({ fieldId, label, path, attr, wide, fill }) {
                 {cells.map((day, i) => {
                   if (!day) return <div key={i} />
                   const isSelected =
+                    selDay !== null && selMonth !== null && selYear !== null &&
                     day === selDay && viewMonth + 1 === selMonth && viewYear === selYear
                   const isToday =
                     day === today.getDate() &&
@@ -418,7 +439,7 @@ function DatePicker({ fieldId, label, path, attr, wide, fill }) {
   )
 }
 
-function NumberInput({ fieldId, label, path, attr, wide, fill }) {
+function NumberInput({ fieldId, label, path, attr, wide, fill }: FieldProps) {
   const { tree, activeFieldId, setActiveFieldId, updateField } = useDocument()
   const currentValue = findNodeById(tree, fieldId)?.value ?? ''
   const isActive = activeFieldId === fieldId
@@ -468,9 +489,14 @@ function NumberInput({ fieldId, label, path, attr, wide, fill }) {
   )
 }
 
-function NotesList({ fieldId, label, path, attr }) {
+interface NoteEntry {
+  id: string
+  order: number
+}
+
+function NotesList({ fieldId, label, path, attr }: FieldProps) {
   const { tree, updateField, removeField, setActiveFieldId, config } = useDocument()
-  const [notes, setNotes] = useState([])
+  const [notes, setNotes] = useState<NoteEntry[]>([])
   const counter = useRef(0)
 
   const anchorOrder = config.fieldDefinitions.findIndex((f) => f.fieldId === fieldId)
@@ -483,12 +509,12 @@ function NotesList({ fieldId, label, path, attr }) {
     updateField(id, path, '', attr, order, true)
   }
 
-  function removeNote(id) {
+  function removeNote(id: string) {
     setNotes((prev) => prev.filter((n) => n.id !== id))
     removeField(id, path)
   }
 
-  function changeNote(id, order, value) {
+  function changeNote(id: string, order: number, value: string) {
     updateField(id, path, value, attr, order, true)
   }
 
@@ -538,30 +564,42 @@ function NotesList({ fieldId, label, path, attr }) {
   )
 }
 
-function DurationMeasureInput({ fieldId, label, path, options, fill, attrKey = 'unitCode' }) {
+function DurationMeasureInput({
+  fieldId,
+  label,
+  path,
+  options,
+  fill,
+  attrKey = 'unitCode',
+}: FieldProps) {
   const { tree, activeFieldId, setActiveFieldId, updateField } = useDocument()
   const node = findNodeById(tree, fieldId)
   const storedAmount = node?.value ?? ''
   const storedUnit = node?.attr?.[attrKey] ?? ''
   const [localUnit, setLocalUnit] = useState('')
   const isActive = activeFieldId === fieldId
+  const opts: SelectOption[] = options ?? []
 
   const displayUnit = storedUnit || localUnit
   const displayAmount = storedAmount
   const hasValue = displayAmount !== '' || displayUnit !== ''
 
-  function handleUnitChange(unit) {
+  function buildAttr(unit: string): FieldAttr {
+    return unit ? { [attrKey]: unit } : 'value'
+  }
+
+  function handleUnitChange(unit: string) {
     setActiveFieldId(fieldId)
     setLocalUnit(unit)
     if (storedAmount !== '') {
-      updateField(fieldId, path, storedAmount, unit ? { [attrKey]: unit } : 'value')
+      updateField(fieldId, path, storedAmount, buildAttr(unit))
     }
   }
 
-  function handleAmountChange(raw) {
+  function handleAmountChange(raw: string) {
     const amount = raw.replace(/\D/g, '')
     if (amount) {
-      updateField(fieldId, path, amount, displayUnit ? { [attrKey]: displayUnit } : 'value')
+      updateField(fieldId, path, amount, buildAttr(displayUnit))
     } else {
       updateField(fieldId, path, '', 'value')
     }
@@ -595,7 +633,7 @@ function DurationMeasureInput({ fieldId, label, path, options, fill, attrKey = '
           }`}
         >
           <option value="">—</option>
-          {options.map((o) => (
+          {opts.map((o) => (
             <option key={o.value} value={o.value}>{o.label}</option>
           ))}
         </select>
@@ -625,14 +663,22 @@ function DurationMeasureInput({ fieldId, label, path, options, fill, attrKey = '
   )
 }
 
-function TimeSpinner({ value, max, onChange, inputRef, nextRef }) {
+interface TimeSpinnerProps {
+  value: number
+  max: number
+  onChange: (value: number) => void
+  inputRef: RefObject<HTMLInputElement | null>
+  nextRef?: RefObject<HTMLInputElement | null>
+}
+
+function TimeSpinner({ value, max, onChange, inputRef, nextRef }: TimeSpinnerProps) {
   const [text, setText] = useState(String(value).padStart(2, '0'))
 
   useEffect(() => {
     setText(String(value).padStart(2, '0'))
   }, [value])
 
-  function commit(raw) {
+  function commit(raw: string) {
     const n = Math.min(max, Math.max(0, parseInt(raw, 10) || 0))
     onChange(n)
     setText(String(n).padStart(2, '0'))
@@ -682,23 +728,22 @@ function TimeSpinner({ value, max, onChange, inputRef, nextRef }) {
   )
 }
 
-function TimePicker({ fieldId, label, path, attr, wide, fill }) {
+function TimePicker({ fieldId, label, path, attr, wide, fill }: FieldProps) {
   const { tree, activeFieldId, setActiveFieldId, updateField } = useDocument()
   const currentValue = findNodeById(tree, fieldId)?.value ?? ''
   const isActive = activeFieldId === fieldId
 
   const [open, setOpen] = useState(false)
-  const containerRef = useRef(null)
-  const hourRef = useRef(null)
-  const minRef = useRef(null)
-  const secRef = useRef(null)
+  const containerRef = useRef<HTMLDivElement | null>(null)
+  const hourRef = useRef<HTMLInputElement | null>(null)
+  const minRef = useRef<HTMLInputElement | null>(null)
+  const secRef = useRef<HTMLInputElement | null>(null)
 
   const w = fill ? 'w-full' : wide ? 'w-48' : 'w-36'
 
-  // XML değeri: "HH:MM:SS.0000000+00:00" — display: "HH:MM:SS"
   const displayValue = currentValue ? currentValue.split('.')[0] : ''
 
-  function parseTime(val) {
+  function parseTime(val: string): [number, number, number] {
     if (!val) return [0, 0, 0]
     const parts = val.split('.')[0].split(':')
     return [
@@ -710,7 +755,7 @@ function TimePicker({ fieldId, label, path, attr, wide, fill }) {
 
   const [h, m, s] = parseTime(currentValue)
 
-  function saveTime(newH, newM, newS) {
+  function saveTime(newH: number, newM: number, newS: number) {
     const hh = String(newH).padStart(2, '0')
     const mm = String(newM).padStart(2, '0')
     const ss = String(newS).padStart(2, '0')
@@ -718,8 +763,8 @@ function TimePicker({ fieldId, label, path, attr, wide, fill }) {
   }
 
   useEffect(() => {
-    function handleClickOutside(e) {
-      if (containerRef.current && !containerRef.current.contains(e.target)) {
+    function handleClickOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setOpen(false)
       }
     }
@@ -792,7 +837,7 @@ function TimePicker({ fieldId, label, path, attr, wide, fill }) {
   )
 }
 
-function renderField(field, shared) {
+function renderField(field: FieldDefinition, shared: SharedFieldProps) {
   if (field.type === 'duration-measure')
     return <DurationMeasureInput key={field.fieldId} {...field} {...shared} />
   if (field.type === 'number')
@@ -808,26 +853,31 @@ function renderField(field, shared) {
   return <FieldInput key={field.fieldId} {...field} {...shared} />
 }
 
-function renderGroupChildren(group, depth = 0) {
-  const shared = { wide: group.wide, fill: !!group.wrap }
+function renderItem(item: GroupItem, shared: SharedFieldProps, colSpan: string, childDepth: number) {
+  if (isFieldDefinition(item)) {
+    return renderField(item, shared)
+  }
+  return (
+    <div key={item.title} className={colSpan}>
+      <FieldGroup title={item.title} wrap={item.wrap} fullWidth collapsible depth={childDepth}>
+        {renderGroupChildren(item, childDepth)}
+      </FieldGroup>
+    </div>
+  )
+}
+
+function renderGroupChildren(group: FieldGroupConfig, depth = 0) {
+  const shared: SharedFieldProps = { wide: group.wide, fill: !!group.wrap }
   const colSpan = group.wrap ? 'col-span-4' : ''
   const childDepth = depth + 1
 
   if (group.items) {
-    return group.items.map((item) =>
-      item.title ? (
-        <div key={item.title} className={colSpan}>
-          <FieldGroup title={item.title} wrap={item.wrap} fullWidth collapsible depth={childDepth}>
-            {renderGroupChildren(item, childDepth)}
-          </FieldGroup>
-        </div>
-      ) : renderField(item, shared)
-    )
+    return group.items.map((item) => renderItem(item, shared, colSpan, childDepth))
   }
 
   return (
     <>
-      {group.fields.map((field) => renderField(field, shared))}
+      {(group.fields ?? []).map((field) => renderField(field, shared))}
       {group.subgroups?.map((sub) => (
         <div key={sub.title} className={colSpan}>
           <FieldGroup title={sub.title} wrap={sub.wrap} fullWidth collapsible depth={childDepth}>
@@ -845,12 +895,12 @@ export default function FieldForm() {
   return (
     <div className="flex flex-wrap gap-3 content-start items-start">
       {config.fieldGroups.map((group) => (
-        <>
-          {group.newRow && <div key={`${group.title}-break`} className="w-full" />}
-          <FieldGroup key={group.title} title={group.title} wrap={group.wrap} fullWidth={group.fullWidth} collapsible defaultOpen={!!group.defaultOpen}>
+        <Fragment key={group.title}>
+          {group.newRow && <div className="w-full" />}
+          <FieldGroup title={group.title} wrap={group.wrap} fullWidth={group.fullWidth} collapsible defaultOpen={!!group.defaultOpen}>
             {renderGroupChildren(group)}
           </FieldGroup>
-        </>
+        </Fragment>
       ))}
     </div>
   )

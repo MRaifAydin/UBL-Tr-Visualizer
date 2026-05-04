@@ -1,8 +1,13 @@
-import { useState, useEffect, useRef } from 'react'
-import { useDocument } from './context/DocumentContext.jsx'
-import InvoicePage from './pages/InvoicePage.jsx'
+import { useState, useEffect, useRef, type ReactNode } from 'react'
+import { useDocument } from './context/DocumentContext'
+import InvoicePage from './pages/InvoicePage'
 
-const SIDEBAR_ITEMS = {
+interface SidebarItem {
+  label: string
+  icon: ReactNode
+}
+
+const SIDEBAR_ITEMS: Record<string, SidebarItem> = {
   invoice: {
     label: 'Fatura',
     icon: (
@@ -14,19 +19,19 @@ const SIDEBAR_ITEMS = {
   },
 }
 
-const PAGES = {
+const PAGES: Record<string, ReactNode> = {
   invoice: <InvoicePage />,
 }
 
 export default function App() {
   const { docType, setDocType } = useDocument()
   const [infoOpen, setInfoOpen] = useState(false)
-  const modalRef = useRef(null)
+  const modalRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     if (!infoOpen) return
-    function handle(e) {
-      if (modalRef.current && !modalRef.current.contains(e.target)) setInfoOpen(false)
+    function handle(e: MouseEvent) {
+      if (modalRef.current && !modalRef.current.contains(e.target as Node)) setInfoOpen(false)
     }
     document.addEventListener('mousedown', handle)
     return () => document.removeEventListener('mousedown', handle)
