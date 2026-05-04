@@ -14,6 +14,34 @@ const DURATION_MEASURE_OPTIONS = [
   { value: 'HUR', label: 'Saat' },
 ]
 
+const CURRENCY_OPTIONS = [
+  { value: 'TRY', label: 'Türk Lirası' },
+  { value: 'USD', label: 'Dolar' },
+  { value: 'EUR', label: 'Euro' },
+]
+
+const WEIGHT_UNIT_OPTIONS = [
+  { value: 'KGM', label: 'Kilogram' },
+  { value: 'GRM', label: 'Gram' },
+]
+
+const QUANTITY_UNIT_OPTIONS = [
+  { value: 'NIU', label: 'Adet' },
+  { value: 'KGM', label: 'Kilogram' },
+  { value: 'C62', label: 'Birim' },
+]
+
+const PAYMENT_MEANS_CODE_OPTIONS = [
+  { value: '1',   label: 'Akreditif' },
+  { value: '10',  label: 'Nakit' },
+  { value: '20',  label: 'Çek' },
+  { value: '30',  label: 'Banka Havalesi' },
+  { value: '42',  label: 'Hesaba Havale' },
+  { value: '48',  label: 'Kredi Kartı' },
+  { value: '49',  label: 'Banka Kartı' },
+  { value: 'ZZZ', label: 'Diğer' },
+]
+
 function makeAddressGroup(prefix: string, pathBase: string[]): FieldGroupConfig {
   return {
     title: 'Adres',
@@ -651,6 +679,219 @@ export const fieldGroups: FieldGroupConfig[] = [
         'tax-rep-party',
         ['Invoice', 'cac:TaxRepresentativeParty'],
       ),
+    ],
+  },
+  {
+    title: 'Gönderim, Taşıma, Sevkiyat Bilgileri',
+    fullWidth: true,
+    wrap: true,
+    fields: [
+      { fieldId: 'delivery-id',           label: 'Sıra Numarası',         path: ['Invoice', 'cac:Delivery', 'cbc:ID'],                  attr: 'value' },
+      { fieldId: 'delivery-quantity',     label: 'Miktar',                path: ['Invoice', 'cac:Delivery', 'cbc:Quantity'],            attr: 'value', type: 'duration-measure', attrKey: 'unitCode', options: QUANTITY_UNIT_OPTIONS },
+      { fieldId: 'delivery-actual-date',  label: 'Fiili Teslim Tarihi',   path: ['Invoice', 'cac:Delivery', 'cbc:ActualDeliveryDate'],  attr: 'value', type: 'date' },
+      { fieldId: 'delivery-actual-time',  label: 'Fiili Teslim Saati',    path: ['Invoice', 'cac:Delivery', 'cbc:ActualDeliveryTime'],  attr: 'value', type: 'time' },
+      { fieldId: 'delivery-latest-date',  label: 'Son Teslim Tarihi',     path: ['Invoice', 'cac:Delivery', 'cbc:LatestDeliveryDate'],  attr: 'value', type: 'date' },
+      { fieldId: 'delivery-latest-time',  label: 'Son Teslim Saati',      path: ['Invoice', 'cac:Delivery', 'cbc:LatestDeliveryTime'],  attr: 'value', type: 'time' },
+      { fieldId: 'delivery-tracking-id',  label: 'Takip Numarası',        path: ['Invoice', 'cac:Delivery', 'cbc:TrackingID'],          attr: 'value' },
+    ],
+    subgroups: [
+      makeAddressGroup('delivery-addr', ['Invoice', 'cac:Delivery', 'cac:DeliveryAddress']),
+      {
+        title: 'Alternatif Teslim Yeri',
+        wrap: true,
+        fields: [
+          { fieldId: 'delivery-alt-loc-id', label: 'ID', path: ['Invoice', 'cac:Delivery', 'cac:AlternativeDeliveryLocation', 'cbc:ID'], attr: 'value' },
+        ],
+        subgroups: [
+          makeAddressGroup('delivery-alt-loc-addr', ['Invoice', 'cac:Delivery', 'cac:AlternativeDeliveryLocation', 'cac:Address']),
+        ],
+      },
+      {
+        title: 'Tahmini Teslim Dönemi',
+        wrap: true,
+        fields: [
+          { fieldId: 'delivery-est-period-start-date',  label: 'Başlangıç Tarihi', path: ['Invoice', 'cac:Delivery', 'cac:EstimatedDeliveryPeriod', 'cbc:StartDate'],       attr: 'value', type: 'date' },
+          { fieldId: 'delivery-est-period-start-time',  label: 'Başlangıç Saati',  path: ['Invoice', 'cac:Delivery', 'cac:EstimatedDeliveryPeriod', 'cbc:StartTime'],       attr: 'value', type: 'time' },
+          { fieldId: 'delivery-est-period-end-date',    label: 'Bitiş Tarihi',     path: ['Invoice', 'cac:Delivery', 'cac:EstimatedDeliveryPeriod', 'cbc:EndDate'],         attr: 'value', type: 'date' },
+          { fieldId: 'delivery-est-period-end-time',    label: 'Bitiş Saati',      path: ['Invoice', 'cac:Delivery', 'cac:EstimatedDeliveryPeriod', 'cbc:EndTime'],         attr: 'value', type: 'time' },
+          { fieldId: 'delivery-est-period-duration',    label: 'Dönem Süresi',     path: ['Invoice', 'cac:Delivery', 'cac:EstimatedDeliveryPeriod', 'cbc:DurationMeasure'], attr: 'value', type: 'duration-measure', options: DURATION_MEASURE_OPTIONS },
+          { fieldId: 'delivery-est-period-description', label: 'Açıklama',         path: ['Invoice', 'cac:Delivery', 'cac:EstimatedDeliveryPeriod', 'cbc:Description'],     attr: 'value' },
+        ],
+      },
+      makePartyGroup('Taşıyıcı Taraf', 'delivery-carrier', ['Invoice', 'cac:Delivery', 'cac:CarrierParty']),
+      makePartyGroup('Teslimat Yapılacak Taraf', 'delivery-party', ['Invoice', 'cac:Delivery', 'cac:DeliveryParty']),
+      {
+        title: 'Gönderi Bilgisi',
+        wrap: true,
+        fields: [
+          { fieldId: 'delivery-despatch-id',           label: 'Sıra Numarası',     path: ['Invoice', 'cac:Delivery', 'cac:Despatch', 'cbc:ID'],                  attr: 'value' },
+          { fieldId: 'delivery-despatch-actual-date', label: 'Fiili Sevk Tarihi', path: ['Invoice', 'cac:Delivery', 'cac:Despatch', 'cbc:ActualDespatchDate'], attr: 'value', type: 'date' },
+          { fieldId: 'delivery-despatch-actual-time', label: 'Fiili Sevk Saati',  path: ['Invoice', 'cac:Delivery', 'cac:Despatch', 'cbc:ActualDespatchTime'], attr: 'value', type: 'time' },
+          { fieldId: 'delivery-despatch-instructions', label: 'Açıklama',         path: ['Invoice', 'cac:Delivery', 'cac:Despatch', 'cbc:Instructions'],        attr: 'value' },
+        ],
+        subgroups: [
+          makeAddressGroup('delivery-despatch-addr', ['Invoice', 'cac:Delivery', 'cac:Despatch', 'cac:DespatchAddress']),
+          makePartyGroup('Gönderim Yapan Taraf', 'delivery-despatch-party', ['Invoice', 'cac:Delivery', 'cac:Despatch', 'cac:DespatchParty']),
+          {
+            title: 'İletişim',
+            wrap: true,
+            fields: [
+              { fieldId: 'delivery-despatch-contact-id',    label: 'Id',               path: ['Invoice', 'cac:Delivery', 'cac:Despatch', 'cac:Contact', 'cbc:ID'],             attr: 'value' },
+              { fieldId: 'delivery-despatch-contact-name',  label: 'İsim',             path: ['Invoice', 'cac:Delivery', 'cac:Despatch', 'cac:Contact', 'cbc:Name'],           attr: 'value' },
+              { fieldId: 'delivery-despatch-contact-tel',   label: 'Telefon Numarası', path: ['Invoice', 'cac:Delivery', 'cac:Despatch', 'cac:Contact', 'cbc:Telephone'],      attr: 'value' },
+              { fieldId: 'delivery-despatch-contact-fax',   label: 'Fax Numarası',     path: ['Invoice', 'cac:Delivery', 'cac:Despatch', 'cac:Contact', 'cbc:Telefax'],        attr: 'value' },
+              { fieldId: 'delivery-despatch-contact-email', label: 'E-Posta Adresi',   path: ['Invoice', 'cac:Delivery', 'cac:Despatch', 'cac:Contact', 'cbc:ElectronicMail'], attr: 'value' },
+              { fieldId: 'delivery-despatch-contact-note',  label: 'Not',              path: ['Invoice', 'cac:Delivery', 'cac:Despatch', 'cac:Contact', 'cbc:Note'],           attr: 'value' },
+            ],
+            subgroups: [
+              {
+                title: 'Diğer Bilgiler',
+                wrap: true,
+                fields: [
+                  { fieldId: 'delivery-despatch-contact-other-ch-code', label: 'İletişim Numarası Kodu', path: ['Invoice', 'cac:Delivery', 'cac:Despatch', 'cac:Contact', 'cac:OtherCommunication', 'cbc:ChannelCode'], attr: 'value' },
+                  { fieldId: 'delivery-despatch-contact-other-ch',      label: 'İletişim Kanal Adı',     path: ['Invoice', 'cac:Delivery', 'cac:Despatch', 'cac:Contact', 'cac:OtherCommunication', 'cbc:Channel'],     attr: 'value' },
+                  { fieldId: 'delivery-despatch-contact-other-value',   label: 'Değer',                  path: ['Invoice', 'cac:Delivery', 'cac:Despatch', 'cac:Contact', 'cac:OtherCommunication', 'cbc:Value'],       attr: 'value' },
+                ],
+              },
+            ],
+          },
+          {
+            title: 'Tahmini Gönderim Dönemi',
+            wrap: true,
+            fields: [
+              { fieldId: 'delivery-despatch-est-period-start-date',  label: 'Başlangıç Tarihi', path: ['Invoice', 'cac:Delivery', 'cac:Despatch', 'cac:EstimatedDespatchPeriod', 'cbc:StartDate'],       attr: 'value', type: 'date' },
+              { fieldId: 'delivery-despatch-est-period-start-time',  label: 'Başlangıç Saati',  path: ['Invoice', 'cac:Delivery', 'cac:Despatch', 'cac:EstimatedDespatchPeriod', 'cbc:StartTime'],       attr: 'value', type: 'time' },
+              { fieldId: 'delivery-despatch-est-period-end-date',    label: 'Bitiş Tarihi',     path: ['Invoice', 'cac:Delivery', 'cac:Despatch', 'cac:EstimatedDespatchPeriod', 'cbc:EndDate'],         attr: 'value', type: 'date' },
+              { fieldId: 'delivery-despatch-est-period-end-time',    label: 'Bitiş Saati',      path: ['Invoice', 'cac:Delivery', 'cac:Despatch', 'cac:EstimatedDespatchPeriod', 'cbc:EndTime'],         attr: 'value', type: 'time' },
+              { fieldId: 'delivery-despatch-est-period-duration',    label: 'Dönem Süresi',     path: ['Invoice', 'cac:Delivery', 'cac:Despatch', 'cac:EstimatedDespatchPeriod', 'cbc:DurationMeasure'], attr: 'value', type: 'duration-measure', options: DURATION_MEASURE_OPTIONS },
+              { fieldId: 'delivery-despatch-est-period-description', label: 'Açıklama',         path: ['Invoice', 'cac:Delivery', 'cac:Despatch', 'cac:EstimatedDespatchPeriod', 'cbc:Description'],     attr: 'value' },
+            ],
+          },
+        ],
+      },
+      {
+        title: 'Teslimat Koşulları',
+        wrap: true,
+        fields: [
+          { fieldId: 'delivery-terms-id',      label: 'Sıra Numarası',  path: ['Invoice', 'cac:Delivery', 'cac:DeliveryTerms', 'cbc:ID'],           attr: 'value' },
+          { fieldId: 'delivery-terms-special', label: 'Özel Koşullar',  path: ['Invoice', 'cac:Delivery', 'cac:DeliveryTerms', 'cbc:SpecialTerms'], attr: 'value' },
+          { fieldId: 'delivery-terms-amount',  label: 'Tutar',          path: ['Invoice', 'cac:Delivery', 'cac:DeliveryTerms', 'cbc:Amount'],       attr: 'value', type: 'duration-measure', attrKey: 'currencyID', options: CURRENCY_OPTIONS },
+        ],
+      },
+      {
+        title: 'Yük/Kargo Bilgileri',
+        wrap: true,
+        fields: [
+          { fieldId: 'delivery-shipment-id',                label: 'Sıra Numarası',                 path: ['Invoice', 'cac:Delivery', 'cac:Shipment', 'cbc:ID'],                                 attr: 'value' },
+          { fieldId: 'delivery-shipment-handling-code',     label: 'İşlem Kodu',                    path: ['Invoice', 'cac:Delivery', 'cac:Shipment', 'cbc:HandlingCode'],                       attr: 'value' },
+          { fieldId: 'delivery-shipment-handling-instr',    label: 'Taşıma Talimatları',            path: ['Invoice', 'cac:Delivery', 'cac:Shipment', 'cbc:HandlingInstructions'],               attr: 'value' },
+          { fieldId: 'delivery-shipment-gross-weight',      label: 'Brüt Ağırlık',                  path: ['Invoice', 'cac:Delivery', 'cac:Shipment', 'cbc:GrossWeightMeasure'],                 attr: 'value', type: 'duration-measure', attrKey: 'unitCode',   options: WEIGHT_UNIT_OPTIONS },
+          { fieldId: 'delivery-shipment-net-weight',        label: 'Net Ağırlık',                   path: ['Invoice', 'cac:Delivery', 'cac:Shipment', 'cbc:NetWeightMeasure'],                   attr: 'value', type: 'duration-measure', attrKey: 'unitCode',   options: WEIGHT_UNIT_OPTIONS },
+          { fieldId: 'delivery-shipment-total-goods-qty',   label: 'Toplam Mal Sayısı',             path: ['Invoice', 'cac:Delivery', 'cac:Shipment', 'cbc:TotalGoodsItemQuantity'],              attr: 'value', type: 'duration-measure', attrKey: 'unitCode',   options: QUANTITY_UNIT_OPTIONS },
+          { fieldId: 'delivery-shipment-total-thu-qty',     label: 'Toplam Taşıma Birimi Sayısı',   path: ['Invoice', 'cac:Delivery', 'cac:Shipment', 'cbc:TotalTransportHandlingUnitQuantity'], attr: 'value', type: 'duration-measure', attrKey: 'unitCode',   options: QUANTITY_UNIT_OPTIONS },
+          { fieldId: 'delivery-shipment-insurance',         label: 'Sigorta Tutarı',                path: ['Invoice', 'cac:Delivery', 'cac:Shipment', 'cbc:InsuranceValueAmount'],               attr: 'value', type: 'duration-measure', attrKey: 'currencyID', options: CURRENCY_OPTIONS },
+          { fieldId: 'delivery-shipment-customs-value',     label: 'Beyan Edilen Gümrük Tutarı',    path: ['Invoice', 'cac:Delivery', 'cac:Shipment', 'cbc:DeclaredCustomsValueAmount'],         attr: 'value', type: 'duration-measure', attrKey: 'currencyID', options: CURRENCY_OPTIONS },
+          { fieldId: 'delivery-shipment-carriage-value',    label: 'Beyan Edilen Taşıma Tutarı',    path: ['Invoice', 'cac:Delivery', 'cac:Shipment', 'cbc:DeclaredForCarriageValueAmount'],     attr: 'value', type: 'duration-measure', attrKey: 'currencyID', options: CURRENCY_OPTIONS },
+          { fieldId: 'delivery-shipment-fob',               label: 'FOB Tutarı',                    path: ['Invoice', 'cac:Delivery', 'cac:Shipment', 'cbc:FreeOnBoardValueAmount'],             attr: 'value', type: 'duration-measure', attrKey: 'currencyID', options: CURRENCY_OPTIONS },
+          { fieldId: 'delivery-shipment-special-instr',     label: 'Özel Talimatlar',               path: ['Invoice', 'cac:Delivery', 'cac:Shipment', 'cbc:SpecialInstructions'],                attr: 'value' },
+        ],
+        subgroups: [
+          makeAddressGroup('delivery-shipment-return-addr', ['Invoice', 'cac:Delivery', 'cac:Shipment', 'cac:ReturnAddress']),
+        ],
+      },
+    ],
+  },
+  {
+    title: 'Ödeme Şekli',
+    fullWidth: true,
+    wrap: true,
+    fields: [
+      { fieldId: 'payment-means-code',         label: 'Ödeme Şekli Kodu',  path: ['Invoice', 'cac:PaymentMeans', 'cbc:PaymentMeansCode'],    attr: 'value', type: 'select', options: PAYMENT_MEANS_CODE_OPTIONS },
+      { fieldId: 'payment-means-due-date',     label: 'Son Ödeme Günü',    path: ['Invoice', 'cac:PaymentMeans', 'cbc:PaymentDueDate'],      attr: 'value', type: 'date' },
+      { fieldId: 'payment-means-channel-code', label: 'Ödeme Kanalı Kodu', path: ['Invoice', 'cac:PaymentMeans', 'cbc:PaymentChannelCode'], attr: 'value' },
+      { fieldId: 'payment-means-instruction',  label: 'Ödeme Açıklaması',  path: ['Invoice', 'cac:PaymentMeans', 'cbc:InstructionNote'],    attr: 'value' },
+    ],
+    subgroups: [
+      {
+        title: 'Ödeme Yapan Taraf Hesabı',
+        wrap: true,
+        fields: [
+          { fieldId: 'payment-means-payer-acc-id',   label: 'Hesap Numarası', path: ['Invoice', 'cac:PaymentMeans', 'cac:PayerFinancialAccount', 'cbc:ID'],           attr: 'value' },
+          { fieldId: 'payment-means-payer-acc-cur',  label: 'Para Birimi',    path: ['Invoice', 'cac:PaymentMeans', 'cac:PayerFinancialAccount', 'cbc:CurrencyCode'], attr: 'value', type: 'select', options: CURRENCY_OPTIONS },
+          { fieldId: 'payment-means-payer-acc-note', label: 'Not',            path: ['Invoice', 'cac:PaymentMeans', 'cac:PayerFinancialAccount', 'cbc:PaymentNote'],  attr: 'value' },
+        ],
+        subgroups: [
+          {
+            title: 'Banka-Şube Bilgileri',
+            wrap: true,
+            fields: [
+              { fieldId: 'payment-means-payer-branch-name', label: 'Adı', path: ['Invoice', 'cac:PaymentMeans', 'cac:PayerFinancialAccount', 'cac:FinancialInstitutionBranch', 'cbc:Name'], attr: 'value' },
+            ],
+            subgroups: [
+              {
+                title: 'Banka Bilgileri',
+                wrap: true,
+                fields: [
+                  { fieldId: 'payment-means-payer-bank-name', label: 'Adı', path: ['Invoice', 'cac:PaymentMeans', 'cac:PayerFinancialAccount', 'cac:FinancialInstitutionBranch', 'cac:FinancialInstitution', 'cbc:Name'], attr: 'value' },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      {
+        title: 'Ödeme Yapılacak Hesap',
+        wrap: true,
+        fields: [
+          { fieldId: 'payment-means-payee-acc-id',   label: 'Hesap Numarası', path: ['Invoice', 'cac:PaymentMeans', 'cac:PayeeFinancialAccount', 'cbc:ID'],           attr: 'value' },
+          { fieldId: 'payment-means-payee-acc-cur',  label: 'Para Birimi',    path: ['Invoice', 'cac:PaymentMeans', 'cac:PayeeFinancialAccount', 'cbc:CurrencyCode'], attr: 'value', type: 'select', options: CURRENCY_OPTIONS },
+          { fieldId: 'payment-means-payee-acc-note', label: 'Not',            path: ['Invoice', 'cac:PaymentMeans', 'cac:PayeeFinancialAccount', 'cbc:PaymentNote'],  attr: 'value' },
+        ],
+        subgroups: [
+          {
+            title: 'Banka-Şube Bilgileri',
+            wrap: true,
+            fields: [
+              { fieldId: 'payment-means-payee-branch-name', label: 'Adı', path: ['Invoice', 'cac:PaymentMeans', 'cac:PayeeFinancialAccount', 'cac:FinancialInstitutionBranch', 'cbc:Name'], attr: 'value' },
+            ],
+            subgroups: [
+              {
+                title: 'Banka Bilgileri',
+                wrap: true,
+                fields: [
+                  { fieldId: 'payment-means-payee-bank-name', label: 'Adı', path: ['Invoice', 'cac:PaymentMeans', 'cac:PayeeFinancialAccount', 'cac:FinancialInstitutionBranch', 'cac:FinancialInstitution', 'cbc:Name'], attr: 'value' },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    title: 'Ödeme Koşulları',
+    fullWidth: true,
+    wrap: true,
+    fields: [
+      { fieldId: 'payment-terms-note',           label: 'Açıklama',              path: ['Invoice', 'cac:PaymentTerms', 'cbc:Note'],                    attr: 'value' },
+      { fieldId: 'payment-terms-penalty-pct',    label: 'Gecikme Cezası Oranı', path: ['Invoice', 'cac:PaymentTerms', 'cbc:PenaltySurchargePercent'], attr: 'value', type: 'number' },
+      { fieldId: 'payment-terms-amount',         label: 'Ödeme Tutarı',         path: ['Invoice', 'cac:PaymentTerms', 'cbc:Amount'],                  attr: 'value', type: 'duration-measure', attrKey: 'currencyID', options: CURRENCY_OPTIONS },
+      { fieldId: 'payment-terms-penalty-amount', label: 'Ceza Tutarı',          path: ['Invoice', 'cac:PaymentTerms', 'cbc:PenaltyAmount'],           attr: 'value', type: 'duration-measure', attrKey: 'currencyID', options: CURRENCY_OPTIONS },
+      { fieldId: 'payment-terms-due-date',       label: 'Son Ödeme Günü',       path: ['Invoice', 'cac:PaymentTerms', 'cbc:PaymentDueDate'],          attr: 'value', type: 'date' },
+    ],
+    subgroups: [
+      {
+        title: 'Ödeme Dönemi',
+        wrap: true,
+        fields: [
+          { fieldId: 'payment-terms-period-start-date',  label: 'Başlangıç Tarihi', path: ['Invoice', 'cac:PaymentTerms', 'cac:SettlementPeriod', 'cbc:StartDate'],       attr: 'value', type: 'date' },
+          { fieldId: 'payment-terms-period-start-time',  label: 'Başlangıç Saati',  path: ['Invoice', 'cac:PaymentTerms', 'cac:SettlementPeriod', 'cbc:StartTime'],       attr: 'value', type: 'time' },
+          { fieldId: 'payment-terms-period-end-date',    label: 'Bitiş Tarihi',     path: ['Invoice', 'cac:PaymentTerms', 'cac:SettlementPeriod', 'cbc:EndDate'],         attr: 'value', type: 'date' },
+          { fieldId: 'payment-terms-period-end-time',    label: 'Bitiş Saati',      path: ['Invoice', 'cac:PaymentTerms', 'cac:SettlementPeriod', 'cbc:EndTime'],         attr: 'value', type: 'time' },
+          { fieldId: 'payment-terms-period-duration',    label: 'Dönem Süresi',     path: ['Invoice', 'cac:PaymentTerms', 'cac:SettlementPeriod', 'cbc:DurationMeasure'], attr: 'value', type: 'duration-measure', options: DURATION_MEASURE_OPTIONS },
+          { fieldId: 'payment-terms-period-description', label: 'Açıklama',         path: ['Invoice', 'cac:PaymentTerms', 'cac:SettlementPeriod', 'cbc:Description'],     attr: 'value' },
+        ],
+      },
     ],
   },
 ]
