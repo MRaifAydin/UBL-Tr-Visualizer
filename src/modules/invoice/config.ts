@@ -999,6 +999,20 @@ export const fieldGroups: FieldGroupConfig[] = [
     ['Invoice', 'cac:WithholdingTaxTotal'],
     'Yeni Tevkifat Ekle',
   ),
+  {
+    title: 'Parasal Toplamlar',
+    fullWidth: true,
+    wrap: true,
+    fields: [
+      { fieldId: 'lmt-line-ext',        label: 'Mal/Hizmet Toplam Tutarı', path: ['Invoice', 'cac:LegalMonetaryTotal', 'cbc:LineExtensionAmount'],   attr: 'value', type: 'duration-measure', attrKey: 'currencyID', options: CURRENCY_OPTIONS },
+      { fieldId: 'lmt-tax-excl',        label: 'Vergiler Hariç Tutar',     path: ['Invoice', 'cac:LegalMonetaryTotal', 'cbc:TaxExclusiveAmount'],    attr: 'value', type: 'duration-measure', attrKey: 'currencyID', options: CURRENCY_OPTIONS },
+      { fieldId: 'lmt-tax-incl',        label: 'Vergiler Dahil Tutar',     path: ['Invoice', 'cac:LegalMonetaryTotal', 'cbc:TaxInclusiveAmount'],    attr: 'value', type: 'duration-measure', attrKey: 'currencyID', options: CURRENCY_OPTIONS },
+      { fieldId: 'lmt-allowance-total', label: 'Toplam Iskonto Tutarı',    path: ['Invoice', 'cac:LegalMonetaryTotal', 'cbc:AllowanceTotalAmount'],  attr: 'value', type: 'duration-measure', attrKey: 'currencyID', options: CURRENCY_OPTIONS },
+      { fieldId: 'lmt-charge-total',    label: 'Toplam Artırım Tutarı',    path: ['Invoice', 'cac:LegalMonetaryTotal', 'cbc:ChargeTotalAmount'],     attr: 'value', type: 'duration-measure', attrKey: 'currencyID', options: CURRENCY_OPTIONS },
+      { fieldId: 'lmt-rounding',        label: 'Yuvarlama Tutarı',         path: ['Invoice', 'cac:LegalMonetaryTotal', 'cbc:PayableRoundingAmount'], attr: 'value', type: 'duration-measure', attrKey: 'currencyID', options: CURRENCY_OPTIONS },
+      { fieldId: 'lmt-payable',         label: 'Ödenecek Tutar',           path: ['Invoice', 'cac:LegalMonetaryTotal', 'cbc:PayableAmount'],         attr: 'value', type: 'duration-measure', attrKey: 'currencyID', options: CURRENCY_OPTIONS },
+    ],
+  },
 ]
 
 function collectFields(groups: FieldGroupConfig[]): FieldDefinition[] {

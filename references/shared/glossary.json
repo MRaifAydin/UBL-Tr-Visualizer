@@ -127,5 +127,13 @@
   "cbc:SourceCurrencyCode": "Kaynak Para Birimi Kodu",
   "cbc:TargetCurrencyCode": "Hedef Para Birimi Kodu",
   "cbc:CalculationRate": "Döviz Kuru",
-  "cbc:Date": "Tarih"
+  "cbc:Date": "Tarih",
+  "cac:LegalMonetaryTotal": "Parasal Toplamlar",
+  "cbc:LineExtensionAmount": "Mal/Hizmet Toplam Tutarı",
+  "cbc:TaxExclusiveAmount": "Vergiler Hariç Tutar",
+  "cbc:TaxInclusiveAmount": "Vergiler Dahil Tutar",
+  "cbc:AllowanceTotalAmount": "Toplam Iskonto Tutarı",
+  "cbc:ChargeTotalAmount": "Toplam Artırım Tutarı",
+  "cbc:PayableRoundingAmount": "Yuvarlama Tutarı",
+  "cbc:PayableAmount": "Ödenecek Tutar"
 }
