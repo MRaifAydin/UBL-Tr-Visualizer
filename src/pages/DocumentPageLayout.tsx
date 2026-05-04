@@ -6,7 +6,7 @@ import XMLNode from '../components/XMLNode'
 import type { ModuleConfig, Tree } from '../types'
 
 function downloadXml(tree: Tree, config: ModuleConfig, docType: string) {
-  const xml = treeToXml(tree, config.rootTag)
+  const xml = treeToXml(tree, config.rootTag, config.rootAttributes, config.rootStaticPrefix)
   if (!xml) return
 
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, '')

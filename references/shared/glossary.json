@@ -1,6 +1,12 @@
 {
   "cbc:ID": "Sıra Numarası",
   "cbc:UUID": "Ettn",
+  "cbc:UBLVersionID": "UBL Versiyonu",
+  "cbc:CustomizationID": "Özelleştirme No",
+  "cbc:CopyIndicator": "Kopya/Asıl",
+  "ext:UBLExtensions": "UBL Eklentileri",
+  "ext:UBLExtension": "UBL Eklentisi",
+  "ext:ExtensionContent": "Eklenti İçeriği",
   "cbc:Name": "Ad",
   "cbc:Description": "Açıklama",
   "cbc:Note": "Not",

@@ -7,6 +7,27 @@ import { isFieldDefinition } from '../../types'
 
 export const rootTag = 'Invoice'
 
+export const rootAttributes: Record<string, string> = {
+  'xmlns':       'urn:oasis:names:specification:ubl:schema:xsd:Invoice-2',
+  'xmlns:cac':   'urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2',
+  'xmlns:cbc':   'urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2',
+  'xmlns:ext':   'urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2',
+  'xmlns:ds':    'http://www.w3.org/2000/09/xmldsig#',
+  'xmlns:xades': 'http://uri.etsi.org/01903/v1.3.2#',
+  'xmlns:xsi':   'http://www.w3.org/2001/XMLSchema-instance',
+  'xmlns:udt':   'urn:un:unece:uncefact:data:specification:UnqualifiedDataTypesSchemaModule:2',
+  'xmlns:ccts':  'urn:un:unece:uncefact:documentation:2',
+  'xmlns:qdt':   'urn:oasis:names:specification:ubl:schema:xsd:QualifiedDatatypes-2',
+  'xmlns:ubltr': 'urn:oasis:names:specification:ubl:schema:xsd:TurkishCustomizationExtensionComponents',
+}
+
+export const rootStaticPrefix =
+  '  <ext:UBLExtensions>\n' +
+  '    <ext:UBLExtension><ext:ExtensionContent /></ext:UBLExtension>\n' +
+  '  </ext:UBLExtensions>\n' +
+  '  <cbc:UBLVersionID>2.1</cbc:UBLVersionID>\n' +
+  '  <cbc:CustomizationID>TR1.2</cbc:CustomizationID>'
+
 const DURATION_MEASURE_OPTIONS = [
   { value: 'ANN', label: 'Yıl' },
   { value: 'MON', label: 'Ay' },
@@ -398,6 +419,20 @@ function makeDeliveryGroup(title: string, prefix: string, pathBase: string[]): F
 
 export const fieldGroups: FieldGroupConfig[] = [
   {
+    title: 'UBL Eklentileri',
+    fullWidth: true,
+    wrap: true,
+    fields: [
+      {
+        fieldId: 'invoice-ubl-extensions-info',
+        label: 'ext:UBLExtensions',
+        path: [],
+        attr: 'value',
+        disabled: true,
+      },
+    ],
+  },
+  {
     title: 'Belge Genel Bilgileri',
     wide: true,
     fullWidth: true,
@@ -433,6 +468,17 @@ export const fieldGroups: FieldGroupConfig[] = [
         label: 'Fatura No',
         path: ['Invoice', 'cbc:ID'],
         attr: 'value',
+      },
+      {
+        fieldId: 'invoice-copy-indicator',
+        label: 'Kopya/Asıl',
+        path: ['Invoice', 'cbc:CopyIndicator'],
+        attr: 'value',
+        type: 'select',
+        options: [
+          { value: 'false', label: 'Asıl' },
+          { value: 'true',  label: 'Kopya' },
+        ],
       },
       {
         fieldId: 'invoice-uuid',

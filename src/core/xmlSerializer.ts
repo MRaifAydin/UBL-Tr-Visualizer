@@ -48,12 +48,28 @@ function serializeNode(node: TreeNode, depth: number): string {
  * Converts a treeManager tree state to a formatted XML string.
  * Internal properties (fieldId, attr, etc.) are never written to output.
  */
-export function treeToXml(tree: Tree, rootTag: string): string {
+export function treeToXml(
+  tree: Tree,
+  rootTag: string,
+  rootAttributes?: Record<string, string>,
+  rootStaticPrefix?: string,
+): string {
   const rootNode = tree.children?.[rootTag]
   if (!rootNode || !hasContent(rootNode)) return ''
 
-  const body = serializeNode(rootNode, 0)
-  if (!body) return ''
+  const rootAttrs = attrsString(rootAttributes)
+  const childNodes = rootNode.children ? Object.values(rootNode.children).filter(hasContent) : []
+  const dynamicBody = childNodes
+    .map((child) => serializeNode(child, 1))
+    .filter(Boolean)
+    .join('\n')
 
+  const innerParts: string[] = []
+  if (rootStaticPrefix) innerParts.push(rootStaticPrefix)
+  if (dynamicBody) innerParts.push(dynamicBody)
+  if (innerParts.length === 0) return ''
+
+  const inner = innerParts.join('\n')
+  const body = `<${rootTag}${rootAttrs}>\n${inner}\n</${rootTag}>`
   return `<?xml version="1.0" encoding="UTF-8"?>\n${body}`
 }

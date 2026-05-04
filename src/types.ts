@@ -58,6 +58,8 @@ export interface FieldGroupConfig {
 
 export interface ModuleConfig {
   rootTag: string
+  rootAttributes?: Record<string, string>
+  rootStaticPrefix?: string
   fieldGroups: FieldGroupConfig[]
   fieldDefinitions: FieldDefinition[]
 }
