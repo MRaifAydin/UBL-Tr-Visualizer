@@ -3,5 +3,18 @@
   "cac:TaxExchangeRate": "Vergi Döviz Kuru",
   "cac:PricingExchangeRate": "Fiyatlandırma Döviz Kuru",
   "cac:PaymentExchangeRate": "Ödeme Döviz Kuru",
-  "cac:PaymentAlternativeExchangeRate": "Alternatif Ödeme Döviz Kuru"
+  "cac:PaymentAlternativeExchangeRate": "Alternatif Ödeme Döviz Kuru",
+  "cac:TaxTotal": "Toplam Vergi",
+  "cac:WithholdingTaxTotal": "Tevkifat Bilgileri",
+  "cac:TaxSubtotal": "Vergi Ara Toplamı",
+  "cac:TaxCategory": "Vergi Türü",
+  "cac:TaxScheme": "Vergi Bilgileri",
+  "cbc:TaxAmount": "Vergi Tutarı",
+  "cbc:TaxableAmount": "Matrah",
+  "cbc:CalculationSequenceNumeric": "Hesaplama Sırası",
+  "cbc:TransactionCurrencyTaxAmount": "İşlem Para Birimi Vergi Tutarı",
+  "cbc:Percent": "Vergi Oranı",
+  "cbc:BaseUnitMeasure": "Birim Ölçü",
+  "cbc:TaxExemptionReasonCode": "Vergi Muafiyet Nedeni Kodu",
+  "cbc:TaxExemptionReason": "Vergi Muafiyet Nedeni"
 }

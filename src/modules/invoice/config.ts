@@ -193,6 +193,70 @@ function makeExchangeRateGroup(title: string, prefix: string, pathBase: string[]
   }
 }
 
+function makeTaxTotalGroup(
+  title: string,
+  prefix: string,
+  instanceMarker: string,
+  basePath: string[],
+  addLabel: string,
+): FieldGroupConfig {
+  return {
+    title,
+    fullWidth: true,
+    repeatable: true,
+    instanceMarker,
+    addLabel,
+    items: [
+      {
+        fieldId: `${prefix}-amount`,
+        label: 'Vergi Tutarı',
+        path: [...basePath, 'cbc:TaxAmount'],
+        attr: 'value',
+        type: 'duration-measure',
+        attrKey: 'currencyID',
+        options: CURRENCY_OPTIONS,
+      },
+      {
+        title: 'Vergi Ara Toplamı',
+        fullWidth: true,
+        wrap: true,
+        repeatable: true,
+        instanceMarker: 'cac:TaxSubtotal',
+        addLabel: 'Yeni Vergi Ara Toplamı Ekle',
+        items: [
+          { fieldId: `${prefix}-sub-taxable`,    label: 'Matrah',                         path: [...basePath, 'cac:TaxSubtotal', 'cbc:TaxableAmount'],                attr: 'value', type: 'duration-measure', attrKey: 'currencyID', options: CURRENCY_OPTIONS },
+          { fieldId: `${prefix}-sub-amount`,     label: 'Vergi Tutarı',                   path: [...basePath, 'cac:TaxSubtotal', 'cbc:TaxAmount'],                    attr: 'value', type: 'duration-measure', attrKey: 'currencyID', options: CURRENCY_OPTIONS },
+          { fieldId: `${prefix}-sub-calc-seq`,   label: 'Hesaplama Sırası',               path: [...basePath, 'cac:TaxSubtotal', 'cbc:CalculationSequenceNumeric'],   attr: 'value', type: 'number' },
+          { fieldId: `${prefix}-sub-trx-amount`, label: 'İşlem Para Birimi Vergi Tutarı', path: [...basePath, 'cac:TaxSubtotal', 'cbc:TransactionCurrencyTaxAmount'], attr: 'value', type: 'duration-measure', attrKey: 'currencyID', options: CURRENCY_OPTIONS },
+          { fieldId: `${prefix}-sub-percent`,    label: 'Vergi Oranı',                    path: [...basePath, 'cac:TaxSubtotal', 'cbc:Percent'],                     attr: 'value', type: 'number' },
+          { fieldId: `${prefix}-sub-base-unit`,  label: 'Birim Ölçü',                     path: [...basePath, 'cac:TaxSubtotal', 'cbc:BaseUnitMeasure'],             attr: 'value', disabled: true },
+          { fieldId: `${prefix}-sub-perunit`,    label: 'Birim Başına Tutar',             path: [...basePath, 'cac:TaxSubtotal', 'cbc:PerUnitAmount'],               attr: 'value', type: 'duration-measure', attrKey: 'currencyID', options: CURRENCY_OPTIONS },
+          {
+            title: 'Vergi Türü',
+            wrap: true,
+            fields: [
+              { fieldId: `${prefix}-cat-name`,          label: 'Adı',                        path: [...basePath, 'cac:TaxSubtotal', 'cac:TaxCategory', 'cbc:Name'],                    attr: 'value' },
+              { fieldId: `${prefix}-cat-exempt-code`,   label: 'Vergi Muafiyet Nedeni Kodu', path: [...basePath, 'cac:TaxSubtotal', 'cac:TaxCategory', 'cbc:TaxExemptionReasonCode'], attr: 'value' },
+              { fieldId: `${prefix}-cat-exempt-reason`, label: 'Vergi Muafiyet Nedeni',      path: [...basePath, 'cac:TaxSubtotal', 'cac:TaxCategory', 'cbc:TaxExemptionReason'],     attr: 'value' },
+            ],
+            subgroups: [
+              {
+                title: 'Vergi Bilgileri',
+                wrap: true,
+                fields: [
+                  { fieldId: `${prefix}-scheme-id`,   label: 'Sıra Numarası',   path: [...basePath, 'cac:TaxSubtotal', 'cac:TaxCategory', 'cac:TaxScheme', 'cbc:ID'],          attr: 'value' },
+                  { fieldId: `${prefix}-scheme-name`, label: 'Vergi Adı',       path: [...basePath, 'cac:TaxSubtotal', 'cac:TaxCategory', 'cac:TaxScheme', 'cbc:Name'],        attr: 'value' },
+                  { fieldId: `${prefix}-scheme-type`, label: 'Vergi Tipi Kodu', path: [...basePath, 'cac:TaxSubtotal', 'cac:TaxCategory', 'cac:TaxScheme', 'cbc:TaxTypeCode'], attr: 'value', disabled: true },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  }
+}
+
 function makeAllowanceChargeGroup(prefix: string, pathBase: string[]): FieldGroupConfig {
   return {
     title: 'Iskonto-Artırım',
@@ -921,6 +985,20 @@ export const fieldGroups: FieldGroupConfig[] = [
   { ...makeExchangeRateGroup('Fiyatlandırma Döviz Kuru',    'pricing-exchange',     ['Invoice', 'cac:PricingExchangeRate']),            fullWidth: true },
   { ...makeExchangeRateGroup('Ödeme Döviz Kuru',            'payment-exchange',     ['Invoice', 'cac:PaymentExchangeRate']),            fullWidth: true },
   { ...makeExchangeRateGroup('Alternatif Ödeme Döviz Kuru', 'alt-payment-exchange', ['Invoice', 'cac:PaymentAlternativeExchangeRate']), fullWidth: true },
+  makeTaxTotalGroup(
+    'Toplam Vergi',
+    'tax',
+    'cac:TaxTotal',
+    ['Invoice', 'cac:TaxTotal'],
+    'Yeni Toplam Vergi Ekle',
+  ),
+  makeTaxTotalGroup(
+    'Tevkifat Bilgileri',
+    'wtax',
+    'cac:WithholdingTaxTotal',
+    ['Invoice', 'cac:WithholdingTaxTotal'],
+    'Yeni Tevkifat Ekle',
+  ),
 ]
 
 function collectFields(groups: FieldGroupConfig[]): FieldDefinition[] {
