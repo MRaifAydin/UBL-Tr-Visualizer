@@ -60,6 +60,8 @@
   "cac:PhysicalLocation": "Depo Bilgisi",
   "cac:PartyTaxScheme": "Vergi Dairesi",
   "cac:TaxScheme": "Vergi Şeması",
+  "cac:AccountingSupplierParty": "Satıcı",
+  "cac:DespatchContact": "Sevkiyat İrtibatı",
   "cac:Contact": "İletişim",
   "cac:OtherCommunication": "Diğer Bilgiler",
   "cac:Person": "Şahıs",

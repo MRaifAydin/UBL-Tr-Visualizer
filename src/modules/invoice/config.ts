@@ -496,6 +496,42 @@ export const fieldGroups: FieldGroupConfig[] = [
       },
     ],
   },
+  {
+    title: 'Satıcı',
+    fullWidth: true,
+    wrap: true,
+    fields: [],
+    subgroups: [
+      makePartyGroup(
+        'Taraf',
+        'supplier-party',
+        ['Invoice', 'cac:AccountingSupplierParty', 'cac:Party'],
+      ),
+      {
+        title: 'Sevkiyat İrtibatı',
+        wrap: true,
+        fields: [
+          { fieldId: 'supplier-despatch-id',    label: 'Id',               path: ['Invoice', 'cac:AccountingSupplierParty', 'cac:DespatchContact', 'cbc:ID'],             attr: 'value' },
+          { fieldId: 'supplier-despatch-name',  label: 'İsim',             path: ['Invoice', 'cac:AccountingSupplierParty', 'cac:DespatchContact', 'cbc:Name'],           attr: 'value' },
+          { fieldId: 'supplier-despatch-tel',   label: 'Telefon Numarası', path: ['Invoice', 'cac:AccountingSupplierParty', 'cac:DespatchContact', 'cbc:Telephone'],      attr: 'value' },
+          { fieldId: 'supplier-despatch-fax',   label: 'Fax Numarası',     path: ['Invoice', 'cac:AccountingSupplierParty', 'cac:DespatchContact', 'cbc:Telefax'],        attr: 'value' },
+          { fieldId: 'supplier-despatch-email', label: 'E-Posta Adresi',   path: ['Invoice', 'cac:AccountingSupplierParty', 'cac:DespatchContact', 'cbc:ElectronicMail'], attr: 'value' },
+          { fieldId: 'supplier-despatch-note',  label: 'Not',              path: ['Invoice', 'cac:AccountingSupplierParty', 'cac:DespatchContact', 'cbc:Note'],           attr: 'value' },
+        ],
+        subgroups: [
+          {
+            title: 'Diğer Bilgiler',
+            wrap: true,
+            fields: [
+              { fieldId: 'supplier-despatch-other-ch-code', label: 'İletişim Numarası Kodu', path: ['Invoice', 'cac:AccountingSupplierParty', 'cac:DespatchContact', 'cac:OtherCommunication', 'cbc:ChannelCode'], attr: 'value' },
+              { fieldId: 'supplier-despatch-other-ch',      label: 'İletişim Kanal Adı',     path: ['Invoice', 'cac:AccountingSupplierParty', 'cac:DespatchContact', 'cac:OtherCommunication', 'cbc:Channel'],     attr: 'value' },
+              { fieldId: 'supplier-despatch-other-value',   label: 'Değer',                  path: ['Invoice', 'cac:AccountingSupplierParty', 'cac:DespatchContact', 'cac:OtherCommunication', 'cbc:Value'],       attr: 'value' },
+            ],
+          },
+        ],
+      },
+    ],
+  },
 ]
 
 function collectFields(groups: FieldGroupConfig[]): FieldDefinition[] {
