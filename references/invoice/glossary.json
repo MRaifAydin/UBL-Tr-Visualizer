@@ -1,4 +1,5 @@
 {
+  "cac:InvoiceLine": "Mal/Hizmet Kalemleri",
   "cac:AllowanceCharge": "Iskonto/Artırım",
   "cac:TaxExchangeRate": "Vergi Döviz Kuru",
   "cac:PricingExchangeRate": "Fiyatlandırma Döviz Kuru",

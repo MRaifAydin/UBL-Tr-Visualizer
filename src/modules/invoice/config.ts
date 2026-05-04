@@ -199,13 +199,11 @@ function makeTaxTotalGroup(
   instanceMarker: string,
   basePath: string[],
   addLabel: string,
+  repeatable: boolean = true,
 ): FieldGroupConfig {
-  return {
+  const base: FieldGroupConfig = {
     title,
     fullWidth: true,
-    repeatable: true,
-    instanceMarker,
-    addLabel,
     items: [
       {
         fieldId: `${prefix}-amount`,
@@ -255,6 +253,9 @@ function makeTaxTotalGroup(
       },
     ],
   }
+  return repeatable
+    ? { ...base, repeatable: true, instanceMarker, addLabel }
+    : base
 }
 
 function makeAllowanceChargeGroup(prefix: string, pathBase: string[]): FieldGroupConfig {
@@ -269,6 +270,128 @@ function makeAllowanceChargeGroup(prefix: string, pathBase: string[]): FieldGrou
       { fieldId: `${prefix}-amount`,           label: 'Tutarı',        path: [...pathBase, 'cbc:Amount'],                  attr: 'value', type: 'number' },
       { fieldId: `${prefix}-base-amount`,      label: 'Matrah',        path: [...pathBase, 'cbc:BaseAmount'],              attr: 'value', type: 'number' },
       { fieldId: `${prefix}-per-unit-amount`,  label: 'Adet',          path: [...pathBase, 'cbc:PerUnitAmount'],           attr: 'value', type: 'number' },
+    ],
+  }
+}
+
+function makeDeliveryGroup(title: string, prefix: string, pathBase: string[]): FieldGroupConfig {
+  return {
+    title,
+    wrap: true,
+    fields: [
+      { fieldId: `${prefix}-id`,           label: 'Sıra Numarası',         path: [...pathBase, 'cbc:ID'],                  attr: 'value' },
+      { fieldId: `${prefix}-quantity`,     label: 'Miktar',                path: [...pathBase, 'cbc:Quantity'],            attr: 'value', type: 'duration-measure', attrKey: 'unitCode', options: QUANTITY_UNIT_OPTIONS },
+      { fieldId: `${prefix}-actual-date`,  label: 'Fiili Teslim Tarihi',   path: [...pathBase, 'cbc:ActualDeliveryDate'],  attr: 'value', type: 'date' },
+      { fieldId: `${prefix}-actual-time`,  label: 'Fiili Teslim Saati',    path: [...pathBase, 'cbc:ActualDeliveryTime'],  attr: 'value', type: 'time' },
+      { fieldId: `${prefix}-latest-date`,  label: 'Son Teslim Tarihi',     path: [...pathBase, 'cbc:LatestDeliveryDate'],  attr: 'value', type: 'date' },
+      { fieldId: `${prefix}-latest-time`,  label: 'Son Teslim Saati',      path: [...pathBase, 'cbc:LatestDeliveryTime'],  attr: 'value', type: 'time' },
+      { fieldId: `${prefix}-tracking-id`,  label: 'Takip Numarası',        path: [...pathBase, 'cbc:TrackingID'],          attr: 'value' },
+    ],
+    subgroups: [
+      makeAddressGroup(`${prefix}-addr`, [...pathBase, 'cac:DeliveryAddress']),
+      {
+        title: 'Alternatif Teslim Yeri',
+        wrap: true,
+        fields: [
+          { fieldId: `${prefix}-alt-loc-id`, label: 'ID', path: [...pathBase, 'cac:AlternativeDeliveryLocation', 'cbc:ID'], attr: 'value' },
+        ],
+        subgroups: [
+          makeAddressGroup(`${prefix}-alt-loc-addr`, [...pathBase, 'cac:AlternativeDeliveryLocation', 'cac:Address']),
+        ],
+      },
+      {
+        title: 'Tahmini Teslim Dönemi',
+        wrap: true,
+        fields: [
+          { fieldId: `${prefix}-est-period-start-date`,  label: 'Başlangıç Tarihi', path: [...pathBase, 'cac:EstimatedDeliveryPeriod', 'cbc:StartDate'],       attr: 'value', type: 'date' },
+          { fieldId: `${prefix}-est-period-start-time`,  label: 'Başlangıç Saati',  path: [...pathBase, 'cac:EstimatedDeliveryPeriod', 'cbc:StartTime'],       attr: 'value', type: 'time' },
+          { fieldId: `${prefix}-est-period-end-date`,    label: 'Bitiş Tarihi',     path: [...pathBase, 'cac:EstimatedDeliveryPeriod', 'cbc:EndDate'],         attr: 'value', type: 'date' },
+          { fieldId: `${prefix}-est-period-end-time`,    label: 'Bitiş Saati',      path: [...pathBase, 'cac:EstimatedDeliveryPeriod', 'cbc:EndTime'],         attr: 'value', type: 'time' },
+          { fieldId: `${prefix}-est-period-duration`,    label: 'Dönem Süresi',     path: [...pathBase, 'cac:EstimatedDeliveryPeriod', 'cbc:DurationMeasure'], attr: 'value', type: 'duration-measure', options: DURATION_MEASURE_OPTIONS },
+          { fieldId: `${prefix}-est-period-description`, label: 'Açıklama',         path: [...pathBase, 'cac:EstimatedDeliveryPeriod', 'cbc:Description'],     attr: 'value' },
+        ],
+      },
+      makePartyGroup('Taşıyıcı Taraf', `${prefix}-carrier`, [...pathBase, 'cac:CarrierParty']),
+      makePartyGroup('Teslimat Yapılacak Taraf', `${prefix}-party`, [...pathBase, 'cac:DeliveryParty']),
+      {
+        title: 'Gönderi Bilgisi',
+        wrap: true,
+        fields: [
+          { fieldId: `${prefix}-despatch-id`,           label: 'Sıra Numarası',     path: [...pathBase, 'cac:Despatch', 'cbc:ID'],                  attr: 'value' },
+          { fieldId: `${prefix}-despatch-actual-date`, label: 'Fiili Sevk Tarihi', path: [...pathBase, 'cac:Despatch', 'cbc:ActualDespatchDate'], attr: 'value', type: 'date' },
+          { fieldId: `${prefix}-despatch-actual-time`, label: 'Fiili Sevk Saati',  path: [...pathBase, 'cac:Despatch', 'cbc:ActualDespatchTime'], attr: 'value', type: 'time' },
+          { fieldId: `${prefix}-despatch-instructions`, label: 'Açıklama',         path: [...pathBase, 'cac:Despatch', 'cbc:Instructions'],        attr: 'value' },
+        ],
+        subgroups: [
+          makeAddressGroup(`${prefix}-despatch-addr`, [...pathBase, 'cac:Despatch', 'cac:DespatchAddress']),
+          makePartyGroup('Gönderim Yapan Taraf', `${prefix}-despatch-party`, [...pathBase, 'cac:Despatch', 'cac:DespatchParty']),
+          {
+            title: 'İletişim',
+            wrap: true,
+            fields: [
+              { fieldId: `${prefix}-despatch-contact-id`,    label: 'Id',               path: [...pathBase, 'cac:Despatch', 'cac:Contact', 'cbc:ID'],             attr: 'value' },
+              { fieldId: `${prefix}-despatch-contact-name`,  label: 'İsim',             path: [...pathBase, 'cac:Despatch', 'cac:Contact', 'cbc:Name'],           attr: 'value' },
+              { fieldId: `${prefix}-despatch-contact-tel`,   label: 'Telefon Numarası', path: [...pathBase, 'cac:Despatch', 'cac:Contact', 'cbc:Telephone'],      attr: 'value' },
+              { fieldId: `${prefix}-despatch-contact-fax`,   label: 'Fax Numarası',     path: [...pathBase, 'cac:Despatch', 'cac:Contact', 'cbc:Telefax'],        attr: 'value' },
+              { fieldId: `${prefix}-despatch-contact-email`, label: 'E-Posta Adresi',   path: [...pathBase, 'cac:Despatch', 'cac:Contact', 'cbc:ElectronicMail'], attr: 'value' },
+              { fieldId: `${prefix}-despatch-contact-note`,  label: 'Not',              path: [...pathBase, 'cac:Despatch', 'cac:Contact', 'cbc:Note'],           attr: 'value' },
+            ],
+            subgroups: [
+              {
+                title: 'Diğer Bilgiler',
+                wrap: true,
+                fields: [
+                  { fieldId: `${prefix}-despatch-contact-other-ch-code`, label: 'İletişim Numarası Kodu', path: [...pathBase, 'cac:Despatch', 'cac:Contact', 'cac:OtherCommunication', 'cbc:ChannelCode'], attr: 'value' },
+                  { fieldId: `${prefix}-despatch-contact-other-ch`,      label: 'İletişim Kanal Adı',     path: [...pathBase, 'cac:Despatch', 'cac:Contact', 'cac:OtherCommunication', 'cbc:Channel'],     attr: 'value' },
+                  { fieldId: `${prefix}-despatch-contact-other-value`,   label: 'Değer',                  path: [...pathBase, 'cac:Despatch', 'cac:Contact', 'cac:OtherCommunication', 'cbc:Value'],       attr: 'value' },
+                ],
+              },
+            ],
+          },
+          {
+            title: 'Tahmini Gönderim Dönemi',
+            wrap: true,
+            fields: [
+              { fieldId: `${prefix}-despatch-est-period-start-date`,  label: 'Başlangıç Tarihi', path: [...pathBase, 'cac:Despatch', 'cac:EstimatedDespatchPeriod', 'cbc:StartDate'],       attr: 'value', type: 'date' },
+              { fieldId: `${prefix}-despatch-est-period-start-time`,  label: 'Başlangıç Saati',  path: [...pathBase, 'cac:Despatch', 'cac:EstimatedDespatchPeriod', 'cbc:StartTime'],       attr: 'value', type: 'time' },
+              { fieldId: `${prefix}-despatch-est-period-end-date`,    label: 'Bitiş Tarihi',     path: [...pathBase, 'cac:Despatch', 'cac:EstimatedDespatchPeriod', 'cbc:EndDate'],         attr: 'value', type: 'date' },
+              { fieldId: `${prefix}-despatch-est-period-end-time`,    label: 'Bitiş Saati',      path: [...pathBase, 'cac:Despatch', 'cac:EstimatedDespatchPeriod', 'cbc:EndTime'],         attr: 'value', type: 'time' },
+              { fieldId: `${prefix}-despatch-est-period-duration`,    label: 'Dönem Süresi',     path: [...pathBase, 'cac:Despatch', 'cac:EstimatedDespatchPeriod', 'cbc:DurationMeasure'], attr: 'value', type: 'duration-measure', options: DURATION_MEASURE_OPTIONS },
+              { fieldId: `${prefix}-despatch-est-period-description`, label: 'Açıklama',         path: [...pathBase, 'cac:Despatch', 'cac:EstimatedDespatchPeriod', 'cbc:Description'],     attr: 'value' },
+            ],
+          },
+        ],
+      },
+      {
+        title: 'Teslimat Koşulları',
+        wrap: true,
+        fields: [
+          { fieldId: `${prefix}-terms-id`,      label: 'Sıra Numarası',  path: [...pathBase, 'cac:DeliveryTerms', 'cbc:ID'],           attr: 'value' },
+          { fieldId: `${prefix}-terms-special`, label: 'Özel Koşullar',  path: [...pathBase, 'cac:DeliveryTerms', 'cbc:SpecialTerms'], attr: 'value' },
+          { fieldId: `${prefix}-terms-amount`,  label: 'Tutar',          path: [...pathBase, 'cac:DeliveryTerms', 'cbc:Amount'],       attr: 'value', type: 'duration-measure', attrKey: 'currencyID', options: CURRENCY_OPTIONS },
+        ],
+      },
+      {
+        title: 'Yük/Kargo Bilgileri',
+        wrap: true,
+        fields: [
+          { fieldId: `${prefix}-shipment-id`,                label: 'Sıra Numarası',                 path: [...pathBase, 'cac:Shipment', 'cbc:ID'],                                 attr: 'value' },
+          { fieldId: `${prefix}-shipment-handling-code`,     label: 'İşlem Kodu',                    path: [...pathBase, 'cac:Shipment', 'cbc:HandlingCode'],                       attr: 'value' },
+          { fieldId: `${prefix}-shipment-handling-instr`,    label: 'Taşıma Talimatları',            path: [...pathBase, 'cac:Shipment', 'cbc:HandlingInstructions'],               attr: 'value' },
+          { fieldId: `${prefix}-shipment-gross-weight`,      label: 'Brüt Ağırlık',                  path: [...pathBase, 'cac:Shipment', 'cbc:GrossWeightMeasure'],                 attr: 'value', type: 'duration-measure', attrKey: 'unitCode',   options: WEIGHT_UNIT_OPTIONS },
+          { fieldId: `${prefix}-shipment-net-weight`,        label: 'Net Ağırlık',                   path: [...pathBase, 'cac:Shipment', 'cbc:NetWeightMeasure'],                   attr: 'value', type: 'duration-measure', attrKey: 'unitCode',   options: WEIGHT_UNIT_OPTIONS },
+          { fieldId: `${prefix}-shipment-total-goods-qty`,   label: 'Toplam Mal Sayısı',             path: [...pathBase, 'cac:Shipment', 'cbc:TotalGoodsItemQuantity'],              attr: 'value', type: 'duration-measure', attrKey: 'unitCode',   options: QUANTITY_UNIT_OPTIONS },
+          { fieldId: `${prefix}-shipment-total-thu-qty`,     label: 'Toplam Taşıma Birimi Sayısı',   path: [...pathBase, 'cac:Shipment', 'cbc:TotalTransportHandlingUnitQuantity'], attr: 'value', type: 'duration-measure', attrKey: 'unitCode',   options: QUANTITY_UNIT_OPTIONS },
+          { fieldId: `${prefix}-shipment-insurance`,         label: 'Sigorta Tutarı',                path: [...pathBase, 'cac:Shipment', 'cbc:InsuranceValueAmount'],               attr: 'value', type: 'duration-measure', attrKey: 'currencyID', options: CURRENCY_OPTIONS },
+          { fieldId: `${prefix}-shipment-customs-value`,     label: 'Beyan Edilen Gümrük Tutarı',    path: [...pathBase, 'cac:Shipment', 'cbc:DeclaredCustomsValueAmount'],         attr: 'value', type: 'duration-measure', attrKey: 'currencyID', options: CURRENCY_OPTIONS },
+          { fieldId: `${prefix}-shipment-carriage-value`,    label: 'Beyan Edilen Taşıma Tutarı',    path: [...pathBase, 'cac:Shipment', 'cbc:DeclaredForCarriageValueAmount'],     attr: 'value', type: 'duration-measure', attrKey: 'currencyID', options: CURRENCY_OPTIONS },
+          { fieldId: `${prefix}-shipment-fob`,               label: 'FOB Tutarı',                    path: [...pathBase, 'cac:Shipment', 'cbc:FreeOnBoardValueAmount'],             attr: 'value', type: 'duration-measure', attrKey: 'currencyID', options: CURRENCY_OPTIONS },
+          { fieldId: `${prefix}-shipment-special-instr`,     label: 'Özel Talimatlar',               path: [...pathBase, 'cac:Shipment', 'cbc:SpecialInstructions'],                attr: 'value' },
+        ],
+        subgroups: [
+          makeAddressGroup(`${prefix}-shipment-return-addr`, [...pathBase, 'cac:Shipment', 'cac:ReturnAddress']),
+        ],
+      },
     ],
   }
 }
@@ -758,126 +881,7 @@ export const fieldGroups: FieldGroupConfig[] = [
       ),
     ],
   },
-  {
-    title: 'Gönderim, Taşıma, Sevkiyat Bilgileri',
-    fullWidth: true,
-    wrap: true,
-    fields: [
-      { fieldId: 'delivery-id',           label: 'Sıra Numarası',         path: ['Invoice', 'cac:Delivery', 'cbc:ID'],                  attr: 'value' },
-      { fieldId: 'delivery-quantity',     label: 'Miktar',                path: ['Invoice', 'cac:Delivery', 'cbc:Quantity'],            attr: 'value', type: 'duration-measure', attrKey: 'unitCode', options: QUANTITY_UNIT_OPTIONS },
-      { fieldId: 'delivery-actual-date',  label: 'Fiili Teslim Tarihi',   path: ['Invoice', 'cac:Delivery', 'cbc:ActualDeliveryDate'],  attr: 'value', type: 'date' },
-      { fieldId: 'delivery-actual-time',  label: 'Fiili Teslim Saati',    path: ['Invoice', 'cac:Delivery', 'cbc:ActualDeliveryTime'],  attr: 'value', type: 'time' },
-      { fieldId: 'delivery-latest-date',  label: 'Son Teslim Tarihi',     path: ['Invoice', 'cac:Delivery', 'cbc:LatestDeliveryDate'],  attr: 'value', type: 'date' },
-      { fieldId: 'delivery-latest-time',  label: 'Son Teslim Saati',      path: ['Invoice', 'cac:Delivery', 'cbc:LatestDeliveryTime'],  attr: 'value', type: 'time' },
-      { fieldId: 'delivery-tracking-id',  label: 'Takip Numarası',        path: ['Invoice', 'cac:Delivery', 'cbc:TrackingID'],          attr: 'value' },
-    ],
-    subgroups: [
-      makeAddressGroup('delivery-addr', ['Invoice', 'cac:Delivery', 'cac:DeliveryAddress']),
-      {
-        title: 'Alternatif Teslim Yeri',
-        wrap: true,
-        fields: [
-          { fieldId: 'delivery-alt-loc-id', label: 'ID', path: ['Invoice', 'cac:Delivery', 'cac:AlternativeDeliveryLocation', 'cbc:ID'], attr: 'value' },
-        ],
-        subgroups: [
-          makeAddressGroup('delivery-alt-loc-addr', ['Invoice', 'cac:Delivery', 'cac:AlternativeDeliveryLocation', 'cac:Address']),
-        ],
-      },
-      {
-        title: 'Tahmini Teslim Dönemi',
-        wrap: true,
-        fields: [
-          { fieldId: 'delivery-est-period-start-date',  label: 'Başlangıç Tarihi', path: ['Invoice', 'cac:Delivery', 'cac:EstimatedDeliveryPeriod', 'cbc:StartDate'],       attr: 'value', type: 'date' },
-          { fieldId: 'delivery-est-period-start-time',  label: 'Başlangıç Saati',  path: ['Invoice', 'cac:Delivery', 'cac:EstimatedDeliveryPeriod', 'cbc:StartTime'],       attr: 'value', type: 'time' },
-          { fieldId: 'delivery-est-period-end-date',    label: 'Bitiş Tarihi',     path: ['Invoice', 'cac:Delivery', 'cac:EstimatedDeliveryPeriod', 'cbc:EndDate'],         attr: 'value', type: 'date' },
-          { fieldId: 'delivery-est-period-end-time',    label: 'Bitiş Saati',      path: ['Invoice', 'cac:Delivery', 'cac:EstimatedDeliveryPeriod', 'cbc:EndTime'],         attr: 'value', type: 'time' },
-          { fieldId: 'delivery-est-period-duration',    label: 'Dönem Süresi',     path: ['Invoice', 'cac:Delivery', 'cac:EstimatedDeliveryPeriod', 'cbc:DurationMeasure'], attr: 'value', type: 'duration-measure', options: DURATION_MEASURE_OPTIONS },
-          { fieldId: 'delivery-est-period-description', label: 'Açıklama',         path: ['Invoice', 'cac:Delivery', 'cac:EstimatedDeliveryPeriod', 'cbc:Description'],     attr: 'value' },
-        ],
-      },
-      makePartyGroup('Taşıyıcı Taraf', 'delivery-carrier', ['Invoice', 'cac:Delivery', 'cac:CarrierParty']),
-      makePartyGroup('Teslimat Yapılacak Taraf', 'delivery-party', ['Invoice', 'cac:Delivery', 'cac:DeliveryParty']),
-      {
-        title: 'Gönderi Bilgisi',
-        wrap: true,
-        fields: [
-          { fieldId: 'delivery-despatch-id',           label: 'Sıra Numarası',     path: ['Invoice', 'cac:Delivery', 'cac:Despatch', 'cbc:ID'],                  attr: 'value' },
-          { fieldId: 'delivery-despatch-actual-date', label: 'Fiili Sevk Tarihi', path: ['Invoice', 'cac:Delivery', 'cac:Despatch', 'cbc:ActualDespatchDate'], attr: 'value', type: 'date' },
-          { fieldId: 'delivery-despatch-actual-time', label: 'Fiili Sevk Saati',  path: ['Invoice', 'cac:Delivery', 'cac:Despatch', 'cbc:ActualDespatchTime'], attr: 'value', type: 'time' },
-          { fieldId: 'delivery-despatch-instructions', label: 'Açıklama',         path: ['Invoice', 'cac:Delivery', 'cac:Despatch', 'cbc:Instructions'],        attr: 'value' },
-        ],
-        subgroups: [
-          makeAddressGroup('delivery-despatch-addr', ['Invoice', 'cac:Delivery', 'cac:Despatch', 'cac:DespatchAddress']),
-          makePartyGroup('Gönderim Yapan Taraf', 'delivery-despatch-party', ['Invoice', 'cac:Delivery', 'cac:Despatch', 'cac:DespatchParty']),
-          {
-            title: 'İletişim',
-            wrap: true,
-            fields: [
-              { fieldId: 'delivery-despatch-contact-id',    label: 'Id',               path: ['Invoice', 'cac:Delivery', 'cac:Despatch', 'cac:Contact', 'cbc:ID'],             attr: 'value' },
-              { fieldId: 'delivery-despatch-contact-name',  label: 'İsim',             path: ['Invoice', 'cac:Delivery', 'cac:Despatch', 'cac:Contact', 'cbc:Name'],           attr: 'value' },
-              { fieldId: 'delivery-despatch-contact-tel',   label: 'Telefon Numarası', path: ['Invoice', 'cac:Delivery', 'cac:Despatch', 'cac:Contact', 'cbc:Telephone'],      attr: 'value' },
-              { fieldId: 'delivery-despatch-contact-fax',   label: 'Fax Numarası',     path: ['Invoice', 'cac:Delivery', 'cac:Despatch', 'cac:Contact', 'cbc:Telefax'],        attr: 'value' },
-              { fieldId: 'delivery-despatch-contact-email', label: 'E-Posta Adresi',   path: ['Invoice', 'cac:Delivery', 'cac:Despatch', 'cac:Contact', 'cbc:ElectronicMail'], attr: 'value' },
-              { fieldId: 'delivery-despatch-contact-note',  label: 'Not',              path: ['Invoice', 'cac:Delivery', 'cac:Despatch', 'cac:Contact', 'cbc:Note'],           attr: 'value' },
-            ],
-            subgroups: [
-              {
-                title: 'Diğer Bilgiler',
-                wrap: true,
-                fields: [
-                  { fieldId: 'delivery-despatch-contact-other-ch-code', label: 'İletişim Numarası Kodu', path: ['Invoice', 'cac:Delivery', 'cac:Despatch', 'cac:Contact', 'cac:OtherCommunication', 'cbc:ChannelCode'], attr: 'value' },
-                  { fieldId: 'delivery-despatch-contact-other-ch',      label: 'İletişim Kanal Adı',     path: ['Invoice', 'cac:Delivery', 'cac:Despatch', 'cac:Contact', 'cac:OtherCommunication', 'cbc:Channel'],     attr: 'value' },
-                  { fieldId: 'delivery-despatch-contact-other-value',   label: 'Değer',                  path: ['Invoice', 'cac:Delivery', 'cac:Despatch', 'cac:Contact', 'cac:OtherCommunication', 'cbc:Value'],       attr: 'value' },
-                ],
-              },
-            ],
-          },
-          {
-            title: 'Tahmini Gönderim Dönemi',
-            wrap: true,
-            fields: [
-              { fieldId: 'delivery-despatch-est-period-start-date',  label: 'Başlangıç Tarihi', path: ['Invoice', 'cac:Delivery', 'cac:Despatch', 'cac:EstimatedDespatchPeriod', 'cbc:StartDate'],       attr: 'value', type: 'date' },
-              { fieldId: 'delivery-despatch-est-period-start-time',  label: 'Başlangıç Saati',  path: ['Invoice', 'cac:Delivery', 'cac:Despatch', 'cac:EstimatedDespatchPeriod', 'cbc:StartTime'],       attr: 'value', type: 'time' },
-              { fieldId: 'delivery-despatch-est-period-end-date',    label: 'Bitiş Tarihi',     path: ['Invoice', 'cac:Delivery', 'cac:Despatch', 'cac:EstimatedDespatchPeriod', 'cbc:EndDate'],         attr: 'value', type: 'date' },
-              { fieldId: 'delivery-despatch-est-period-end-time',    label: 'Bitiş Saati',      path: ['Invoice', 'cac:Delivery', 'cac:Despatch', 'cac:EstimatedDespatchPeriod', 'cbc:EndTime'],         attr: 'value', type: 'time' },
-              { fieldId: 'delivery-despatch-est-period-duration',    label: 'Dönem Süresi',     path: ['Invoice', 'cac:Delivery', 'cac:Despatch', 'cac:EstimatedDespatchPeriod', 'cbc:DurationMeasure'], attr: 'value', type: 'duration-measure', options: DURATION_MEASURE_OPTIONS },
-              { fieldId: 'delivery-despatch-est-period-description', label: 'Açıklama',         path: ['Invoice', 'cac:Delivery', 'cac:Despatch', 'cac:EstimatedDespatchPeriod', 'cbc:Description'],     attr: 'value' },
-            ],
-          },
-        ],
-      },
-      {
-        title: 'Teslimat Koşulları',
-        wrap: true,
-        fields: [
-          { fieldId: 'delivery-terms-id',      label: 'Sıra Numarası',  path: ['Invoice', 'cac:Delivery', 'cac:DeliveryTerms', 'cbc:ID'],           attr: 'value' },
-          { fieldId: 'delivery-terms-special', label: 'Özel Koşullar',  path: ['Invoice', 'cac:Delivery', 'cac:DeliveryTerms', 'cbc:SpecialTerms'], attr: 'value' },
-          { fieldId: 'delivery-terms-amount',  label: 'Tutar',          path: ['Invoice', 'cac:Delivery', 'cac:DeliveryTerms', 'cbc:Amount'],       attr: 'value', type: 'duration-measure', attrKey: 'currencyID', options: CURRENCY_OPTIONS },
-        ],
-      },
-      {
-        title: 'Yük/Kargo Bilgileri',
-        wrap: true,
-        fields: [
-          { fieldId: 'delivery-shipment-id',                label: 'Sıra Numarası',                 path: ['Invoice', 'cac:Delivery', 'cac:Shipment', 'cbc:ID'],                                 attr: 'value' },
-          { fieldId: 'delivery-shipment-handling-code',     label: 'İşlem Kodu',                    path: ['Invoice', 'cac:Delivery', 'cac:Shipment', 'cbc:HandlingCode'],                       attr: 'value' },
-          { fieldId: 'delivery-shipment-handling-instr',    label: 'Taşıma Talimatları',            path: ['Invoice', 'cac:Delivery', 'cac:Shipment', 'cbc:HandlingInstructions'],               attr: 'value' },
-          { fieldId: 'delivery-shipment-gross-weight',      label: 'Brüt Ağırlık',                  path: ['Invoice', 'cac:Delivery', 'cac:Shipment', 'cbc:GrossWeightMeasure'],                 attr: 'value', type: 'duration-measure', attrKey: 'unitCode',   options: WEIGHT_UNIT_OPTIONS },
-          { fieldId: 'delivery-shipment-net-weight',        label: 'Net Ağırlık',                   path: ['Invoice', 'cac:Delivery', 'cac:Shipment', 'cbc:NetWeightMeasure'],                   attr: 'value', type: 'duration-measure', attrKey: 'unitCode',   options: WEIGHT_UNIT_OPTIONS },
-          { fieldId: 'delivery-shipment-total-goods-qty',   label: 'Toplam Mal Sayısı',             path: ['Invoice', 'cac:Delivery', 'cac:Shipment', 'cbc:TotalGoodsItemQuantity'],              attr: 'value', type: 'duration-measure', attrKey: 'unitCode',   options: QUANTITY_UNIT_OPTIONS },
-          { fieldId: 'delivery-shipment-total-thu-qty',     label: 'Toplam Taşıma Birimi Sayısı',   path: ['Invoice', 'cac:Delivery', 'cac:Shipment', 'cbc:TotalTransportHandlingUnitQuantity'], attr: 'value', type: 'duration-measure', attrKey: 'unitCode',   options: QUANTITY_UNIT_OPTIONS },
-          { fieldId: 'delivery-shipment-insurance',         label: 'Sigorta Tutarı',                path: ['Invoice', 'cac:Delivery', 'cac:Shipment', 'cbc:InsuranceValueAmount'],               attr: 'value', type: 'duration-measure', attrKey: 'currencyID', options: CURRENCY_OPTIONS },
-          { fieldId: 'delivery-shipment-customs-value',     label: 'Beyan Edilen Gümrük Tutarı',    path: ['Invoice', 'cac:Delivery', 'cac:Shipment', 'cbc:DeclaredCustomsValueAmount'],         attr: 'value', type: 'duration-measure', attrKey: 'currencyID', options: CURRENCY_OPTIONS },
-          { fieldId: 'delivery-shipment-carriage-value',    label: 'Beyan Edilen Taşıma Tutarı',    path: ['Invoice', 'cac:Delivery', 'cac:Shipment', 'cbc:DeclaredForCarriageValueAmount'],     attr: 'value', type: 'duration-measure', attrKey: 'currencyID', options: CURRENCY_OPTIONS },
-          { fieldId: 'delivery-shipment-fob',               label: 'FOB Tutarı',                    path: ['Invoice', 'cac:Delivery', 'cac:Shipment', 'cbc:FreeOnBoardValueAmount'],             attr: 'value', type: 'duration-measure', attrKey: 'currencyID', options: CURRENCY_OPTIONS },
-          { fieldId: 'delivery-shipment-special-instr',     label: 'Özel Talimatlar',               path: ['Invoice', 'cac:Delivery', 'cac:Shipment', 'cbc:SpecialInstructions'],                attr: 'value' },
-        ],
-        subgroups: [
-          makeAddressGroup('delivery-shipment-return-addr', ['Invoice', 'cac:Delivery', 'cac:Shipment', 'cac:ReturnAddress']),
-        ],
-      },
-    ],
-  },
+  { ...makeDeliveryGroup('Gönderim, Taşıma, Sevkiyat Bilgileri', 'delivery', ['Invoice', 'cac:Delivery']), fullWidth: true },
   {
     title: 'Ödeme Şekli',
     fullWidth: true,
@@ -1011,6 +1015,222 @@ export const fieldGroups: FieldGroupConfig[] = [
       { fieldId: 'lmt-charge-total',    label: 'Toplam Artırım Tutarı',    path: ['Invoice', 'cac:LegalMonetaryTotal', 'cbc:ChargeTotalAmount'],     attr: 'value', type: 'duration-measure', attrKey: 'currencyID', options: CURRENCY_OPTIONS },
       { fieldId: 'lmt-rounding',        label: 'Yuvarlama Tutarı',         path: ['Invoice', 'cac:LegalMonetaryTotal', 'cbc:PayableRoundingAmount'], attr: 'value', type: 'duration-measure', attrKey: 'currencyID', options: CURRENCY_OPTIONS },
       { fieldId: 'lmt-payable',         label: 'Ödenecek Tutar',           path: ['Invoice', 'cac:LegalMonetaryTotal', 'cbc:PayableAmount'],         attr: 'value', type: 'duration-measure', attrKey: 'currencyID', options: CURRENCY_OPTIONS },
+    ],
+  },
+  {
+    title: 'Mal/Hizmet Kalemleri',
+    fullWidth: true,
+    repeatable: true,
+    instanceMarker: 'cac:InvoiceLine',
+    addLabel: 'Yeni Kalem Ekle',
+    items: [
+      { fieldId: 'iline-id',       label: 'Sıra Numarası',     path: ['Invoice', 'cac:InvoiceLine', 'cbc:ID'],                  attr: 'value' },
+      { fieldId: 'iline-note',     label: 'Açıklama',          path: ['Invoice', 'cac:InvoiceLine', 'cbc:Note'],                attr: 'value', type: 'notes-list' },
+      { fieldId: 'iline-quantity', label: 'Miktar',            path: ['Invoice', 'cac:InvoiceLine', 'cbc:InvoicedQuantity'],    attr: 'value', type: 'duration-measure', attrKey: 'unitCode',   options: QUANTITY_UNIT_OPTIONS },
+      { fieldId: 'iline-line-ext', label: 'Mal/Hizmet Tutarı', path: ['Invoice', 'cac:InvoiceLine', 'cbc:LineExtensionAmount'], attr: 'value', type: 'duration-measure', attrKey: 'currencyID', options: CURRENCY_OPTIONS },
+      {
+        title: 'Sipariş Kalemi Referansı',
+        fullWidth: true,
+        wrap: true,
+        repeatable: true,
+        instanceMarker: 'cac:OrderLineReference',
+        addLabel: 'Yeni Sipariş Kalemi Ekle',
+        items: [
+          { fieldId: 'iline-order-lineid',       label: 'Kalem Numarası',         path: ['Invoice', 'cac:InvoiceLine', 'cac:OrderLineReference', 'cbc:LineID'],          attr: 'value' },
+          { fieldId: 'iline-order-sales-lineid', label: 'Satıcı Kalem Numarası',  path: ['Invoice', 'cac:InvoiceLine', 'cac:OrderLineReference', 'cbc:SalesOrderLineID'], attr: 'value' },
+          { fieldId: 'iline-order-uuid',         label: 'Ettn',                   path: ['Invoice', 'cac:InvoiceLine', 'cac:OrderLineReference', 'cbc:UUID'],            attr: 'value' },
+          { fieldId: 'iline-order-status',       label: 'Kalem Durumu',           path: ['Invoice', 'cac:InvoiceLine', 'cac:OrderLineReference', 'cbc:LineStatusCode'],  attr: 'value' },
+          {
+            title: 'Sipariş Bilgisi',
+            wrap: true,
+            fields: [
+              { fieldId: 'iline-order-ref-id',        label: 'Sipariş Numarası',        path: ['Invoice', 'cac:InvoiceLine', 'cac:OrderLineReference', 'cac:OrderReference', 'cbc:ID'],            attr: 'value' },
+              { fieldId: 'iline-order-ref-sales-id',  label: 'Satıcı Sipariş Numarası', path: ['Invoice', 'cac:InvoiceLine', 'cac:OrderLineReference', 'cac:OrderReference', 'cbc:SalesOrderID'], attr: 'value' },
+              { fieldId: 'iline-order-ref-issue',     label: 'Sipariş Tarihi',          path: ['Invoice', 'cac:InvoiceLine', 'cac:OrderLineReference', 'cac:OrderReference', 'cbc:IssueDate'],     attr: 'value', type: 'date' },
+              { fieldId: 'iline-order-ref-type-code', label: 'Sipariş Tipi',            path: ['Invoice', 'cac:InvoiceLine', 'cac:OrderLineReference', 'cac:OrderReference', 'cbc:OrderTypeCode'], attr: 'value' },
+            ],
+          },
+        ],
+      },
+      {
+        title: 'İrsaliye Kalemi Referansı',
+        fullWidth: true,
+        wrap: true,
+        repeatable: true,
+        instanceMarker: 'cac:DespatchLineReference',
+        addLabel: 'Yeni İrsaliye Kalemi Ekle',
+        items: [
+          { fieldId: 'iline-desp-lineid', label: 'Kalem Numarası', path: ['Invoice', 'cac:InvoiceLine', 'cac:DespatchLineReference', 'cbc:LineID'],         attr: 'value' },
+          { fieldId: 'iline-desp-status', label: 'Kalem Durumu',   path: ['Invoice', 'cac:InvoiceLine', 'cac:DespatchLineReference', 'cbc:LineStatusCode'], attr: 'value' },
+          makeDocumentReferenceGroup('Referans Belge', 'iline-desp-docref', ['Invoice', 'cac:InvoiceLine', 'cac:DespatchLineReference', 'cac:DocumentReference']),
+        ],
+      },
+      {
+        title: 'Alındı Kalemi Referansı',
+        fullWidth: true,
+        wrap: true,
+        repeatable: true,
+        instanceMarker: 'cac:ReceiptLineReference',
+        addLabel: 'Yeni Alındı Kalemi Ekle',
+        items: [
+          { fieldId: 'iline-rcpt-lineid', label: 'Kalem Numarası', path: ['Invoice', 'cac:InvoiceLine', 'cac:ReceiptLineReference', 'cbc:LineID'],         attr: 'value' },
+          { fieldId: 'iline-rcpt-status', label: 'Kalem Durumu',   path: ['Invoice', 'cac:InvoiceLine', 'cac:ReceiptLineReference', 'cbc:LineStatusCode'], attr: 'value' },
+          makeDocumentReferenceGroup('Referans Belge', 'iline-rcpt-docref', ['Invoice', 'cac:InvoiceLine', 'cac:ReceiptLineReference', 'cac:DocumentReference']),
+        ],
+      },
+      makeDeliveryGroup('Kalem Teslimatı', 'iline-delivery', ['Invoice', 'cac:InvoiceLine', 'cac:Delivery']),
+      {
+        title: 'Kalem İskonto/Artırım',
+        fullWidth: true,
+        wrap: true,
+        repeatable: true,
+        instanceMarker: 'cac:AllowanceCharge',
+        addLabel: 'Yeni Kalem İskonto/Artırım Ekle',
+        items: [
+          makeAllowanceChargeGroup('iline-ac', ['Invoice', 'cac:InvoiceLine', 'cac:AllowanceCharge']),
+        ],
+      },
+      makeTaxTotalGroup(
+        'Kalem Vergisi',
+        'iline-tax',
+        'cac:TaxTotal',
+        ['Invoice', 'cac:InvoiceLine', 'cac:TaxTotal'],
+        'Yeni Kalem Vergisi Ekle',
+        false,
+      ),
+      makeTaxTotalGroup(
+        'Kalem Tevkifat',
+        'iline-wtax',
+        'cac:WithholdingTaxTotal',
+        ['Invoice', 'cac:InvoiceLine', 'cac:WithholdingTaxTotal'],
+        'Yeni Kalem Tevkifatı Ekle',
+      ),
+      {
+        title: 'Mal/Hizmet',
+        wrap: true,
+        fields: [
+          { fieldId: 'iline-item-desc',    label: 'Açıklama',       path: ['Invoice', 'cac:InvoiceLine', 'cac:Item', 'cbc:Description'], attr: 'value' },
+          { fieldId: 'iline-item-name',    label: 'Adı',            path: ['Invoice', 'cac:InvoiceLine', 'cac:Item', 'cbc:Name'],        attr: 'value' },
+          { fieldId: 'iline-item-keyword', label: 'Anahtar Kelime', path: ['Invoice', 'cac:InvoiceLine', 'cac:Item', 'cbc:Keyword'],     attr: 'value' },
+          { fieldId: 'iline-item-brand',   label: 'Marka Adı',      path: ['Invoice', 'cac:InvoiceLine', 'cac:Item', 'cbc:BrandName'],   attr: 'value' },
+          { fieldId: 'iline-item-model',   label: 'Model Adı',      path: ['Invoice', 'cac:InvoiceLine', 'cac:Item', 'cbc:ModelName'],   attr: 'value' },
+        ],
+        subgroups: [
+          {
+            title: 'Alıcı Tanımlama',
+            wrap: true,
+            fields: [
+              { fieldId: 'iline-item-buyer-id', label: 'ID', path: ['Invoice', 'cac:InvoiceLine', 'cac:Item', 'cac:BuyersItemIdentification', 'cbc:ID'], attr: 'value' },
+            ],
+          },
+          {
+            title: 'Satıcı Tanımlama',
+            wrap: true,
+            fields: [
+              { fieldId: 'iline-item-seller-id', label: 'ID', path: ['Invoice', 'cac:InvoiceLine', 'cac:Item', 'cac:SellersItemIdentification', 'cbc:ID'], attr: 'value' },
+            ],
+          },
+          {
+            title: 'Üretici Tanımlama',
+            wrap: true,
+            fields: [
+              { fieldId: 'iline-item-mfr-id', label: 'ID', path: ['Invoice', 'cac:InvoiceLine', 'cac:Item', 'cac:ManufacturersItemIdentification', 'cbc:ID'], attr: 'value' },
+            ],
+          },
+          {
+            title: 'Ek Tanımlama',
+            fullWidth: true,
+            wrap: true,
+            repeatable: true,
+            instanceMarker: 'cac:AdditionalItemIdentification',
+            addLabel: 'Yeni Ek Tanımlama Ekle',
+            items: [
+              { fieldId: 'iline-item-add-id', label: 'ID', path: ['Invoice', 'cac:InvoiceLine', 'cac:Item', 'cac:AdditionalItemIdentification', 'cbc:ID'], attr: 'value' },
+            ],
+          },
+          {
+            title: 'Menşei Ülke',
+            wrap: true,
+            fields: [
+              { fieldId: 'iline-item-origin-code', label: 'Ülke Kodu', path: ['Invoice', 'cac:InvoiceLine', 'cac:Item', 'cac:OriginCountry', 'cbc:IdentificationCode'], attr: 'value' },
+              { fieldId: 'iline-item-origin-name', label: 'Ülke Adı',  path: ['Invoice', 'cac:InvoiceLine', 'cac:Item', 'cac:OriginCountry', 'cbc:Name'],               attr: 'value' },
+            ],
+          },
+          {
+            title: 'Emtia Sınıflandırma',
+            fullWidth: true,
+            wrap: true,
+            repeatable: true,
+            instanceMarker: 'cac:CommodityClassification',
+            addLabel: 'Yeni Sınıflandırma Ekle',
+            items: [
+              { fieldId: 'iline-item-class-code', label: 'Sınıflandırma Kodu', path: ['Invoice', 'cac:InvoiceLine', 'cac:Item', 'cac:CommodityClassification', 'cbc:ItemClassificationCode'], attr: 'value' },
+            ],
+          },
+          {
+            title: 'Ürün Bilgisi',
+            fullWidth: true,
+            wrap: true,
+            repeatable: true,
+            instanceMarker: 'cac:ItemInstance',
+            addLabel: 'Yeni Ürün Bilgisi Ekle',
+            items: [
+              { fieldId: 'iline-item-inst-trace',       label: 'Ürün İz Numarası',  path: ['Invoice', 'cac:InvoiceLine', 'cac:Item', 'cac:ItemInstance', 'cbc:ProductTraceID'], attr: 'value' },
+              { fieldId: 'iline-item-inst-mfg-date',    label: 'Üretim Tarihi',     path: ['Invoice', 'cac:InvoiceLine', 'cac:Item', 'cac:ItemInstance', 'cbc:ManufactureDate'], attr: 'value', type: 'date' },
+              { fieldId: 'iline-item-inst-mfg-time',    label: 'Üretim Saati',      path: ['Invoice', 'cac:InvoiceLine', 'cac:Item', 'cac:ItemInstance', 'cbc:ManufactureTime'], attr: 'value', type: 'time' },
+              { fieldId: 'iline-item-inst-best-before', label: 'Son Kullanım Tarihi', path: ['Invoice', 'cac:InvoiceLine', 'cac:Item', 'cac:ItemInstance', 'cbc:BestBeforeDate'], attr: 'value', type: 'date' },
+              { fieldId: 'iline-item-inst-reg-id',      label: 'Kayıt Numarası',    path: ['Invoice', 'cac:InvoiceLine', 'cac:Item', 'cac:ItemInstance', 'cbc:RegistrationID'], attr: 'value' },
+              { fieldId: 'iline-item-inst-serial',      label: 'Seri Numarası',     path: ['Invoice', 'cac:InvoiceLine', 'cac:Item', 'cac:ItemInstance', 'cbc:SerialID'],       attr: 'value' },
+              {
+                title: 'Lot Tanımlama',
+                wrap: true,
+                fields: [
+                  { fieldId: 'iline-item-inst-lot-num',    label: 'Lot Numarası',        path: ['Invoice', 'cac:InvoiceLine', 'cac:Item', 'cac:ItemInstance', 'cac:LotIdentification', 'cbc:LotNumberID'], attr: 'value' },
+                  { fieldId: 'iline-item-inst-lot-expiry', label: 'Son Kullanım Tarihi', path: ['Invoice', 'cac:InvoiceLine', 'cac:Item', 'cac:ItemInstance', 'cac:LotIdentification', 'cbc:ExpiryDate'],  attr: 'value', type: 'date' },
+                ],
+              },
+              {
+                title: 'Ek Özellik',
+                fullWidth: true,
+                wrap: true,
+                repeatable: true,
+                instanceMarker: 'cac:AdditionalItemProperty',
+                addLabel: 'Yeni Ek Özellik Ekle',
+                items: [
+                  { fieldId: 'iline-item-inst-prop-id',           label: 'Sıra Numarası',     path: ['Invoice', 'cac:InvoiceLine', 'cac:Item', 'cac:ItemInstance', 'cac:AdditionalItemProperty', 'cbc:ID'],             attr: 'value' },
+                  { fieldId: 'iline-item-inst-prop-name',         label: 'Adı',               path: ['Invoice', 'cac:InvoiceLine', 'cac:Item', 'cac:ItemInstance', 'cac:AdditionalItemProperty', 'cbc:Name'],           attr: 'value' },
+                  { fieldId: 'iline-item-inst-prop-name-code',    label: 'İsim Kodu',         path: ['Invoice', 'cac:InvoiceLine', 'cac:Item', 'cac:ItemInstance', 'cac:AdditionalItemProperty', 'cbc:NameCode'],       attr: 'value' },
+                  { fieldId: 'iline-item-inst-prop-test',         label: 'Test Yöntemi',      path: ['Invoice', 'cac:InvoiceLine', 'cac:Item', 'cac:ItemInstance', 'cac:AdditionalItemProperty', 'cbc:TestMethod'],     attr: 'value' },
+                  { fieldId: 'iline-item-inst-prop-value',        label: 'Değer',             path: ['Invoice', 'cac:InvoiceLine', 'cac:Item', 'cac:ItemInstance', 'cac:AdditionalItemProperty', 'cbc:Value'],          attr: 'value' },
+                  { fieldId: 'iline-item-inst-prop-value-qty',    label: 'Değer Miktarı',     path: ['Invoice', 'cac:InvoiceLine', 'cac:Item', 'cac:ItemInstance', 'cac:AdditionalItemProperty', 'cbc:ValueQuantity'],  attr: 'value', type: 'number' },
+                  { fieldId: 'iline-item-inst-prop-importance',   label: 'Önem Derecesi',     path: ['Invoice', 'cac:InvoiceLine', 'cac:Item', 'cac:ItemInstance', 'cac:AdditionalItemProperty', 'cbc:ImportanceCode'], attr: 'value' },
+                  { fieldId: 'iline-item-inst-prop-qualifiers',   label: 'Değer Niteleyicisi', path: ['Invoice', 'cac:InvoiceLine', 'cac:Item', 'cac:ItemInstance', 'cac:AdditionalItemProperty', 'cbc:ValueQualifier'], attr: 'value', type: 'notes-list' },
+                  { fieldId: 'iline-item-inst-prop-list-values',  label: 'Liste Değeri',      path: ['Invoice', 'cac:InvoiceLine', 'cac:Item', 'cac:ItemInstance', 'cac:AdditionalItemProperty', 'cbc:ListValue'],     attr: 'value', type: 'notes-list' },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      {
+        title: 'Fiyat',
+        wrap: true,
+        fields: [
+          { fieldId: 'iline-price-amount', label: 'Birim Fiyat', path: ['Invoice', 'cac:InvoiceLine', 'cac:Price', 'cbc:PriceAmount'], attr: 'value', type: 'duration-measure', attrKey: 'currencyID', options: CURRENCY_OPTIONS },
+        ],
+      },
+      {
+        title: 'Alt Kalem',
+        fullWidth: true,
+        wrap: true,
+        repeatable: true,
+        instanceMarker: 'cac:SubInvoiceLine',
+        addLabel: 'Yeni Alt Kalem Ekle',
+        items: [
+          { fieldId: 'iline-sub-id',       label: 'Sıra Numarası', path: ['Invoice', 'cac:InvoiceLine', 'cac:SubInvoiceLine', 'cbc:ID'],               attr: 'value' },
+          { fieldId: 'iline-sub-quantity', label: 'Miktar',        path: ['Invoice', 'cac:InvoiceLine', 'cac:SubInvoiceLine', 'cbc:InvoicedQuantity'], attr: 'value', type: 'duration-measure', attrKey: 'unitCode', options: QUANTITY_UNIT_OPTIONS },
+        ],
+      },
     ],
   },
 ]

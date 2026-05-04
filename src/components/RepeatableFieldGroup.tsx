@@ -125,11 +125,14 @@ function transformGroup(
   idx: number,
   baseOrder: number,
   counter: FieldOffsetCounter,
+  isOuter: boolean = true,
 ): FieldGroupConfig {
   const next: FieldGroupConfig = { ...group }
-  delete next.repeatable
-  delete next.instanceMarker
-  delete next.addLabel
+  if (isOuter) {
+    delete next.repeatable
+    delete next.instanceMarker
+    delete next.addLabel
+  }
 
   if (group.items) {
     next.items = group.items.map((item) => transformItem(item, marker, idx, baseOrder, counter))
@@ -138,7 +141,7 @@ function transformGroup(
       next.fields = group.fields.map((f) => rewriteField(f, marker, idx, baseOrder, counter))
     }
     if (group.subgroups) {
-      next.subgroups = group.subgroups.map((sub) => transformGroup(sub, marker, idx, baseOrder, counter))
+      next.subgroups = group.subgroups.map((sub) => transformGroup(sub, marker, idx, baseOrder, counter, false))
     }
   }
 
@@ -155,7 +158,7 @@ function transformItem(
   if (isFieldDefinition(item)) {
     return rewriteField(item, marker, idx, baseOrder, counter)
   }
-  return transformGroup(item, marker, idx, baseOrder, counter)
+  return transformGroup(item, marker, idx, baseOrder, counter, false)
 }
 
 function rewriteField(
