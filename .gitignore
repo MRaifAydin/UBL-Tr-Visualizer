@@ -138,5 +138,9 @@ dist
 # Referans dökümanlar (XSD/PDF). glossary.json commit edilir.
 references/*/xsd/
 references/*/pdf/
-references/.DS_Store
-references/invoice/.DS_Store
+
+# macOS
+.DS_Store
+
+# Claude Code
+.claude/settings.local.json
