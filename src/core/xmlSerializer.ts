@@ -10,6 +10,11 @@ const ESCAPE_MAP: Record<string, string> = {
 const escapeXml = (str: string): string =>
   String(str).replace(/[&<>"']/g, (c) => ESCAPE_MAP[c])
 
+// XML Name yaklaşık kuralı (UBL-TR: harf/_ ile başlar; harf, rakam, '.', '-', '_', ':' içerir)
+const XML_NAME_RE = /^[A-Za-z_][\w.\-:]*$/
+const isValidXmlName = (name: unknown): name is string =>
+  typeof name === 'string' && XML_NAME_RE.test(name)
+
 function hasContent(node: TreeNode): boolean {
   if (node.value !== undefined) return true
   if (!node.children) return false
@@ -19,6 +24,11 @@ function hasContent(node: TreeNode): boolean {
 function attrsString(attr: TreeNode['attr']): string {
   if (!attr || typeof attr !== 'object') return ''
   return Object.entries(attr)
+    .filter(([k]) => {
+      if (isValidXmlName(k)) return true
+      console.warn(`[xmlSerializer] Geçersiz XML attribute adı atlandı: ${JSON.stringify(k)}`)
+      return false
+    })
     .map(([k, v]) => ` ${k}="${escapeXml(v)}"`)
     .join('')
 }
@@ -26,9 +36,14 @@ function attrsString(attr: TreeNode['attr']): string {
 function serializeNode(node: TreeNode, depth: number): string {
   if (!hasContent(node)) return ''
 
+  const tag = node.tag
+  if (!isValidXmlName(tag)) {
+    console.warn(`[xmlSerializer] Geçersiz XML tag adı atlandı: ${JSON.stringify(tag)}`)
+    return ''
+  }
+
   const pad = '  '.repeat(depth)
   const attrs = attrsString(node.attr)
-  const tag = node.tag
 
   const children = node.children ? Object.values(node.children).filter(hasContent) : []
 
@@ -54,6 +69,10 @@ export function treeToXml(
   rootAttributes?: Record<string, string>,
   rootStaticPrefix?: string,
 ): string {
+  if (!isValidXmlName(rootTag)) {
+    console.warn(`[xmlSerializer] Geçersiz root XML tag adı: ${JSON.stringify(rootTag)}`)
+    return ''
+  }
   const rootNode = tree.children?.[rootTag]
   if (!rootNode || !hasContent(rootNode)) return ''
 

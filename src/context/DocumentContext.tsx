@@ -152,16 +152,16 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
       } catch {
         // localStorage erişim hatası — sessizce yut
       }
+      if (!next) {
+        // Safe mode kapatılıyor → hata listesini ve aktif flag'i sıfırla
+        setStates((s) => ({
+          ...s,
+          [docType]: { ...s[docType], validationErrors: [], validationActive: false },
+        }))
+      }
       return { ...prev, [docType]: next }
     })
-    if (safeModeMap[docType]) {
-      // Safe mode kapatılıyor → hata listesini ve aktif flag'i sıfırla
-      setStates((prev) => ({
-        ...prev,
-        [docType]: { ...prev[docType], validationErrors: [], validationActive: false },
-      }))
-    }
-  }, [docType, safeModeMap])
+  }, [docType])
 
   const validateRequired = useCallback((): ValidationError[] => {
     const slice = states[docType]

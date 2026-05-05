@@ -34,6 +34,11 @@ interface SharedFieldProps {
 
 interface FieldProps extends FieldDefinition, SharedFieldProps {}
 
+function FieldError({ show }: { show: boolean }) {
+  if (!show) return null
+  return <p className="mt-1 text-[11px] text-red-600">Bu alan zorunludur.</p>
+}
+
 function FieldInput({ fieldId, label, path, attr, wide, fill, disabled, required, _order }: FieldProps) {
   const { tree, activeFieldId, setActiveFieldId, updateField, safeMode, validationErrors } = useDocument()
   const currentValue = findNodeById(tree, fieldId)?.value ?? ''
@@ -45,6 +50,7 @@ function FieldInput({ fieldId, label, path, attr, wide, fill, disabled, required
   return (
     <div data-field-id={fieldId}>
       <label
+        htmlFor={fieldId}
         className={`block text-xs font-medium mb-1 transition-colors ${
           isActive ? 'text-blue-600' : 'text-gray-500'
         }`}
@@ -54,6 +60,7 @@ function FieldInput({ fieldId, label, path, attr, wide, fill, disabled, required
       </label>
       <div className="relative">
         <input
+          id={fieldId}
           type="text"
           value={currentValue}
           disabled={disabled}
@@ -84,6 +91,7 @@ function FieldInput({ fieldId, label, path, attr, wide, fill, disabled, required
           </span>
         )}
       </div>
+      <FieldError show={hasError} />
     </div>
   )
 }
@@ -135,6 +143,7 @@ function SearchableSelect({ fieldId, label, path, attr, options, wide, fill, req
   return (
     <div ref={containerRef} data-field-id={fieldId} className="relative">
       <label
+        htmlFor={fieldId}
         className={`block text-xs font-medium mb-1 transition-colors ${
           isActive ? 'text-blue-600' : 'text-gray-500'
         }`}
@@ -154,6 +163,7 @@ function SearchableSelect({ fieldId, label, path, attr, options, wide, fill, req
         />
       ) : (
         <button
+          id={fieldId}
           type="button"
           onClick={handleOpen}
           className={`${w} rounded border px-2 py-1 text-xs text-left flex items-center justify-between transition-all ${
@@ -189,6 +199,8 @@ function SearchableSelect({ fieldId, label, path, attr, options, wide, fill, req
           )}
         </button>
       )}
+
+      {!open && <FieldError show={hasError} />}
 
       {open && (
         <ul className="absolute z-10 mt-1 w-64 max-h-52 overflow-y-auto overflow-x-hidden rounded border border-gray-200 bg-white shadow-md text-xs">
@@ -305,6 +317,7 @@ function DatePicker({ fieldId, label, path, attr, wide, fill, required, _order }
   return (
     <div ref={containerRef} data-field-id={fieldId} className="relative">
       <label
+        htmlFor={fieldId}
         className={`block text-xs font-medium mb-1 transition-colors ${
           isActive ? 'text-blue-600' : 'text-gray-500'
         }`}
@@ -314,6 +327,7 @@ function DatePicker({ fieldId, label, path, attr, wide, fill, required, _order }
       </label>
 
       <button
+        id={fieldId}
         type="button"
         onClick={handleOpen}
         className={`${w} rounded border px-2 py-1 text-xs text-left flex items-center justify-between transition-all ${
@@ -344,6 +358,8 @@ function DatePicker({ fieldId, label, path, attr, wide, fill, required, _order }
           </svg>
         )}
       </button>
+
+      {!open && <FieldError show={hasError} />}
 
       {open && (
         <div className="absolute z-10 mt-1 bg-white border border-gray-200 rounded shadow-md p-2 w-52 text-xs select-none">
@@ -466,6 +482,7 @@ function NumberInput({ fieldId, label, path, attr, wide, fill, required, _order 
   return (
     <div data-field-id={fieldId}>
       <label
+        htmlFor={fieldId}
         className={`block text-xs font-medium mb-1 transition-colors ${
           isActive ? 'text-blue-600' : 'text-gray-500'
         }`}
@@ -475,6 +492,7 @@ function NumberInput({ fieldId, label, path, attr, wide, fill, required, _order 
       </label>
       <div className="relative">
         <input
+          id={fieldId}
           type="text"
           inputMode="numeric"
           value={currentValue}
@@ -506,6 +524,7 @@ function NumberInput({ fieldId, label, path, attr, wide, fill, required, _order 
           </span>
         )}
       </div>
+      <FieldError show={hasError} />
     </div>
   )
 }
@@ -643,6 +662,7 @@ function DurationMeasureInput({
   return (
     <div data-field-id={fieldId}>
       <label
+        htmlFor={fieldId}
         className={`block text-xs font-medium mb-1 transition-colors ${
           isActive ? 'text-blue-600' : 'text-gray-500'
         }`}
@@ -652,6 +672,7 @@ function DurationMeasureInput({
       </label>
       <div className={`flex ${w}`}>
         <select
+          id={fieldId}
           value={displayUnit}
           onChange={(e) => handleUnitChange(e.target.value)}
           onFocus={() => setActiveFieldId(fieldId)}
@@ -686,6 +707,7 @@ function DurationMeasureInput({
           )}
         </div>
       </div>
+      <FieldError show={hasError} />
     </div>
   )
 }
@@ -813,6 +835,7 @@ function TimePicker({ fieldId, label, path, attr, wide, fill, required, _order }
   return (
     <div ref={containerRef} data-field-id={fieldId} className="relative">
       <label
+        htmlFor={fieldId}
         className={`block text-xs font-medium mb-1 transition-colors ${
           isActive ? 'text-blue-600' : 'text-gray-500'
         }`}
@@ -822,6 +845,7 @@ function TimePicker({ fieldId, label, path, attr, wide, fill, required, _order }
       </label>
 
       <button
+        id={fieldId}
         type="button"
         onClick={handleOpen}
         className={`${w} rounded border px-2 py-1 text-xs text-left flex items-center justify-between transition-all ${
@@ -853,6 +877,8 @@ function TimePicker({ fieldId, label, path, attr, wide, fill, required, _order }
           </svg>
         )}
       </button>
+
+      {!open && <FieldError show={hasError} />}
 
       {open && (
         <div className="absolute z-10 mt-1 bg-white border border-gray-200 rounded shadow-md p-3 text-xs select-none">

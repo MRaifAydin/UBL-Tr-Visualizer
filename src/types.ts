@@ -25,6 +25,13 @@ export type FieldType =
   | 'duration-measure'
   | 'notes-list'
 
+/**
+ * Alanın XML'de nasıl yazılacağını belirler:
+ * - `'value'` → element text'i olarak yazılır (örn. `<cbc:ID>123</cbc:ID>`).
+ * - `Record<string, string>` → element üzerinde attribute olarak yazılır
+ *   (anahtar = attribute adı, değer = attribute değeri; örn.
+ *   `{ currencyID: 'TRY' }` → `<cbc:PayableAmount currencyID="TRY">100</cbc:PayableAmount>`).
+ */
 export type FieldAttr = 'value' | Record<string, string>
 
 export interface FieldDefinition {

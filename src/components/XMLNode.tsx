@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import type { TreeNode } from '../types'
 
 function containsFieldId(node: TreeNode, fieldId: string): boolean {
@@ -29,6 +29,16 @@ export default function XMLNode({
     !isActive && !!activeFieldId && hasChildren && !!node && containsFieldId(node, activeFieldId)
   const isHighlighted = isActive || isAncestor
   const isOpen = manualOpen
+
+  const sortedChildren = useMemo(
+    () =>
+      node?.children
+        ? Object.entries(node.children).sort(
+            ([, a], [, b]) => (a._order ?? Infinity) - (b._order ?? Infinity),
+          )
+        : [],
+    [node?.children],
+  )
 
   useEffect(() => {
     if (depth >= 1) setManualOpen(false)
@@ -108,11 +118,9 @@ export default function XMLNode({
       {hasChildren && isOpen && (
         <>
           <div className="ml-6">
-            {Object.entries(node.children!)
-              .sort(([, a], [, b]) => (a._order ?? Infinity) - (b._order ?? Infinity))
-              .map(([key, child]) => (
-                <XMLNode key={key} node={child} activeFieldId={activeFieldId} depth={depth + 1} collapseSignal={collapseSignal} />
-              ))}
+            {sortedChildren.map(([key, child]) => (
+              <XMLNode key={key} node={child} activeFieldId={activeFieldId} depth={depth + 1} collapseSignal={collapseSignal} />
+            ))}
           </div>
           <div className="flex items-center gap-1 py-0.5 pl-4">
             <span className={`font-mono text-sm ${isHighlighted ? 'text-blue-600' : 'text-gray-500'}`}>

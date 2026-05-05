@@ -30,11 +30,18 @@ export default function App() {
 
   useEffect(() => {
     if (!infoOpen) return
-    function handle(e: MouseEvent) {
+    function handleClick(e: MouseEvent) {
       if (modalRef.current && !modalRef.current.contains(e.target as Node)) setInfoOpen(false)
     }
-    document.addEventListener('mousedown', handle)
-    return () => document.removeEventListener('mousedown', handle)
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setInfoOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    document.addEventListener('keydown', handleKey)
+    return () => {
+      document.removeEventListener('mousedown', handleClick)
+      document.removeEventListener('keydown', handleKey)
+    }
   }, [infoOpen])
 
   return (
