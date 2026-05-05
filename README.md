@@ -110,17 +110,6 @@ references/        — XSD / PDF / Schematron / örnek XML kaynakları
 scripts/           — extractRequiredFromXsd.ts
 ```
 
-Mimari detaylar için: [CLAUDE.md](CLAUDE.md).
-
-## Yeni Belge Tipi Eklemek
-
-1. `src/modules/<isim>/config.ts` oluştur — `rootTag`, `rootAttributes`, `fieldGroups`, `fieldDefinitions` export et.
-2. `src/pages/<Isim>Page.tsx` ekle — mevcut `InvoicePage` örneğini izle.
-3. `src/modules/index.ts`'e modülü kaydet.
-4. `src/App.tsx`'in `SIDEBAR_ITEMS` ve `PAGES` haritalarına yeni belge tipini ekle (ikon + sayfa).
-
-Detaylı modül mimarisi: [CLAUDE.md](CLAUDE.md) → "Modül sistemi".
-
 ## Claude Code Skill'leri
 
 Proje, [Claude Code](https://docs.claude.com/claude-code) ile geliştirilirken kullanılmak üzere iki adet özel slash komut içerir. Skill kayıtları `.claude/skills/` altındadır; Claude Code projeyi açtığında bu skill'ler otomatik tanınır.
@@ -176,17 +165,6 @@ references/
 ```
 
 Bu klasörlerin amaçları ve genişletme yöntemi: [references/README.md](references/README.md).
-
-## Katkı Kuralları
-
-- **Paket yöneticisi:** `npm`
-- **Commit mesajları:** Türkçe
-- **Dosya uzantıları:** JSX içerenler `.tsx`, saf TypeScript `.ts`
-- **Import'lar:** dosya uzantısı yazma (TypeScript bundler resolution)
-- **Tip kontrolü:** kod değişikliklerinden sonra `npx tsc --noEmit`
-- **Zorunlu alanlar:** `required.generated.json` XSD'den üretilir; manuel düzenlenmez. Yenilemek için `npm run extract-required`.
-
-Proje yapısı, factory'ler, repeatable gruplar ve mimari kuralları için: [CLAUDE.md](CLAUDE.md).
 
 ## Lisans
 
