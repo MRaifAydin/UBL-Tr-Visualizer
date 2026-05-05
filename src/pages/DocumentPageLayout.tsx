@@ -182,11 +182,6 @@ export default function DocumentPageLayout({ title }: DocumentPageLayoutProps) {
           </div>
 
           <div className="flex items-center gap-2">
-            {safeMode && validationErrors.length > 0 && (
-              <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-red-100 text-red-700 border border-red-200">
-                {validationErrors.length} eksik alan
-              </span>
-            )}
             <input
               ref={fileInputRef}
               type="file"
@@ -203,7 +198,7 @@ export default function DocumentPageLayout({ title }: DocumentPageLayoutProps) {
             <button
               onClick={triggerFileSelect}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors
-                bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+                bg-green-600 text-white hover:bg-green-700"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm10.707-7.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V17a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clipRule="evenodd" />

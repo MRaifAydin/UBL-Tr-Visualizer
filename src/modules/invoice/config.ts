@@ -126,9 +126,12 @@ function makePartyItems(prefix: string, base: string[]): GroupItem[] {
     { fieldId: `${prefix}-website`,       label: 'Web Sitesi',    path: [...base, 'cbc:WebsiteURI'],                 attr: 'value' },
     { fieldId: `${prefix}-endpoint`,      label: 'EndpointID',    path: [...base, 'cbc:EndpointID'],                 attr: 'value', disabled: true },
     { fieldId: `${prefix}-industry-code`, label: 'Faaliyet Kodu', path: [...base, 'cbc:IndustryClassificationCode'], attr: 'value' },
-    { fieldId: `${prefix}-party-id`, label: 'Kimlik Bilgisi', path: [...base, 'cac:PartyIdentification'],
-      attr: 'value', type: 'duration-measure', attrKey: 'schemeID',
-      options: [{ value: 'TCKN', label: 'Kimlik Numarası' }, { value: 'VKN', label: 'Vergi Numarası' }] },
+    { title: 'Kimlik Bilgisi', wrap: true, repeatable: true, instanceMarker: 'cac:PartyIdentification', addLabel: 'Yeni Kimlik Bilgisi Ekle',
+      fields: [
+        { fieldId: `${prefix}-party-id`, label: 'Kimlik Numarası', path: [...base, 'cac:PartyIdentification', 'cbc:ID'],
+          attr: 'value', type: 'duration-measure', attrKey: 'schemeID',
+          options: [{ value: 'VKN', label: 'Vergi Kimlik Numarası' }, { value: 'TCKN', label: 'T.C. Kimlik Numarası' }] },
+      ] },
     { fieldId: `${prefix}-party-name`, label: 'Kurum İsmi', path: [...base, 'cac:PartyName', 'cbc:Name'], attr: 'value' },
     makeAddressGroup(`${prefix}-postal`, [...base, 'cac:PostalAddress']),
     { title: 'Depo Bilgisi', wrap: true,
@@ -144,7 +147,34 @@ function makePartyItems(prefix: string, base: string[]): GroupItem[] {
         { fieldId: `${prefix}-tax-scheme-name`, label: 'Vergi Dairesi Adı', path: [...base, 'cac:PartyTaxScheme', 'cac:TaxScheme', 'cbc:Name'],        attr: 'value' },
         { fieldId: `${prefix}-tax-scheme-type`, label: 'Vergi Tipi Kodu',   path: [...base, 'cac:PartyTaxScheme', 'cac:TaxScheme', 'cbc:TaxTypeCode'], attr: 'value', disabled: true },
       ]}] },
-    { fieldId: `${prefix}-other-reg`, label: 'Diğer Kayıtlı Olduğu Yerler', path: [], attr: 'value', disabled: true },
+    { title: 'Taraf Sicil Bilgileri', wrap: true, repeatable: true, instanceMarker: 'cac:PartyLegalEntity', addLabel: 'Yeni Sicil Bilgisi Ekle',
+      fields: [
+        { fieldId: `${prefix}-legal-name`,       label: 'Kayıt İsmi',        path: [...base, 'cac:PartyLegalEntity', 'cbc:RegistrationName'],            attr: 'value' },
+        { fieldId: `${prefix}-legal-company`,    label: 'Kayıt Numarası',    path: [...base, 'cac:PartyLegalEntity', 'cbc:CompanyID'],                   attr: 'value' },
+        { fieldId: `${prefix}-legal-date`,       label: 'Kayıt Tarihi',      path: [...base, 'cac:PartyLegalEntity', 'cbc:RegistrationDate'],            attr: 'value', type: 'date' },
+        { fieldId: `${prefix}-legal-sole`,       label: 'Şahıs Şirketi mi?', path: [...base, 'cac:PartyLegalEntity', 'cbc:SoleProprietorshipIndicator'], attr: 'value', type: 'select', options: [{ value: 'true', label: 'Evet' }, { value: 'false', label: 'Hayır' }] },
+        { fieldId: `${prefix}-legal-stock`,      label: 'Ödenmiş Sermaye',   path: [...base, 'cac:PartyLegalEntity', 'cbc:CorporateStockAmount'],        attr: 'value', type: 'duration-measure', attrKey: 'currencyID', options: CURRENCY_OPTIONS },
+        { fieldId: `${prefix}-legal-fully-paid`, label: 'Halka Açık mı?',    path: [...base, 'cac:PartyLegalEntity', 'cbc:FullyPaidSharesIndicator'],    attr: 'value', type: 'select', options: [{ value: 'true', label: 'Evet' }, { value: 'false', label: 'Hayır' }] },
+      ],
+      subgroups: [
+        { title: 'Ticaret Sicili', wrap: true,
+          fields: [
+            { fieldId: `${prefix}-legal-corp-name`, label: 'Ticaret Odası', path: [...base, 'cac:PartyLegalEntity', 'cac:CorporateRegistrationScheme', 'cbc:Name'], attr: 'value' },
+          ],
+          subgroups: [
+            makeAddressGroup(`${prefix}-legal-corp-jur`, [...base, 'cac:PartyLegalEntity', 'cac:CorporateRegistrationScheme', 'cac:JurisdictionRegionAddress']),
+          ],
+        },
+        { title: 'Merkez Bilgisi', wrap: true,
+          fields: [
+            { fieldId: `${prefix}-legal-head-id`,   label: 'Kimlik Numarası', path: [...base, 'cac:PartyLegalEntity', 'cac:HeadOfficeParty', 'cac:PartyIdentification', 'cbc:ID'], attr: 'value', type: 'duration-measure', attrKey: 'schemeID', options: [{ value: 'VKN', label: 'Vergi Kimlik Numarası' }, { value: 'TCKN', label: 'T.C. Kimlik Numarası' }] },
+            { fieldId: `${prefix}-legal-head-name`, label: 'Kurum İsmi',      path: [...base, 'cac:PartyLegalEntity', 'cac:HeadOfficeParty', 'cac:PartyName', 'cbc:Name'],         attr: 'value' },
+          ],
+          subgroups: [
+            makeAddressGroup(`${prefix}-legal-head-addr`, [...base, 'cac:PartyLegalEntity', 'cac:HeadOfficeParty', 'cac:PostalAddress']),
+          ],
+        },
+      ] },
     { title: 'İletişim', wrap: true,
       fields: [
         { fieldId: `${prefix}-contact-id`,    label: 'Id',               path: [...base, 'cac:Contact', 'cbc:ID'],             attr: 'value' },

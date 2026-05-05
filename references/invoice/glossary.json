@@ -17,5 +17,15 @@
   "cbc:Percent": "Vergi Oranı",
   "cbc:BaseUnitMeasure": "Birim Ölçü",
   "cbc:TaxExemptionReasonCode": "Vergi Muafiyet Nedeni Kodu",
-  "cbc:TaxExemptionReason": "Vergi Muafiyet Nedeni"
+  "cbc:TaxExemptionReason": "Vergi Muafiyet Nedeni",
+  "cac:PartyIdentification": "Kimlik Bilgisi",
+  "cac:PartyLegalEntity": "Taraf Sicil Bilgileri",
+  "cac:CorporateRegistrationScheme": "Ticaret Sicili",
+  "cac:HeadOfficeParty": "Merkez Bilgisi",
+  "cbc:RegistrationName": "Kayıt İsmi",
+  "cbc:CompanyID": "Kayıt Numarası",
+  "cbc:RegistrationDate": "Kayıt Tarihi",
+  "cbc:SoleProprietorshipIndicator": "Şahıs Şirketi Göstergesi",
+  "cbc:CorporateStockAmount": "Ödenmiş Sermaye",
+  "cbc:FullyPaidSharesIndicator": "Halka Açıklık Göstergesi"
 }
