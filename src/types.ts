@@ -100,6 +100,9 @@ export interface DocumentContextValue {
   validationErrors: ValidationError[]
   validateRequired: () => ValidationError[]
   clearValidationErrors: () => void
+  loadTree: (tree: Tree, extraOptions?: Record<string, SelectOption[]>) => void
+  loadCounter: number
+  extraOptions: Record<string, SelectOption[]>
 }
 
 export function isFieldDefinition(item: GroupItem): item is FieldDefinition {

@@ -97,7 +97,7 @@ function FieldInput({ fieldId, label, path, attr, wide, fill, disabled, required
 }
 
 function SearchableSelect({ fieldId, label, path, attr, options, wide, fill, required, _order }: FieldProps) {
-  const { tree, activeFieldId, setActiveFieldId, updateField, safeMode, validationErrors } = useDocument()
+  const { tree, activeFieldId, setActiveFieldId, updateField, safeMode, validationErrors, extraOptions } = useDocument()
   const currentValue = findNodeById(tree, fieldId)?.value ?? ''
   const isActive = activeFieldId === fieldId
   const hasError = validationErrors.some((e) => e.fieldId === fieldId)
@@ -108,7 +108,7 @@ function SearchableSelect({ fieldId, label, path, attr, options, wide, fill, req
   const containerRef = useRef<HTMLDivElement | null>(null)
 
   const w = fill ? 'w-full' : wide ? 'w-48' : 'w-36'
-  const opts: SelectOption[] = options ?? []
+  const opts: SelectOption[] = [...(options ?? []), ...(extraOptions[fieldId] ?? [])]
   const selectedLabel = opts.find((o) => o.value === currentValue)?.label ?? currentValue
 
   const filtered = opts.filter(
@@ -614,7 +614,7 @@ function DurationMeasureInput({
   attrKey = 'unitCode',
   _order,
 }: FieldProps) {
-  const { tree, activeFieldId, setActiveFieldId, updateField, safeMode, validationErrors } = useDocument()
+  const { tree, activeFieldId, setActiveFieldId, updateField, safeMode, validationErrors, extraOptions } = useDocument()
   const node = findNodeById(tree, fieldId)
   const storedAmount = node?.value ?? ''
   const storedUnit = node?.attr?.[attrKey] ?? ''
@@ -622,7 +622,7 @@ function DurationMeasureInput({
   const isActive = activeFieldId === fieldId
   const hasError = validationErrors.some((e) => e.fieldId === fieldId)
   const showStar = safeMode && required
-  const opts: SelectOption[] = options ?? []
+  const opts: SelectOption[] = [...(options ?? []), ...(extraOptions[fieldId] ?? [])]
 
   const displayUnit = storedUnit || localUnit
   const displayAmount = storedAmount

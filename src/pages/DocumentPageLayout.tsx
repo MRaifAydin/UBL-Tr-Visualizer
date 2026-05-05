@@ -1,9 +1,12 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useDocument } from '../context/DocumentContext'
 import { treeToXml } from '../core/xmlSerializer'
+import { parseXmlToTree } from '../core/xmlParser'
 import FieldForm from '../components/FieldForm'
 import XMLNode from '../components/XMLNode'
 import type { ModuleConfig, Tree } from '../types'
+
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024
 
 function downloadXml(tree: Tree, config: ModuleConfig, docType: string) {
   const xml = treeToXml(tree, config.rootTag, config.rootAttributes, config.rootStaticPrefix)
@@ -46,8 +49,12 @@ export default function DocumentPageLayout({ title }: DocumentPageLayoutProps) {
     toggleSafeMode,
     validationErrors,
     validateRequired,
+    loadTree,
+    loadCounter,
   } = useDocument()
   const [collapseSignal, setCollapseSignal] = useState(0)
+  const [unknownPaths, setUnknownPaths] = useState<string[]>([])
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const rootNodes = tree.children ? Object.values(tree.children) : []
   const hasRoot = rootNodes.length > 0
@@ -62,6 +69,38 @@ export default function DocumentPageLayout({ title }: DocumentPageLayoutProps) {
       }
     }
     downloadXml(tree, config, docType)
+  }
+
+  async function handleUpload(file: File) {
+    if (file.size > MAX_UPLOAD_BYTES) {
+      window.alert('Dosya çok büyük. En fazla 5 MB boyutunda bir XML yükleyebilirsiniz.')
+      return
+    }
+    if (hasContent) {
+      const ok = window.confirm(
+        'Mevcut form verileri yüklenen XML ile değiştirilecek. Devam edilsin mi?',
+      )
+      if (!ok) return
+    }
+    let xmlString: string
+    try {
+      xmlString = await file.text()
+    } catch {
+      window.alert('Dosya okunamadı.')
+      return
+    }
+    try {
+      const result = parseXmlToTree(xmlString, config)
+      loadTree(result.tree, result.extraOptions)
+      setUnknownPaths(result.unknownPaths)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Bilinmeyen bir hata oluştu.'
+      window.alert(`XML yüklenemedi: ${message}`)
+    }
+  }
+
+  function triggerFileSelect() {
+    fileInputRef.current?.click()
   }
 
   return (
@@ -109,7 +148,7 @@ export default function DocumentPageLayout({ title }: DocumentPageLayoutProps) {
           </div>
         </div>
         <div className="flex-1 overflow-y-auto p-4">
-          <FieldForm />
+          <FieldForm key={loadCounter} />
         </div>
       </aside>
 
@@ -148,6 +187,29 @@ export default function DocumentPageLayout({ title }: DocumentPageLayoutProps) {
                 {validationErrors.length} eksik alan
               </span>
             )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".xml,application/xml,text/xml"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (file) {
+                  void handleUpload(file)
+                }
+                e.target.value = ''
+              }}
+            />
+            <button
+              onClick={triggerFileSelect}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors
+                bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm10.707-7.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V17a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clipRule="evenodd" />
+              </svg>
+              XML Yükle
+            </button>
             <button
               onClick={handleDownload}
               disabled={!hasContent}
@@ -162,6 +224,26 @@ export default function DocumentPageLayout({ title }: DocumentPageLayoutProps) {
             </button>
           </div>
         </header>
+
+        {unknownPaths.length > 0 && (
+          <div className="bg-amber-50 border-b border-amber-200 px-5 py-2 text-xs text-amber-800 flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="font-medium mb-0.5">
+                Yüklenen XML'de tanınmayan {unknownPaths.length} öğe atlandı:
+              </p>
+              <p className="font-mono text-[11px] text-amber-700 break-all">
+                {unknownPaths.join(', ')}
+              </p>
+            </div>
+            <button
+              onClick={() => setUnknownPaths([])}
+              title="Kapat"
+              className="shrink-0 text-amber-600 hover:text-amber-900 leading-none px-1"
+            >
+              ✕
+            </button>
+          </div>
+        )}
 
         <div className="flex-1 overflow-y-auto p-5">
           {!hasRoot ? (
