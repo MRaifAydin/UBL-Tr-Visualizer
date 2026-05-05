@@ -10,6 +10,7 @@
  *   `promptUser: false` → modal açmadan doğrudan uygular (ileride YTB gibi senaryolar için).
  */
 import type { FieldDefinition } from '../../types'
+import scenariosData from './scenarios.generated.json'
 
 export type FieldDefaultValue = string | (() => string)
 
@@ -196,6 +197,32 @@ export const invoiceGroupDefaults: GroupDefaults[] = [
  */
 export const invoiceExcludedGroups: string[] = ['UBL Eklentileri', 'Mali Mühür-İmza']
 
+/**
+ * `/senaryo-ekle` skill'inin ürettiği profil bazlı senaryolar.
+ * Schematron + örnek XML'den çıkarılan profil-özgü zorunlu alanlar ve tipik
+ * değerler `scenarios.generated.json` üzerinden okunur ve FillScenario'ya
+ * dönüştürülür. ProfileID otomatik olarak fieldOverrides'a eklenir.
+ */
+interface GeneratedProfile {
+  profileId: string
+  label: string
+  description?: string
+  fieldOverrides: Record<string, string>
+  groupTitles?: string[] | null
+}
+
+const profileScenarios: FillScenario[] = (
+  (scenariosData.profiles ?? []) as GeneratedProfile[]
+).map((p) => ({
+  id: `profile-${p.profileId.toLowerCase()}`,
+  label: p.label,
+  description: p.description ?? `${p.label} profili için tipik değerlerle örnek belge.`,
+  promptUser: false,
+  kind: 'scenario',
+  groupTitles: p.groupTitles ?? undefined,
+  fieldOverrides: { 'invoice-profile-id': p.profileId, ...p.fieldOverrides },
+}))
+
 export const invoiceFillScenarios: FillScenario[] = [
   {
     id: 'all',
@@ -213,6 +240,7 @@ export const invoiceFillScenarios: FillScenario[] = [
     kind: 'scenario',
     requiredOnly: true,
   },
+  ...profileScenarios,
 ]
 
 /**

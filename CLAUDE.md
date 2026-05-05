@@ -132,16 +132,20 @@ Bazı UBL yapıları aynı belgede birden fazla kez yer alır (örn. `cac:PartyI
 - `<select>` alanlarına gelen tanımsız değerler `extraOptions`'a eklenir; FieldForm bu ekstraları normal seçenekler gibi sunar (veri kaybı olmaz).
 - `loadCounter` artırılır; `FieldForm` bunu `key` olarak kullanarak iç state'ini sıfırlar.
 
-## Referans dökümanlar ve `/alan-ekle` skill'i
+## Referans dökümanlar ve skill'ler (`/alan-ekle`, `/senaryo-ekle`)
 
-XSD ve PDF kılavuzları `references/` klasörü altında modül-bazlı tutulur:
+XSD, PDF, Schematron ve örnek XML dosyaları `references/` klasörü altında modül-bazlı tutulur:
 
 ```
 references/
   shared/glossary.json            — modüller arası ortak terim sözlüğü (commit edilir)
   <modül>/xsd/                    — XSD dosyaları (gitignore'lu)
   <modül>/pdf/                    — kılavuz PDF'leri (gitignore'lu)
+  <modül>/schematron/             — Schematron .sch dosyaları (gitignore'lu)
+  <modül>/samples/                — Profil bazlı örnek XML'ler (gitignore'lu)
   <modül>/glossary.json           — modüle özgü terim sözlüğü (commit edilir)
 ```
 
-Yeni alan eklemek için `/alan-ekle` skill'i kullanılır. Skill XSD'yi parse eder, mevcut factory'leri (yukarıdaki liste — `makeAddressGroup`, `makePartyItems`, `makePartyGroup`, `makeDocumentReferenceGroup`, `makeExchangeRateGroup`, `makeTaxTotalGroup`, `makeAllowanceChargeGroup`, `makeDeliveryGroup`) tanır, glossary'yi günceller, önce öneri sunar, onay sonrası `config.ts`'i değiştirir. Klasör yoksa skill ilk kullanımda kullanıcıyı yönlendirerek oluşturur.
+**`/alan-ekle`** — Yeni alan eklemek için kullanılır. XSD'yi parse eder, mevcut factory'leri (yukarıdaki liste — `makeAddressGroup`, `makePartyItems`, `makePartyGroup`, `makeDocumentReferenceGroup`, `makeExchangeRateGroup`, `makeTaxTotalGroup`, `makeAllowanceChargeGroup`, `makeDeliveryGroup`) tanır, glossary'yi günceller, önce öneri sunar, onay sonrası `config.ts`'i değiştirir. Klasör yoksa skill ilk kullanımda kullanıcıyı yönlendirerek oluşturur.
+
+**`/senaryo-ekle`** — Profil bazlı doldurma senaryoları (TEMELFATURA, TICARIFATURA, IHRACAT vb.) eklemek için kullanılır. `references/<modül>/schematron/` altındaki .sch dosyalarından profil-spesifik zorunlu alanları, `references/<modül>/samples/` altındaki örnek XML'lerden ise tipik değerleri çıkarır; sonucu `src/modules/<modül>/scenarios.generated.json`'a yazar. `defaults.ts` bu JSON'u `invoiceFillScenarios` dizisine merge eder; `ScenarioListModal` yeni profilleri otomatik listeler. Argümansız çağrıldığında tüm profilleri toplu işler, `/senaryo-ekle TICARIFATURA` gibi argüman verilirse o tek profile odaklanır.

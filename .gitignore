@@ -135,9 +135,11 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
-# Referans dökümanlar (XSD/PDF). glossary.json commit edilir.
+# Referans dökümanlar (XSD/PDF/Schematron/örnek XML). glossary.json commit edilir.
 references/*/xsd/
 references/*/pdf/
+references/*/schematron/
+references/*/samples/
 
 # macOS
 .DS_Store
