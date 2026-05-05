@@ -10,6 +10,7 @@
     "extract-required": "tsx scripts/extractRequiredFromXsd.ts"
   },
   "dependencies": {
+    "dexie": "^4.4.2",
     "react": "^19.2.5",
     "react-dom": "^19.2.5"
   },

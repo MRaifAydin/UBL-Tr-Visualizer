@@ -1,13 +1,22 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useDocument } from '../context/DocumentContext'
 import { treeToXml } from '../core/xmlSerializer'
 import { parseXmlToTree } from '../core/xmlParser'
 import { applyFieldUpdate } from '../core/treeManager'
+import {
+  findUniqueName,
+  listExistingNames,
+  saveHistoryEntry,
+  type HistoryEntry,
+} from '../core/historyDb'
+import { generateHistoryName } from '../core/historyName'
 import FieldForm from '../components/FieldForm'
 import XMLNode from '../components/XMLNode'
 import DefaultsModal from '../components/DefaultsModal'
 import FillModeChooserModal from '../components/FillModeChooserModal'
 import ScenarioListModal from '../components/ScenarioListModal'
+import SaveHistoryModal from '../components/SaveHistoryModal'
+import HistoryModal from '../components/HistoryModal'
 import type {
   FieldAttr,
   FieldDefinition,
@@ -157,6 +166,18 @@ export default function DocumentPageLayout({
   const [unknownPaths, setUnknownPaths] = useState<string[]>([])
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
+  const [saveModalOpen, setSaveModalOpen] = useState(false)
+  const [saveModalDefaultName, setSaveModalDefaultName] = useState('')
+  const [saveModalExistingNames, setSaveModalExistingNames] = useState<Set<string>>(new Set())
+  const [historyModalOpen, setHistoryModalOpen] = useState(false)
+  const [savedBanner, setSavedBanner] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!savedBanner) return
+    const t = setTimeout(() => setSavedBanner(null), 2000)
+    return () => clearTimeout(t)
+  }, [savedBanner])
+
   const rootNodes = tree.children ? Object.values(tree.children) : []
   const hasRoot = rootNodes.length > 0
   const hasContent = hasRoot && Object.keys(rootNodes[0]?.children || {}).length > 0
@@ -202,6 +223,70 @@ export default function DocumentPageLayout({
 
   function triggerFileSelect() {
     fileInputRef.current?.click()
+  }
+
+  async function handleOpenSaveModal() {
+    const xml = treeToXml(tree, config.rootTag, config.rootAttributes, config.rootStaticPrefix)
+    if (!xml) return
+    const baseName = generateHistoryName(tree, config.rootTag)
+    try {
+      const [unique, existing] = await Promise.all([
+        findUniqueName(docType, baseName),
+        listExistingNames(docType),
+      ])
+      setSaveModalDefaultName(unique)
+      setSaveModalExistingNames(existing)
+      setSaveModalOpen(true)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Bilinmeyen bir hata oluştu.'
+      window.alert(`Geçmiş okunamadı: ${message}`)
+    }
+  }
+
+  async function handleConfirmSave(name: string) {
+    const xml = treeToXml(tree, config.rootTag, config.rootAttributes, config.rootStaticPrefix)
+    if (!xml) {
+      setSaveModalOpen(false)
+      return
+    }
+    try {
+      await saveHistoryEntry({
+        docType,
+        name,
+        xml,
+        createdAt: Date.now(),
+      })
+      setSaveModalOpen(false)
+      setSavedBanner(name)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Bilinmeyen bir hata oluştu.'
+      window.alert(`Geçmişe kaydedilemedi: ${message}`)
+    }
+  }
+
+  async function handleOpenHistoryEntry(entry: HistoryEntry) {
+    if (hasContent) {
+      const ok = window.confirm(
+        'Mevcut form verileri seçilen kayıt ile değiştirilecek. Devam edilsin mi?',
+      )
+      if (!ok) return
+    }
+    setHistoryModalOpen(false)
+    setFilling(true)
+    // İki rAF: overlay'in DOM'a basılması için handleConfirmFill ile aynı pattern.
+    await new Promise<void>((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+    )
+    try {
+      const result = parseXmlToTree(entry.xml, config)
+      loadTree(result.tree, result.extraOptions)
+      setUnknownPaths(result.unknownPaths)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Bilinmeyen bir hata oluştu.'
+      window.alert(`Belge yüklenemedi: ${message}`)
+    } finally {
+      setFilling(false)
+    }
   }
 
   function readValueAtPath(path: string[], fieldId: string): string {
@@ -414,19 +499,32 @@ export default function DocumentPageLayout({
               </span>
             )}
           </div>
-          {showFillButton && (
+          <div className="flex items-center gap-2">
             <button
-              onClick={() => setChooserOpen(true)}
-              title="Form alanlarını örnek değerlerle doldurur"
+              onClick={() => setHistoryModalOpen(true)}
+              title="Tarayıcıda kayıtlı belgeleri aç"
               className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors
-                bg-blue-600 text-white hover:bg-blue-700"
+                bg-gray-200 text-gray-700 hover:bg-gray-300"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M9.243 3.03a1 1 0 01.727 1.213L9.53 6h2.94l.56-2.243a1 1 0 111.94.486L14.53 6H17a1 1 0 110 2h-2.97l-1 4H15a1 1 0 110 2h-2.47l-.56 2.242a1 1 0 11-1.94-.485L10.47 14H7.53l-.56 2.242a1 1 0 11-1.94-.485L5.47 14H3a1 1 0 110-2h2.97l1-4H5a1 1 0 110-2h2.47l.56-2.243a1 1 0 011.213-.727zM9.03 8l-1 4h2.94l1-4H9.03z" clipRule="evenodd" />
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .2.08.39.22.53l3 3a.75.75 0 101.06-1.06L10.75 9.69V5z" clipRule="evenodd" />
               </svg>
-              Varsayılanları Doldur
+              Geçmiş
             </button>
-          )}
+            {showFillButton && (
+              <button
+                onClick={() => setChooserOpen(true)}
+                title="Form alanlarını örnek değerlerle doldurur"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors
+                  bg-blue-600 text-white hover:bg-blue-700"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M9.243 3.03a1 1 0 01.727 1.213L9.53 6h2.94l.56-2.243a1 1 0 111.94.486L14.53 6H17a1 1 0 110 2h-2.97l-1 4H15a1 1 0 110 2h-2.47l-.56 2.242a1 1 0 11-1.94-.485L10.47 14H7.53l-.56 2.242a1 1 0 11-1.94-.485L5.47 14H3a1 1 0 110-2h2.97l1-4H5a1 1 0 110-2h2.47l.56-2.243a1 1 0 011.213-.727zM9.03 8l-1 4h2.94l1-4H9.03z" clipRule="evenodd" />
+                </svg>
+                Varsayılanları Doldur
+              </button>
+            )}
+          </div>
         </div>
         <div className="flex-1 overflow-y-auto p-4">
           <FieldForm key={loadCounter} />
@@ -477,6 +575,19 @@ export default function DocumentPageLayout({
               }}
             />
             <button
+              onClick={() => void handleOpenSaveModal()}
+              disabled={!hasContent}
+              title="Mevcut belgeyi tarayıcı geçmişine kaydet"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors
+                bg-amber-500 text-white hover:bg-amber-600
+                disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-3-5 3V4z" />
+              </svg>
+              Geçmişe Kaydet
+            </button>
+            <button
               onClick={triggerFileSelect}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors
                 bg-green-600 text-white hover:bg-green-700"
@@ -500,6 +611,21 @@ export default function DocumentPageLayout({
             </button>
           </div>
         </header>
+
+        {savedBanner && (
+          <div className="bg-green-50 border-b border-green-200 px-5 py-2 text-xs text-green-800 flex items-center justify-between gap-3">
+            <p>
+              <span className="font-medium">"{savedBanner}"</span> geçmişe kaydedildi.
+            </p>
+            <button
+              onClick={() => setSavedBanner(null)}
+              title="Kapat"
+              className="shrink-0 text-green-600 hover:text-green-900 leading-none px-1"
+            >
+              ✕
+            </button>
+          </div>
+        )}
 
         {unknownPaths.length > 0 && (
           <div className="bg-amber-50 border-b border-amber-200 px-5 py-2 text-xs text-amber-800 flex items-start justify-between gap-3">
@@ -566,6 +692,25 @@ export default function DocumentPageLayout({
         onCancel={() => setActiveScenario(null)}
         onConfirm={(titles, overwrite) => {
           void handleConfirmFill(titles, overwrite)
+        }}
+      />
+
+      <SaveHistoryModal
+        open={saveModalOpen}
+        defaultName={saveModalDefaultName}
+        existingNames={saveModalExistingNames}
+        onCancel={() => setSaveModalOpen(false)}
+        onConfirm={(name) => {
+          void handleConfirmSave(name)
+        }}
+      />
+
+      <HistoryModal
+        open={historyModalOpen}
+        docType={docType}
+        onCancel={() => setHistoryModalOpen(false)}
+        onOpen={(entry) => {
+          void handleOpenHistoryEntry(entry)
         }}
       />
 
