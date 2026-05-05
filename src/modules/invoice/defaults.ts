@@ -212,7 +212,7 @@ interface GeneratedProfile {
 }
 
 const profileScenarios: FillScenario[] = (
-  (scenariosData.profiles ?? []) as GeneratedProfile[]
+  (scenariosData.profiles ?? []) as unknown as GeneratedProfile[]
 ).map((p) => ({
   id: `profile-${p.profileId.toLowerCase()}`,
   label: p.label,
