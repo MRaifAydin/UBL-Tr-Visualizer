@@ -33,6 +33,13 @@ function attrsString(attr: TreeNode['attr']): string {
     .join('')
 }
 
+function orderedChildren(node: TreeNode): TreeNode[] {
+  if (!node.children) return []
+  return Object.values(node.children)
+    .filter(hasContent)
+    .sort((a, b) => (a._order ?? Infinity) - (b._order ?? Infinity))
+}
+
 function serializeNode(node: TreeNode, depth: number): string {
   if (!hasContent(node)) return ''
 
@@ -45,7 +52,7 @@ function serializeNode(node: TreeNode, depth: number): string {
   const pad = '  '.repeat(depth)
   const attrs = attrsString(node.attr)
 
-  const children = node.children ? Object.values(node.children).filter(hasContent) : []
+  const children = orderedChildren(node)
 
   if (children.length > 0) {
     const inner = children
@@ -77,7 +84,7 @@ export function treeToXml(
   if (!rootNode || !hasContent(rootNode)) return ''
 
   const rootAttrs = attrsString(rootAttributes)
-  const childNodes = rootNode.children ? Object.values(rootNode.children).filter(hasContent) : []
+  const childNodes = orderedChildren(rootNode)
   const dynamicBody = childNodes
     .map((child) => serializeNode(child, 1))
     .filter(Boolean)

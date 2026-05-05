@@ -23,6 +23,26 @@ export function findOrCreateNodeById(
   return newTree
 }
 
+/**
+ * `findOrCreateNodeById`'nin in-place (mutating) varyantı. Verilen tree'yi
+ * doğrudan değiştirir, klon yapmaz. Toplu doldurma (bulk fill) senaryolarında
+ * tek bir `structuredClone` üzerinde defalarca çağrılarak O(N²) klonlama
+ * maliyetinden kaçınmak için kullanılır.
+ *
+ * Tek alan güncellemesi için `findOrCreateNodeById`'yi kullan — o saf bir
+ * şekilde klon döndürür.
+ */
+export function applyFieldUpdate(
+  tree: Tree,
+  fieldId: string,
+  path: string[],
+  value: string,
+  attr: FieldAttr | undefined,
+  order = 0,
+): void {
+  _traverse(tree as TreeNode, fieldId, path, value, attr, order, 0)
+}
+
 function _traverse(
   node: TreeNode,
   fieldId: string,

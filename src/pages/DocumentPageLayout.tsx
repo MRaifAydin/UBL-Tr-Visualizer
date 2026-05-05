@@ -1,10 +1,22 @@
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useDocument } from '../context/DocumentContext'
 import { treeToXml } from '../core/xmlSerializer'
 import { parseXmlToTree } from '../core/xmlParser'
+import { applyFieldUpdate } from '../core/treeManager'
 import FieldForm from '../components/FieldForm'
 import XMLNode from '../components/XMLNode'
-import type { ModuleConfig, Tree } from '../types'
+import DefaultsModal from '../components/DefaultsModal'
+import type {
+  FieldAttr,
+  FieldDefinition,
+  FieldGroupConfig,
+  GroupItem,
+  ModuleConfig,
+  Tree,
+} from '../types'
+import { isFieldDefinition } from '../types'
+import type { FillScenario, GroupDefaults } from '../modules/invoice/defaults'
+import { autoFieldDefault } from '../modules/invoice/defaults'
 
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024
 
@@ -36,9 +48,80 @@ function scrollToFieldId(fieldId: string) {
 
 interface DocumentPageLayoutProps {
   title: string
+  /** Field-level override haritaları (override katmanı). Eksik field'lar autoFieldDefault ile dolar. */
+  groupDefaults?: GroupDefaults[]
+  /** "Tümünü Doldur" listesinde gösterilmeyecek üst-seviye grup başlıkları (teknik bloklar). */
+  excludedGroups?: string[]
+  fillScenarios?: FillScenario[]
 }
 
-export default function DocumentPageLayout({ title }: DocumentPageLayoutProps) {
+/**
+ * Senaryo doldurma için hazırlanmış field. `field` tree'ye yazılırken
+ * kullanılacak hâlidir (path'te `marker#0`, fieldId'de marker sayısı kadar
+ * `--0` suffix). `originalFieldId` ise override haritalarında lookup için
+ * orijinal fieldId'dir.
+ *
+ * Suffix gerekçesi: `RepeatableFieldGroup` runtime'da input'ların fieldId'sine
+ * her geçtiği repeatable için bir `--idx` ekliyor (rewriteField). Input değeri
+ * `findNodeById(tree, suffix'li fieldId)` ile aranıyor — tree'ye orijinal
+ * fieldId ile yazarsak input boş kalır.
+ */
+interface PreparedField {
+  field: FieldDefinition
+  originalFieldId: string
+}
+
+function collectGroupFields(
+  group: FieldGroupConfig,
+  activeMarkers: string[] = [],
+): PreparedField[] {
+  const markers =
+    group.repeatable && group.instanceMarker
+      ? [...activeMarkers, group.instanceMarker]
+      : activeMarkers
+
+  const markerSet = new Set(markers)
+  const suffix = '--0'.repeat(markers.length)
+  const out: PreparedField[] = []
+
+  function pushField(field: FieldDefinition) {
+    if (markers.length === 0) {
+      out.push({ field, originalFieldId: field.fieldId })
+      return
+    }
+    const newPath = field.path.map((seg) => (markerSet.has(seg) ? `${seg}#0` : seg))
+    out.push({
+      field: { ...field, path: newPath, fieldId: field.fieldId + suffix },
+      originalFieldId: field.fieldId,
+    })
+  }
+
+  function walkItems(items: GroupItem[]) {
+    for (const item of items) {
+      if (isFieldDefinition(item)) pushField(item)
+      else out.push(...collectGroupFields(item, markers))
+    }
+  }
+
+  if (group.fields) {
+    for (const f of group.fields) pushField(f)
+  }
+  if (group.subgroups) {
+    for (const sub of group.subgroups) {
+      out.push(...collectGroupFields(sub, markers))
+    }
+  }
+  if (group.items) walkItems(group.items)
+
+  return out
+}
+
+export default function DocumentPageLayout({
+  title,
+  groupDefaults,
+  excludedGroups,
+  fillScenarios,
+}: DocumentPageLayoutProps) {
   const {
     docType,
     tree,
@@ -51,7 +134,21 @@ export default function DocumentPageLayout({ title }: DocumentPageLayoutProps) {
     validateRequired,
     loadTree,
     loadCounter,
+    extraOptions,
   } = useDocument()
+  const [activeScenario, setActiveScenario] = useState<FillScenario | null>(null)
+  const [filling, setFilling] = useState(false)
+  const treeRef = useRef(tree)
+  treeRef.current = tree
+
+  // Modal listesinde gösterilecek başlıklar: tüm config grupları, excluded hariç.
+  const availableGroupTitles = useMemo(
+    () =>
+      config.fieldGroups
+        .map((g) => g.title)
+        .filter((t) => !excludedGroups?.includes(t)),
+    [config, excludedGroups],
+  )
   const [collapseSignal, setCollapseSignal] = useState(0)
   const [unknownPaths, setUnknownPaths] = useState<string[]>([])
   const fileInputRef = useRef<HTMLInputElement | null>(null)
@@ -103,6 +200,137 @@ export default function DocumentPageLayout({ title }: DocumentPageLayoutProps) {
     fileInputRef.current?.click()
   }
 
+  function readValueAtPath(path: string[], fieldId: string): string {
+    let node = treeRef.current as { children?: Record<string, { value?: string; children?: Record<string, unknown> }> } | undefined
+    for (let i = 0; i < path.length; i++) {
+      const segment = path[i]
+      const isLeaf = i === path.length - 1
+      const children = node?.children
+      if (!children) return ''
+      const key = isLeaf ? `${segment}__${fieldId}` : segment
+      node = children[key] as typeof node
+      if (!node) return ''
+    }
+    return (node as { value?: string } | undefined)?.value ?? ''
+  }
+
+  /**
+   * Senaryoyu tek bir tree klonu üzerinde sıralı `applyFieldUpdate` çağrılarıyla
+   * uygular ve sonunda `loadTree` ile atomik olarak commit'ler. Bu sayede her
+   * field için ayrı `structuredClone` + setState yapılmaz (O(N²) → O(N)).
+   */
+  function applyScenario(
+    scenario: FillScenario,
+    selectedTitles: string[],
+    overwrite: boolean,
+  ) {
+    const workingTree: Tree = structuredClone(treeRef.current)
+
+    for (const title of selectedTitles) {
+      const groupDefault = groupDefaults?.find((g) => g.groupTitle === title)
+      const groupConfig = config.fieldGroups.find((g) => g.title === title)
+      if (!groupConfig) continue
+
+      const prepared = collectGroupFields(groupConfig)
+      const topGroupIdx = config.fieldGroups.findIndex((g) => g.title === title)
+      // RepeatableFieldGroup ile aynı _order taban hesabı: top-level group index'i × 1000.
+      // Yer bulunamazsa diziden sonraya at (groups.length × 1000).
+      const anchorOrder =
+        (topGroupIdx >= 0 ? topGroupIdx : config.fieldGroups.length) * 1000
+
+      prepared.forEach(({ field, originalFieldId }, idx) => {
+        // Override haritalarında orijinal fieldId ile lookup; auto fallback.
+        const entry =
+          scenario.fieldOverrides?.[originalFieldId] ??
+          groupDefault?.values[originalFieldId]
+
+        const value =
+          entry !== undefined
+            ? typeof entry === 'function'
+              ? entry()
+              : entry
+            : autoFieldDefault(field)
+
+        if (value === '') return // disabled field veya hesaplanamadı
+        if (!overwrite && readValueAtPath(field.path, field.fieldId) !== '') return
+
+        // _order: doğal fieldDefinitions index'i varsa onu kullan; repeatable
+        // içindeki field'lar fieldDefinitions'ta olmadığı için anchor + offset.
+        const naturalIdx = config.fieldDefinitions.findIndex(
+          (f) => f.fieldId === originalFieldId,
+        )
+        const order = naturalIdx >= 0 ? naturalIdx : anchorOrder + idx * 0.0001
+
+        // duration-measure: amount + unit attribute; field.attr config'de 'value'
+        // diye gözükse de runtime'da unit'i attr olarak yazmak gerek (FieldForm
+        // de aynısını yapıyor). İlk option default unit olur.
+        let attr: FieldAttr = field.attr
+        if (
+          field.type === 'duration-measure' &&
+          field.attrKey &&
+          field.options?.[0]
+        ) {
+          attr = { [field.attrKey]: field.options[0].value }
+        }
+
+        // Tree'ye render-tarafı (suffix'li) fieldId ile yaz — input bu fieldId
+        // üzerinden findNodeById yaptığı için aksi halde değer ekrana basılmaz.
+        applyFieldUpdate(workingTree, field.fieldId, field.path, value, attr, order)
+      })
+    }
+
+    loadTree(workingTree, extraOptions)
+  }
+
+  /**
+   * Onayla → modal'ı hemen kapat, tam ekran yükleme overlay'ini aç, bir frame
+   * bekleyerek React'e overlay'i çizmesi için fırsat ver, sonra senaryoyu
+   * uygula. Spinner kapanır.
+   */
+  async function handleConfirmFill(titles: string[], overwrite: boolean) {
+    const scenario = activeScenario
+    if (!scenario) return
+    setActiveScenario(null)
+    setFilling(true)
+    // İki rAF: ilki overlay'in DOM'a basılması, ikincisi paint sonrası.
+    await new Promise<void>((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+    )
+    try {
+      applyScenario(scenario, titles, overwrite)
+    } finally {
+      setFilling(false)
+    }
+  }
+
+  function runScenario(scenario: FillScenario) {
+    if (scenario.promptUser) {
+      setActiveScenario(scenario)
+      return
+    }
+    // Sabit senaryo: kendi groupTitles'ı varsa onları, yoksa tüm available'ı kullan.
+    const titles = scenario.groupTitles ?? availableGroupTitles
+    void (async () => {
+      setFilling(true)
+      await new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+      )
+      try {
+        applyScenario(scenario, titles, false)
+      } finally {
+        setFilling(false)
+      }
+    })()
+  }
+
+  function getAvailableTitlesFor(scenario: FillScenario): string[] {
+    if (!scenario.groupTitles) return availableGroupTitles
+    return availableGroupTitles.filter((t) => scenario.groupTitles!.includes(t))
+  }
+
+  // Tek "Tümünü Doldur" butonunu temsil eden senaryo (varsa).
+  const primaryScenario = fillScenarios?.find((s) => s.promptUser) ?? null
+
   return (
     <div className="flex flex-1 min-w-0 overflow-hidden">
 
@@ -146,6 +374,19 @@ export default function DocumentPageLayout({ title }: DocumentPageLayoutProps) {
               </span>
             )}
           </div>
+          {primaryScenario && groupDefaults && (
+            <button
+              onClick={() => runScenario(primaryScenario)}
+              title="Form alanlarını örnek değerlerle doldurur"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors
+                bg-violet-600 text-white hover:bg-violet-700"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M9.243 3.03a1 1 0 01.727 1.213L9.53 6h2.94l.56-2.243a1 1 0 111.94.486L14.53 6H17a1 1 0 110 2h-2.97l-1 4H15a1 1 0 110 2h-2.47l-.56 2.242a1 1 0 11-1.94-.485L10.47 14H7.53l-.56 2.242a1 1 0 11-1.94-.485L5.47 14H3a1 1 0 110-2h2.97l1-4H5a1 1 0 110-2h2.47l.56-2.243a1 1 0 011.213-.727zM9.03 8l-1 4h2.94l1-4H9.03z" clipRule="evenodd" />
+              </svg>
+              Varsayılanları Doldur
+            </button>
+          )}
         </div>
         <div className="flex-1 overflow-y-auto p-4">
           <FieldForm key={loadCounter} />
@@ -261,6 +502,44 @@ export default function DocumentPageLayout({ title }: DocumentPageLayoutProps) {
           )}
         </div>
       </main>
+
+      <DefaultsModal
+        open={activeScenario !== null}
+        scenario={activeScenario}
+        availableGroupTitles={activeScenario ? getAvailableTitlesFor(activeScenario) : []}
+        onCancel={() => setActiveScenario(null)}
+        onConfirm={(titles, overwrite) => {
+          void handleConfirmFill(titles, overwrite)
+        }}
+      />
+
+      {filling && (
+        <div
+          className="fixed inset-0 bg-black/40 z-[60] flex items-center justify-center"
+          // pointer event'leri yutulur — ana sayfa bloklanır
+          onMouseDown={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.stopPropagation()}
+          aria-busy="true"
+          role="alert"
+        >
+          <div className="bg-white rounded-lg shadow-2xl px-6 py-5 flex items-center gap-3">
+            <svg
+              className="animate-spin w-5 h-5 text-blue-600"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+              />
+            </svg>
+            <span className="text-sm text-gray-700">Form alanları dolduruluyor…</span>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
