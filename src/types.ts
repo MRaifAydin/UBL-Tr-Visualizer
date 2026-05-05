@@ -36,7 +36,14 @@ export interface FieldDefinition {
   options?: SelectOption[]
   attrKey?: string
   disabled?: boolean
+  required?: boolean
   _order?: number
+}
+
+export interface ValidationError {
+  fieldId: string
+  label: string
+  path: string[]
 }
 
 export type GroupItem = FieldDefinition | FieldGroupConfig
@@ -81,6 +88,11 @@ export interface DocumentContextValue {
   activeFieldId: string | null
   setActiveFieldId: (id: string | null) => void
   config: ModuleConfig
+  safeMode: boolean
+  toggleSafeMode: () => void
+  validationErrors: ValidationError[]
+  validateRequired: () => ValidationError[]
+  clearValidationErrors: () => void
 }
 
 export function isFieldDefinition(item: GroupItem): item is FieldDefinition {

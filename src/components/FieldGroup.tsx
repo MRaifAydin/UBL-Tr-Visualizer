@@ -1,4 +1,5 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useDocument } from '../context/DocumentContext'
 
 const DEPTH_STYLES = [
   { container: 'bg-white border border-gray-200',          label: 'text-gray-400',    arrow: 'text-gray-400' },
@@ -24,6 +25,7 @@ interface FieldGroupProps {
   defaultOpen?: boolean
   depth?: number
   headerExtra?: ReactNode
+  validationFieldIds?: string[]
 }
 
 export default function FieldGroup({
@@ -35,22 +37,47 @@ export default function FieldGroup({
   defaultOpen = false,
   depth = 0,
   headerExtra,
+  validationFieldIds,
 }: FieldGroupProps) {
   const [open, setOpen] = useState(defaultOpen)
+  const { validationErrors } = useDocument()
+
+  const errorCount = useMemo(() => {
+    if (!validationFieldIds || validationFieldIds.length === 0) return 0
+    const idSet = new Set(validationFieldIds)
+    return validationErrors.reduce((n, e) => (idSet.has(e.fieldId) ? n + 1 : n), 0)
+  }, [validationErrors, validationFieldIds])
+
+  // Hata sayısı arttığında (yeni validation veya yeni eksik) grubu otomatik aç.
+  // Kullanıcı sonra manuel kapatabilir; aynı sayıda tekrar açma yapılmaz.
+  const prevErrorCount = useRef(0)
+  useEffect(() => {
+    if (errorCount > prevErrorCount.current && collapsible) {
+      setOpen(true)
+    }
+    prevErrorCount.current = errorCount
+  }, [errorCount, collapsible])
+
   const isOpen = !collapsible || open
   const style = DEPTH_STYLES[Math.min(depth, DEPTH_STYLES.length - 1)]
+  const hasError = errorCount > 0
 
   return (
     <div
-      className={`${fullWidth ? 'w-full' : 'w-fit'} ${style.container} rounded-lg p-3 ${collapsible && !isOpen ? 'cursor-pointer select-none' : ''}`}
+      className={`${fullWidth ? 'w-full' : 'w-fit'} ${style.container} rounded-lg p-3 ${collapsible && !isOpen ? 'cursor-pointer select-none' : ''} ${hasError ? 'ring-1 ring-red-300' : ''}`}
       onClick={collapsible && !isOpen ? () => setOpen(true) : undefined}
     >
       <div
         className={`flex items-center justify-between ${collapsible ? 'cursor-pointer select-none' : ''} ${isOpen ? 'mb-3' : ''}`}
         onClick={collapsible ? (e) => { e.stopPropagation(); setOpen((o) => !o) } : undefined}
       >
-        <p className={`text-[10px] font-semibold uppercase tracking-wider ${style.label}`}>
-          {title}
+        <p className={`text-[10px] font-semibold uppercase tracking-wider flex items-center gap-1.5 ${hasError ? 'text-red-600' : style.label}`}>
+          <span>{title}</span>
+          {hasError && (
+            <span className="px-1.5 py-px rounded bg-red-100 text-red-700 border border-red-200 text-[9px] font-bold normal-case tracking-normal">
+              {errorCount} eksik
+            </span>
+          )}
         </p>
         <div className="flex items-center gap-2">
           {headerExtra && (

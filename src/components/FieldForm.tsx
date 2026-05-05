@@ -34,20 +34,23 @@ interface SharedFieldProps {
 
 interface FieldProps extends FieldDefinition, SharedFieldProps {}
 
-function FieldInput({ fieldId, label, path, attr, wide, fill, disabled, _order }: FieldProps) {
-  const { tree, activeFieldId, setActiveFieldId, updateField } = useDocument()
+function FieldInput({ fieldId, label, path, attr, wide, fill, disabled, required, _order }: FieldProps) {
+  const { tree, activeFieldId, setActiveFieldId, updateField, safeMode, validationErrors } = useDocument()
   const currentValue = findNodeById(tree, fieldId)?.value ?? ''
   const isActive = activeFieldId === fieldId && !disabled
+  const hasError = validationErrors.some((e) => e.fieldId === fieldId)
+  const showStar = safeMode && required
   const w = fill ? 'w-full' : wide ? 'w-48' : 'w-36'
 
   return (
-    <div>
+    <div data-field-id={fieldId}>
       <label
         className={`block text-xs font-medium mb-1 transition-colors ${
           isActive ? 'text-blue-600' : 'text-gray-500'
         }`}
       >
         {label}
+        {showStar && <span className="ml-0.5 text-red-500">*</span>}
       </label>
       <div className="relative">
         <input
@@ -61,6 +64,8 @@ function FieldInput({ fieldId, label, path, attr, wide, fill, disabled, _order }
           } ${
             disabled
               ? 'border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed'
+              : hasError
+              ? 'border-red-500 ring-1 ring-red-300 bg-white'
               : isActive
               ? 'border-blue-400 ring-1 ring-blue-300 bg-white'
               : 'border-gray-300 bg-white hover:border-gray-400 focus:border-blue-400 focus:ring-1 focus:ring-blue-300'
@@ -83,10 +88,12 @@ function FieldInput({ fieldId, label, path, attr, wide, fill, disabled, _order }
   )
 }
 
-function SearchableSelect({ fieldId, label, path, attr, options, wide, fill, _order }: FieldProps) {
-  const { tree, activeFieldId, setActiveFieldId, updateField } = useDocument()
+function SearchableSelect({ fieldId, label, path, attr, options, wide, fill, required, _order }: FieldProps) {
+  const { tree, activeFieldId, setActiveFieldId, updateField, safeMode, validationErrors } = useDocument()
   const currentValue = findNodeById(tree, fieldId)?.value ?? ''
   const isActive = activeFieldId === fieldId
+  const hasError = validationErrors.some((e) => e.fieldId === fieldId)
+  const showStar = safeMode && required
 
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
@@ -126,13 +133,14 @@ function SearchableSelect({ fieldId, label, path, attr, options, wide, fill, _or
   }
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} data-field-id={fieldId} className="relative">
       <label
         className={`block text-xs font-medium mb-1 transition-colors ${
           isActive ? 'text-blue-600' : 'text-gray-500'
         }`}
       >
         {label}
+        {showStar && <span className="ml-0.5 text-red-500">*</span>}
       </label>
 
       {open ? (
@@ -149,7 +157,9 @@ function SearchableSelect({ fieldId, label, path, attr, options, wide, fill, _or
           type="button"
           onClick={handleOpen}
           className={`${w} rounded border px-2 py-1 text-xs text-left flex items-center justify-between transition-all ${
-            isActive
+            hasError
+              ? 'border-red-500 ring-1 ring-red-300 bg-white'
+              : isActive
               ? 'border-blue-400 ring-1 ring-blue-300 bg-white'
               : 'border-gray-300 bg-white hover:border-gray-400'
           }`}
@@ -206,10 +216,12 @@ function SearchableSelect({ fieldId, label, path, attr, options, wide, fill, _or
 
 type CalendarView = 'calendar' | 'months' | 'years'
 
-function DatePicker({ fieldId, label, path, attr, wide, fill, _order }: FieldProps) {
-  const { tree, activeFieldId, setActiveFieldId, updateField } = useDocument()
+function DatePicker({ fieldId, label, path, attr, wide, fill, required, _order }: FieldProps) {
+  const { tree, activeFieldId, setActiveFieldId, updateField, safeMode, validationErrors } = useDocument()
   const currentValue = findNodeById(tree, fieldId)?.value ?? ''
   const isActive = activeFieldId === fieldId
+  const hasError = validationErrors.some((e) => e.fieldId === fieldId)
+  const showStar = safeMode && required
 
   const [open, setOpen] = useState(false)
   const [view, setView] = useState<CalendarView>('calendar')
@@ -291,20 +303,23 @@ function DatePicker({ fieldId, label, path, attr, wide, fill, _order }: FieldPro
   const navBtn = 'px-1 py-0.5 rounded hover:bg-gray-100 text-gray-600 leading-none'
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} data-field-id={fieldId} className="relative">
       <label
         className={`block text-xs font-medium mb-1 transition-colors ${
           isActive ? 'text-blue-600' : 'text-gray-500'
         }`}
       >
         {label}
+        {showStar && <span className="ml-0.5 text-red-500">*</span>}
       </label>
 
       <button
         type="button"
         onClick={handleOpen}
         className={`${w} rounded border px-2 py-1 text-xs text-left flex items-center justify-between transition-all ${
-          isActive || open
+          hasError
+            ? 'border-red-500 ring-1 ring-red-300 bg-white'
+            : isActive || open
             ? 'border-blue-400 ring-1 ring-blue-300 bg-white'
             : 'border-gray-300 bg-white hover:border-gray-400'
         }`}
@@ -440,20 +455,23 @@ function DatePicker({ fieldId, label, path, attr, wide, fill, _order }: FieldPro
   )
 }
 
-function NumberInput({ fieldId, label, path, attr, wide, fill, _order }: FieldProps) {
-  const { tree, activeFieldId, setActiveFieldId, updateField } = useDocument()
+function NumberInput({ fieldId, label, path, attr, wide, fill, required, _order }: FieldProps) {
+  const { tree, activeFieldId, setActiveFieldId, updateField, safeMode, validationErrors } = useDocument()
   const currentValue = findNodeById(tree, fieldId)?.value ?? ''
   const isActive = activeFieldId === fieldId
+  const hasError = validationErrors.some((e) => e.fieldId === fieldId)
+  const showStar = safeMode && required
   const w = fill ? 'w-full' : wide ? 'w-48' : 'w-36'
 
   return (
-    <div>
+    <div data-field-id={fieldId}>
       <label
         className={`block text-xs font-medium mb-1 transition-colors ${
           isActive ? 'text-blue-600' : 'text-gray-500'
         }`}
       >
         {label}
+        {showStar && <span className="ml-0.5 text-red-500">*</span>}
       </label>
       <div className="relative">
         <input
@@ -468,7 +486,9 @@ function NumberInput({ fieldId, label, path, attr, wide, fill, _order }: FieldPr
           className={`${w} rounded border px-2 py-1 text-xs outline-none transition-all ${
             currentValue ? 'pr-5' : ''
           } ${
-            isActive
+            hasError
+              ? 'border-red-500 ring-1 ring-red-300 bg-white'
+              : isActive
               ? 'border-blue-400 ring-1 ring-blue-300 bg-white'
               : 'border-gray-300 bg-white hover:border-gray-400 focus:border-blue-400 focus:ring-1 focus:ring-blue-300'
           }`}
@@ -571,15 +591,18 @@ function DurationMeasureInput({
   path,
   options,
   fill,
+  required,
   attrKey = 'unitCode',
   _order,
 }: FieldProps) {
-  const { tree, activeFieldId, setActiveFieldId, updateField } = useDocument()
+  const { tree, activeFieldId, setActiveFieldId, updateField, safeMode, validationErrors } = useDocument()
   const node = findNodeById(tree, fieldId)
   const storedAmount = node?.value ?? ''
   const storedUnit = node?.attr?.[attrKey] ?? ''
   const [localUnit, setLocalUnit] = useState('')
   const isActive = activeFieldId === fieldId
+  const hasError = validationErrors.some((e) => e.fieldId === fieldId)
+  const showStar = safeMode && required
   const opts: SelectOption[] = options ?? []
 
   const displayUnit = storedUnit || localUnit
@@ -615,15 +638,17 @@ function DurationMeasureInput({
   const w = fill ? 'w-full' : 'w-36'
   const borderActive = 'border-blue-400 ring-1 ring-blue-300'
   const borderIdle = 'border-gray-300 hover:border-gray-400'
+  const borderError = 'border-red-500 ring-1 ring-red-300'
 
   return (
-    <div>
+    <div data-field-id={fieldId}>
       <label
         className={`block text-xs font-medium mb-1 transition-colors ${
           isActive ? 'text-blue-600' : 'text-gray-500'
         }`}
       >
         {label}
+        {showStar && <span className="ml-0.5 text-red-500">*</span>}
       </label>
       <div className={`flex ${w}`}>
         <select
@@ -631,7 +656,7 @@ function DurationMeasureInput({
           onChange={(e) => handleUnitChange(e.target.value)}
           onFocus={() => setActiveFieldId(fieldId)}
           className={`w-16 shrink-0 rounded-l border border-r-0 px-1 py-1 text-xs bg-white outline-none appearance-none text-center cursor-pointer transition-all ${
-            isActive ? borderActive : borderIdle
+            hasError ? borderError : isActive ? borderActive : borderIdle
           }`}
         >
           <option value="">—</option>
@@ -648,7 +673,7 @@ function DurationMeasureInput({
             onChange={(e) => handleAmountChange(e.target.value)}
             className={`w-full rounded-r border px-2 py-1 text-xs outline-none transition-all bg-white ${
               hasValue ? 'pr-5' : ''
-            } ${isActive ? borderActive : borderIdle}`}
+            } ${hasError ? borderError : isActive ? borderActive : borderIdle}`}
           />
           {hasValue && (
             <span
@@ -730,10 +755,12 @@ function TimeSpinner({ value, max, onChange, inputRef, nextRef }: TimeSpinnerPro
   )
 }
 
-function TimePicker({ fieldId, label, path, attr, wide, fill, _order }: FieldProps) {
-  const { tree, activeFieldId, setActiveFieldId, updateField } = useDocument()
+function TimePicker({ fieldId, label, path, attr, wide, fill, required, _order }: FieldProps) {
+  const { tree, activeFieldId, setActiveFieldId, updateField, safeMode, validationErrors } = useDocument()
   const currentValue = findNodeById(tree, fieldId)?.value ?? ''
   const isActive = activeFieldId === fieldId
+  const hasError = validationErrors.some((e) => e.fieldId === fieldId)
+  const showStar = safeMode && required
 
   const [open, setOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement | null>(null)
@@ -784,20 +811,23 @@ function TimePicker({ fieldId, label, path, attr, wide, fill, _order }: FieldPro
   }
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} data-field-id={fieldId} className="relative">
       <label
         className={`block text-xs font-medium mb-1 transition-colors ${
           isActive ? 'text-blue-600' : 'text-gray-500'
         }`}
       >
         {label}
+        {showStar && <span className="ml-0.5 text-red-500">*</span>}
       </label>
 
       <button
         type="button"
         onClick={handleOpen}
         className={`${w} rounded border px-2 py-1 text-xs text-left flex items-center justify-between transition-all ${
-          isActive || open
+          hasError
+            ? 'border-red-500 ring-1 ring-red-300 bg-white'
+            : isActive || open
             ? 'border-blue-400 ring-1 ring-blue-300 bg-white'
             : 'border-gray-300 bg-white hover:border-gray-400'
         }`}
@@ -855,6 +885,25 @@ export function renderField(field: FieldDefinition, shared: SharedFieldProps) {
   return <FieldInput key={field.fieldId} {...field} {...shared} />
 }
 
+export function collectFieldIdsInGroup(group: FieldGroupConfig): string[] {
+  const out: string[] = []
+  if (group.fields) {
+    for (const f of group.fields) out.push(f.fieldId)
+  }
+  if (group.items) {
+    for (const item of group.items) {
+      if (isFieldDefinition(item)) out.push(item.fieldId)
+      else if (!item.repeatable) out.push(...collectFieldIdsInGroup(item))
+    }
+  }
+  if (group.subgroups) {
+    for (const sub of group.subgroups) {
+      if (!sub.repeatable) out.push(...collectFieldIdsInGroup(sub))
+    }
+  }
+  return out
+}
+
 function renderItem(item: GroupItem, shared: SharedFieldProps, colSpan: string, childDepth: number) {
   if (isFieldDefinition(item)) {
     return renderField(item, shared)
@@ -868,7 +917,14 @@ function renderItem(item: GroupItem, shared: SharedFieldProps, colSpan: string, 
   }
   return (
     <div key={item.title} className={colSpan}>
-      <FieldGroup title={item.title} wrap={item.wrap} fullWidth collapsible depth={childDepth}>
+      <FieldGroup
+        title={item.title}
+        wrap={item.wrap}
+        fullWidth
+        collapsible
+        depth={childDepth}
+        validationFieldIds={collectFieldIdsInGroup(item)}
+      >
         {renderGroupChildren(item, childDepth)}
       </FieldGroup>
     </div>
@@ -897,7 +953,14 @@ export function renderGroupChildren(group: FieldGroupConfig, depth = 0) {
         }
         return (
           <div key={sub.title} className={colSpan}>
-            <FieldGroup title={sub.title} wrap={sub.wrap} fullWidth collapsible depth={childDepth}>
+            <FieldGroup
+              title={sub.title}
+              wrap={sub.wrap}
+              fullWidth
+              collapsible
+              depth={childDepth}
+              validationFieldIds={collectFieldIdsInGroup(sub)}
+            >
               {renderGroupChildren(sub, childDepth)}
             </FieldGroup>
           </div>
@@ -918,7 +981,14 @@ export default function FieldForm() {
           {group.repeatable ? (
             <RepeatableFieldGroup group={group} depth={0} />
           ) : (
-            <FieldGroup title={group.title} wrap={group.wrap} fullWidth={group.fullWidth} collapsible defaultOpen={!!group.defaultOpen}>
+            <FieldGroup
+              title={group.title}
+              wrap={group.wrap}
+              fullWidth={group.fullWidth}
+              collapsible
+              defaultOpen={!!group.defaultOpen}
+              validationFieldIds={collectFieldIdsInGroup(group)}
+            >
               {renderGroupChildren(group)}
             </FieldGroup>
           )}

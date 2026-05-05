@@ -4,6 +4,33 @@ import type {
   GroupItem,
 } from '../../types'
 import { isFieldDefinition } from '../../types'
+import requiredJson from './required.generated.json'
+
+const REQUIRED_PATHS = new Set<string>(requiredJson.requiredPaths)
+
+function isPathRequired(path: string[]): boolean {
+  return REQUIRED_PATHS.has(path.join('/'))
+}
+
+function markRequiredInGroups(groups: FieldGroupConfig[]): void {
+  for (const group of groups) {
+    if (group.fields) {
+      for (const field of group.fields) {
+        if (isPathRequired(field.path)) field.required = true
+      }
+    }
+    if (group.items) {
+      for (const item of group.items) {
+        if (isFieldDefinition(item)) {
+          if (isPathRequired(item.path)) item.required = true
+        } else {
+          markRequiredInGroups([item])
+        }
+      }
+    }
+    if (group.subgroups) markRequiredInGroups(group.subgroups)
+  }
+}
 
 export const rootTag = 'Invoice'
 
@@ -1295,5 +1322,7 @@ function collectFields(groups: FieldGroupConfig[]): FieldDefinition[] {
     ]
   })
 }
+
+markRequiredInGroups(fieldGroups)
 
 export const fieldDefinitions: FieldDefinition[] = collectFields(fieldGroups)
