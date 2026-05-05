@@ -6,6 +6,8 @@ import { applyFieldUpdate } from '../core/treeManager'
 import FieldForm from '../components/FieldForm'
 import XMLNode from '../components/XMLNode'
 import DefaultsModal from '../components/DefaultsModal'
+import FillModeChooserModal from '../components/FillModeChooserModal'
+import ScenarioListModal from '../components/ScenarioListModal'
 import type {
   FieldAttr,
   FieldDefinition,
@@ -137,6 +139,8 @@ export default function DocumentPageLayout({
     extraOptions,
   } = useDocument()
   const [activeScenario, setActiveScenario] = useState<FillScenario | null>(null)
+  const [chooserOpen, setChooserOpen] = useState(false)
+  const [scenarioListOpen, setScenarioListOpen] = useState(false)
   const [filling, setFilling] = useState(false)
   const treeRef = useRef(tree)
   treeRef.current = tree
@@ -239,6 +243,9 @@ export default function DocumentPageLayout({
         (topGroupIdx >= 0 ? topGroupIdx : config.fieldGroups.length) * 1000
 
       prepared.forEach(({ field, originalFieldId }, idx) => {
+        // requiredOnly senaryolarda yalnızca XSD'ye göre zorunlu alanlar yazılır.
+        if (scenario.requiredOnly && !field.required) return
+
         // Override haritalarında orijinal fieldId ile lookup; auto fallback.
         const entry =
           scenario.fieldOverrides?.[originalFieldId] ??
@@ -305,6 +312,8 @@ export default function DocumentPageLayout({
 
   function runScenario(scenario: FillScenario) {
     if (scenario.promptUser) {
+      // promptUser olan tek tip artık 'manual' (Kendim Seçeceğim) — DefaultsModal aç.
+      // 'scenario' kind, ScenarioListModal'dan zaten doğrudan handleScenarioSelect ile uygulanır.
       setActiveScenario(scenario)
       return
     }
@@ -328,8 +337,39 @@ export default function DocumentPageLayout({
     return availableGroupTitles.filter((t) => scenario.groupTitles!.includes(t))
   }
 
-  // Tek "Tümünü Doldur" butonunu temsil eden senaryo (varsa).
-  const primaryScenario = fillScenarios?.find((s) => s.promptUser) ?? null
+  // Ara ekrandan "Senaryolar" seçilince listeye geç.
+  function handlePickScenarios() {
+    setChooserOpen(false)
+    setScenarioListOpen(true)
+  }
+
+  // Ara ekrandan "Kendim Seçeceğim" seçilince mevcut DefaultsModal akışını başlat.
+  function handlePickManual() {
+    setChooserOpen(false)
+    if (manualScenario) runScenario(manualScenario)
+  }
+
+  // Senaryo kartına tıklanınca doğrudan uygula — ek onay ekranı yok.
+  async function handleScenarioSelect(scenario: FillScenario, overwrite: boolean) {
+    setScenarioListOpen(false)
+    setFilling(true)
+    await new Promise<void>((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+    )
+    try {
+      applyScenario(scenario, getAvailableTitlesFor(scenario), overwrite)
+    } finally {
+      setFilling(false)
+    }
+  }
+
+  // Ara ekran açılırken "Kendim Seçeceğim"i tetikleyecek manual senaryo.
+  const manualScenario =
+    fillScenarios?.find((s) => s.kind === 'manual' && s.promptUser) ?? null
+  // Senaryolar listesinde gösterilecek kayıtlar.
+  const scenarioList = fillScenarios?.filter((s) => s.kind === 'scenario') ?? []
+  // "Varsayılanları Doldur" butonu — en az bir interaktif senaryo varsa görünür.
+  const showFillButton = !!groupDefaults && (manualScenario !== null || scenarioList.length > 0)
 
   return (
     <div className="flex flex-1 min-w-0 overflow-hidden">
@@ -374,12 +414,12 @@ export default function DocumentPageLayout({
               </span>
             )}
           </div>
-          {primaryScenario && groupDefaults && (
+          {showFillButton && (
             <button
-              onClick={() => runScenario(primaryScenario)}
+              onClick={() => setChooserOpen(true)}
               title="Form alanlarını örnek değerlerle doldurur"
               className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors
-                bg-violet-600 text-white hover:bg-violet-700"
+                bg-blue-600 text-white hover:bg-blue-700"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M9.243 3.03a1 1 0 01.727 1.213L9.53 6h2.94l.56-2.243a1 1 0 111.94.486L14.53 6H17a1 1 0 110 2h-2.97l-1 4H15a1 1 0 110 2h-2.47l-.56 2.242a1 1 0 11-1.94-.485L10.47 14H7.53l-.56 2.242a1 1 0 11-1.94-.485L5.47 14H3a1 1 0 110-2h2.97l1-4H5a1 1 0 110-2h2.47l.56-2.243a1 1 0 011.213-.727zM9.03 8l-1 4h2.94l1-4H9.03z" clipRule="evenodd" />
@@ -502,6 +542,22 @@ export default function DocumentPageLayout({
           )}
         </div>
       </main>
+
+      <FillModeChooserModal
+        open={chooserOpen}
+        onCancel={() => setChooserOpen(false)}
+        onPickScenarios={handlePickScenarios}
+        onPickManual={handlePickManual}
+      />
+
+      <ScenarioListModal
+        open={scenarioListOpen}
+        scenarios={scenarioList}
+        onCancel={() => setScenarioListOpen(false)}
+        onSelect={(scenario, overwrite) => {
+          void handleScenarioSelect(scenario, overwrite)
+        }}
+      />
 
       <DefaultsModal
         open={activeScenario !== null}

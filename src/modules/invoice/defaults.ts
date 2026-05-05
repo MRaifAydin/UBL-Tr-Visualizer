@@ -21,11 +21,24 @@ export interface GroupDefaults {
 export interface FillScenario {
   id: string
   label: string
+  /** Senaryo listesinde ve onay modalında gösterilen kısa açıklama. */
+  description?: string
   promptUser: boolean
   /** İçerilecek grup başlıkları. undefined → tüm groupDefaults girdileri. */
   groupTitles?: string[]
   /** groupDefaults değerlerinin üzerine binen field-level override'lar. */
   fieldOverrides?: Record<string, FieldDefaultValue>
+  /**
+   * true → applyScenario yalnızca `field.required === true` alanları yazar;
+   * isteğe bağlı kardeşler (aynı grupta olsalar bile) atlanır.
+   */
+  requiredOnly?: boolean
+  /**
+   * Ara ekrandaki ayrımı belirler:
+   *  - 'manual'   → Kendim Seçeceğim → DefaultsModal (grup checkbox listesi)
+   *  - 'scenario' → Senaryolar listesinde gösterilir → ScenarioConfirmModal
+   */
+  kind?: 'manual' | 'scenario'
 }
 
 const today = (): string => new Date().toISOString().slice(0, 10)
@@ -188,7 +201,17 @@ export const invoiceFillScenarios: FillScenario[] = [
     id: 'all',
     label: 'Tümünü Doldur',
     promptUser: true,
+    kind: 'manual',
     // groupTitles undefined → tüm config grupları (excluded hariç)
+  },
+  {
+    id: 'required-only',
+    label: 'Sadece zorunlu alanlar',
+    description:
+      "XSD'ye göre zorunlu olarak işaretlenmiş alanları örnek değerlerle doldurur. İsteğe bağlı alanlar boş kalır.",
+    promptUser: true,
+    kind: 'scenario',
+    requiredOnly: true,
   },
 ]
 
