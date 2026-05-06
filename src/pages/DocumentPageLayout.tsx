@@ -8,7 +8,17 @@ import {
   listExistingNames,
   saveHistoryEntry,
   type HistoryEntry,
+  listXslts,
+  getXsltEntry,
+  deleteXsltEntry,
+  findUniqueXsltName,
+  listExistingXsltNames,
+  saveXsltEntry,
+  MAX_CUSTOM_XSLTS_PER_DOCTYPE,
+  type XsltEntry,
 } from '../core/historyDb'
+import { extractEmbeddedXslts, hasEmbeddedXslt, type ExtractedXslt } from '../core/xsltExtractor'
+import { injectXsltIntoXml } from '../core/xsltInjector'
 import { generateHistoryName } from '../core/historyName'
 import FieldForm from '../components/FieldForm'
 import XMLNode from '../components/XMLNode'
@@ -18,13 +28,14 @@ import ScenarioListModal from '../components/ScenarioListModal'
 import SaveHistoryModal from '../components/SaveHistoryModal'
 import HistoryModal from '../components/HistoryModal'
 import PreviewModal from '../components/PreviewModal'
+import XsltListModal, { type SelectedXslt } from '../components/XsltListModal'
+import SaveXsltModal from '../components/SaveXsltModal'
 import { transformXmlWithXslt, loadXsltFromUrl } from '../core/xsltTransform'
 import type {
   FieldAttr,
   FieldDefinition,
   FieldGroupConfig,
   GroupItem,
-  ModuleConfig,
   Tree,
 } from '../types'
 import { isFieldDefinition } from '../types'
@@ -33,10 +44,7 @@ import { autoFieldDefault } from '../modules/invoice/defaults'
 
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024
 
-function downloadXml(tree: Tree, config: ModuleConfig, docType: string) {
-  const xml = treeToXml(tree, config.rootTag, config.rootAttributes, config.rootStaticPrefix)
-  if (!xml) return
-
+function triggerXmlDownload(xml: string, docType: string) {
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, '')
   const blob = new Blob([xml], { type: 'application/xml' })
   const url = URL.createObjectURL(blob)
@@ -45,6 +53,21 @@ function downloadXml(tree: Tree, config: ModuleConfig, docType: string) {
   a.download = `${docType}_${date}.xml`
   a.click()
   URL.revokeObjectURL(url)
+}
+
+function readInvoiceMetaFromXml(xml: string): { id: string; issueDate: string } {
+  const doc = new DOMParser().parseFromString(xml, 'application/xml')
+  const root = doc.documentElement
+  let id = ''
+  let issueDate = ''
+  if (root) {
+    for (const child of Array.from(root.children)) {
+      if (!id && child.localName === 'ID') id = (child.textContent || '').trim()
+      if (!issueDate && child.localName === 'IssueDate') issueDate = (child.textContent || '').trim()
+      if (id && issueDate) break
+    }
+  }
+  return { id, issueDate }
 }
 
 function scrollToFieldId(fieldId: string) {
@@ -178,6 +201,82 @@ export default function DocumentPageLayout({
   const [previewHtml, setPreviewHtml] = useState('')
   const [previewError, setPreviewError] = useState<string | null>(null)
 
+  const [selectedXslt, setSelectedXslt] = useState<SelectedXslt>({ kind: 'default' })
+  const [originalEmbeddedXslt, setOriginalEmbeddedXslt] = useState<string | null>(null)
+  const [xsltListOpen, setXsltListOpen] = useState(false)
+  const [customXslts, setCustomXslts] = useState<XsltEntry[]>([])
+  const [pendingXslts, setPendingXslts] = useState<ExtractedXslt[]>([])
+  const [savingXsltDefaultName, setSavingXsltDefaultName] = useState('')
+  const [savingXsltExistingNames, setSavingXsltExistingNames] = useState<Set<string>>(new Set())
+  const [xsltLimitBanner, setXsltLimitBanner] = useState<string | null>(null)
+
+  // Modül başına seçili XSLT'yi localStorage'da hatırla
+  useEffect(() => {
+    const raw = localStorage.getItem(`xslt:selected:${docType}`)
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw) as SelectedXslt
+        setSelectedXslt(parsed)
+        return
+      } catch {
+        /* ignore */
+      }
+    }
+    setSelectedXslt({ kind: 'default' })
+  }, [docType])
+
+  useEffect(() => {
+    localStorage.setItem(`xslt:selected:${docType}`, JSON.stringify(selectedXslt))
+  }, [docType, selectedXslt])
+
+  useEffect(() => {
+    if (!xsltLimitBanner) return
+    const t = setTimeout(() => setXsltLimitBanner(null), 4000)
+    return () => clearTimeout(t)
+  }, [xsltLimitBanner])
+
+  async function refreshCustomXslts(): Promise<XsltEntry[]> {
+    const list = await listXslts(docType)
+    setCustomXslts(list)
+    return list
+  }
+
+  /** Seçili XSLT'nin metnini döndür. Custom silinmişse default'a düşer. */
+  async function loadSelectedXsltText(): Promise<string | null> {
+    if (selectedXslt.kind === 'custom') {
+      const entry = await getXsltEntry(selectedXslt.id)
+      if (entry) return entry.xsltText
+      setSelectedXslt({ kind: 'default' })
+    }
+    if (!config.xsltPath) return null
+    return loadXsltFromUrl(config.xsltPath)
+  }
+
+  /** Yüklenen XML'den XSLT'leri çıkartıp DB'de olmayanları kuyruğa ekle. */
+  async function queuePendingXsltsFromXml(xmlString: string) {
+    const extracted = extractEmbeddedXslts(xmlString)
+    setOriginalEmbeddedXslt(extracted[0]?.xsltText ?? null)
+    if (extracted.length === 0) return
+    const existing = await listXslts(docType)
+    const existingTexts = new Set(existing.map((e) => e.xsltText))
+    const newOnes = extracted.filter((e) => !existingTexts.has(e.xsltText))
+    if (newOnes.length === 0) return
+    setPendingXslts(newOnes)
+    void prepareSaveModalForFirst(newOnes[0])
+  }
+
+  async function prepareSaveModalForFirst(item: ExtractedXslt) {
+    const baseFromFilename = item.filename
+      ? item.filename.replace(/\.[^.]+$/, '')
+      : `xslt_${new Date().toISOString().slice(0, 10).replace(/-/g, '')}`
+    const [unique, existing] = await Promise.all([
+      findUniqueXsltName(docType, baseFromFilename),
+      listExistingXsltNames(docType),
+    ])
+    setSavingXsltDefaultName(unique)
+    setSavingXsltExistingNames(existing)
+  }
+
   useEffect(() => {
     if (!savedBanner) return
     const t = setTimeout(() => setSavedBanner(null), 2000)
@@ -196,19 +295,30 @@ export default function DocumentPageLayout({
         return
       }
     }
-    downloadXml(tree, config, docType)
+    void (async () => {
+      let xml = treeToXml(tree, config.rootTag, config.rootAttributes, config.rootStaticPrefix)
+      if (!xml) return
+      // Yüklenen XML'in XSLT'si varsa elleme (kullanıcı kuralı), aksi halde seçili XSLT'yi inject et.
+      const xsltToEmbed = originalEmbeddedXslt ?? (await loadSelectedXsltText())
+      if (xsltToEmbed && !hasEmbeddedXslt(xml)) {
+        const meta = readInvoiceMetaFromXml(xml)
+        const fallbackId = meta.id || `${docType}_${Date.now()}`
+        const fallbackDate = meta.issueDate || new Date().toISOString().slice(0, 10)
+        xml = injectXsltIntoXml(xml, xsltToEmbed, fallbackId, fallbackDate, config.rootTag)
+      }
+      triggerXmlDownload(xml, docType)
+    })()
   }
 
   async function handlePreview() {
-    if (!config.xsltPath) return
     const xml = treeToXml(tree, config.rootTag, config.rootAttributes, config.rootStaticPrefix)
     if (!xml) return
     setPreviewError(null)
     setPreviewHtml('')
     setPreviewOpen(true)
     try {
-      // İleride: kullanıcı özel XSLT seçtiyse IndexedDB'den; aksi halde default.
-      const xsltText = await loadXsltFromUrl(config.xsltPath)
+      const xsltText = await loadSelectedXsltText()
+      if (!xsltText) throw new Error('Aktif XSLT bulunamadı')
       const html = transformXmlWithXslt(xml, xsltText)
       setPreviewHtml(html)
     } catch (err) {
@@ -271,6 +381,7 @@ export default function DocumentPageLayout({
       const result = parseXmlToTree(xmlString, config)
       loadTree(result.tree, result.extraOptions)
       setUnknownPaths(result.unknownPaths)
+      void queuePendingXsltsFromXml(xmlString)
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Bilinmeyen bir hata oluştu.'
       window.alert(`XML yüklenemedi: ${message}`)
@@ -297,6 +408,60 @@ export default function DocumentPageLayout({
       const message = err instanceof Error ? err.message : 'Bilinmeyen bir hata oluştu.'
       window.alert(`Geçmiş okunamadı: ${message}`)
     }
+  }
+
+  async function handleOpenXsltList() {
+    await refreshCustomXslts()
+    setXsltListOpen(true)
+  }
+
+  function handleSelectXslt(sel: SelectedXslt) {
+    setSelectedXslt(sel)
+    setXsltListOpen(false)
+  }
+
+  async function handleDeleteXslt(id: number, name: string) {
+    const ok = window.confirm(`"${name}" XSLT'si silinsin mi?`)
+    if (!ok) return
+    await deleteXsltEntry(id)
+    if (selectedXslt.kind === 'custom' && selectedXslt.id === id) {
+      setSelectedXslt({ kind: 'default' })
+    }
+    await refreshCustomXslts()
+  }
+
+  async function handleSaveXsltConfirm(name: string) {
+    const item = pendingXslts[0]
+    if (!item) return
+    try {
+      const result = await saveXsltEntry({
+        docType,
+        name,
+        xsltText: item.xsltText,
+        createdAt: Date.now(),
+      })
+      if (result.removedOldestId !== null) {
+        setXsltLimitBanner(
+          `${MAX_CUSTOM_XSLTS_PER_DOCTYPE} özel XSLT sınırı aşıldı, en eski kayıt silindi.`,
+        )
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Bilinmeyen bir hata oluştu.'
+      window.alert(`XSLT kaydedilemedi: ${message}`)
+    }
+    await advancePendingXsltQueue()
+  }
+
+  async function handleSaveXsltSkip() {
+    await advancePendingXsltQueue()
+  }
+
+  async function advancePendingXsltQueue() {
+    setPendingXslts((prev) => {
+      const next = prev.slice(1)
+      if (next.length > 0) void prepareSaveModalForFirst(next[0])
+      return next
+    })
   }
 
   async function handleConfirmSave(name: string) {
@@ -337,6 +502,7 @@ export default function DocumentPageLayout({
       const result = parseXmlToTree(entry.xml, config)
       loadTree(result.tree, result.extraOptions)
       setUnknownPaths(result.unknownPaths)
+      void queuePendingXsltsFromXml(entry.xml)
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Bilinmeyen bir hata oluştu.'
       window.alert(`Belge yüklenemedi: ${message}`)
@@ -567,6 +733,17 @@ export default function DocumentPageLayout({
               </svg>
               Geçmiş
             </button>
+            <button
+              onClick={() => void handleOpenXsltList()}
+              title="XSLT Listesi (kayıtlı + default)"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors
+                bg-indigo-600 text-white hover:bg-indigo-700"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 16a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" />
+              </svg>
+              XSLT Listesi
+            </button>
             {showFillButton && (
               <button
                 onClick={() => setChooserOpen(true)}
@@ -644,19 +821,13 @@ export default function DocumentPageLayout({
               Geçmişe Kaydet
             </button>
             <button
-              onClick={triggerFileSelect}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors
-                bg-green-600 text-white hover:bg-green-700"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm10.707-7.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V17a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clipRule="evenodd" />
-              </svg>
-              XML Yükle
-            </button>
-            <button
               onClick={() => void handlePreview()}
-              disabled={!hasContent || !config.xsltPath}
-              title={!config.xsltPath ? 'Bu modül için XSLT tanımlı değil' : 'XSLT ile önizle'}
+              disabled={!hasContent || (!config.xsltPath && selectedXslt.kind === 'default')}
+              title={
+                !config.xsltPath && selectedXslt.kind === 'default'
+                  ? 'Bu modül için default XSLT tanımlı değil'
+                  : 'Seçili XSLT ile önizle'
+              }
               className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors
                 bg-purple-600 text-white hover:bg-purple-700
                 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
@@ -666,6 +837,16 @@ export default function DocumentPageLayout({
                 <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
               </svg>
               Önizle
+            </button>
+            <button
+              onClick={triggerFileSelect}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors
+                bg-green-600 text-white hover:bg-green-700"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm10.707-7.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V17a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clipRule="evenodd" />
+              </svg>
+              XML Yükle
             </button>
             <button
               onClick={handleDownload}
@@ -691,6 +872,19 @@ export default function DocumentPageLayout({
               onClick={() => setSavedBanner(null)}
               title="Kapat"
               className="shrink-0 text-green-600 hover:text-green-900 leading-none px-1"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
+        {xsltLimitBanner && (
+          <div className="bg-amber-50 border-b border-amber-200 px-5 py-2 text-xs text-amber-800 flex items-center justify-between gap-3">
+            <p>{xsltLimitBanner}</p>
+            <button
+              onClick={() => setXsltLimitBanner(null)}
+              title="Kapat"
+              className="shrink-0 text-amber-600 hover:text-amber-900 leading-none px-1"
             >
               ✕
             </button>
@@ -762,6 +956,25 @@ export default function DocumentPageLayout({
         onClose={() => setPreviewOpen(false)}
         onDownloadHtml={downloadHtmlPreview}
         onDownloadPdf={downloadPdfPreview}
+      />
+
+      <XsltListModal
+        open={xsltListOpen}
+        hasDefault={!!config.xsltPath}
+        customXslts={customXslts}
+        selectedXslt={selectedXslt}
+        onSelect={handleSelectXslt}
+        onDelete={(id, name) => void handleDeleteXslt(id, name)}
+        onClose={() => setXsltListOpen(false)}
+      />
+
+      <SaveXsltModal
+        open={pendingXslts.length > 0}
+        defaultName={savingXsltDefaultName}
+        existingNames={savingXsltExistingNames}
+        remainingCount={pendingXslts.length}
+        onSkip={() => void handleSaveXsltSkip()}
+        onConfirm={(name) => void handleSaveXsltConfirm(name)}
       />
 
       <DefaultsModal
