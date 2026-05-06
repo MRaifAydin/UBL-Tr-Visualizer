@@ -76,6 +76,7 @@ export interface ModuleConfig {
   rootStaticPrefix?: string
   fieldGroups: FieldGroupConfig[]
   fieldDefinitions: FieldDefinition[]
+  xsltPath?: string
 }
 
 export interface DocumentContextValue {

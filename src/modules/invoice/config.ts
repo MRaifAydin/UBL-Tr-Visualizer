@@ -34,6 +34,8 @@ function markRequiredInGroups(groups: FieldGroupConfig[]): void {
 
 export const rootTag = 'Invoice'
 
+export const xsltPath = '/xslt/invoice.xslt'
+
 export const rootAttributes: Record<string, string> = {
   'xmlns':       'urn:oasis:names:specification:ubl:schema:xsd:Invoice-2',
   'xmlns:cac':   'urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2',

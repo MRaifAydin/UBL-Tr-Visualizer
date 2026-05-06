@@ -17,6 +17,8 @@ import FillModeChooserModal from '../components/FillModeChooserModal'
 import ScenarioListModal from '../components/ScenarioListModal'
 import SaveHistoryModal from '../components/SaveHistoryModal'
 import HistoryModal from '../components/HistoryModal'
+import PreviewModal from '../components/PreviewModal'
+import { transformXmlWithXslt, loadXsltFromUrl } from '../core/xsltTransform'
 import type {
   FieldAttr,
   FieldDefinition,
@@ -172,6 +174,10 @@ export default function DocumentPageLayout({
   const [historyModalOpen, setHistoryModalOpen] = useState(false)
   const [savedBanner, setSavedBanner] = useState<string | null>(null)
 
+  const [previewOpen, setPreviewOpen] = useState(false)
+  const [previewHtml, setPreviewHtml] = useState('')
+  const [previewError, setPreviewError] = useState<string | null>(null)
+
   useEffect(() => {
     if (!savedBanner) return
     const t = setTimeout(() => setSavedBanner(null), 2000)
@@ -191,6 +197,56 @@ export default function DocumentPageLayout({
       }
     }
     downloadXml(tree, config, docType)
+  }
+
+  async function handlePreview() {
+    if (!config.xsltPath) return
+    const xml = treeToXml(tree, config.rootTag, config.rootAttributes, config.rootStaticPrefix)
+    if (!xml) return
+    setPreviewError(null)
+    setPreviewHtml('')
+    setPreviewOpen(true)
+    try {
+      // İleride: kullanıcı özel XSLT seçtiyse IndexedDB'den; aksi halde default.
+      const xsltText = await loadXsltFromUrl(config.xsltPath)
+      const html = transformXmlWithXslt(xml, xsltText)
+      setPreviewHtml(html)
+    } catch (err) {
+      setPreviewError(err instanceof Error ? err.message : 'Önizleme oluşturulamadı')
+    }
+  }
+
+  function downloadHtmlPreview() {
+    if (!previewHtml) return
+    const date = new Date().toISOString().slice(0, 10).replace(/-/g, '')
+    const blob = new Blob([previewHtml], { type: 'text/html;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${docType}_onizleme_${date}.html`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  function downloadPdfPreview() {
+    if (!previewHtml) return
+    // Gizli iframe + window.print() — tarayıcının native "PDF olarak kaydet" özelliği.
+    const iframe = document.createElement('iframe')
+    iframe.style.position = 'fixed'
+    iframe.style.right = '0'
+    iframe.style.bottom = '0'
+    iframe.style.width = '0'
+    iframe.style.height = '0'
+    iframe.style.border = '0'
+    document.body.appendChild(iframe)
+    iframe.srcdoc = previewHtml
+    iframe.onload = () => {
+      iframe.contentWindow?.focus()
+      iframe.contentWindow?.print()
+      setTimeout(() => {
+        if (iframe.parentNode) document.body.removeChild(iframe)
+      }, 1000)
+    }
   }
 
   async function handleUpload(file: File) {
@@ -598,6 +654,20 @@ export default function DocumentPageLayout({
               XML Yükle
             </button>
             <button
+              onClick={() => void handlePreview()}
+              disabled={!hasContent || !config.xsltPath}
+              title={!config.xsltPath ? 'Bu modül için XSLT tanımlı değil' : 'XSLT ile önizle'}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors
+                bg-purple-600 text-white hover:bg-purple-700
+                disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+              </svg>
+              Önizle
+            </button>
+            <button
               onClick={handleDownload}
               disabled={!hasContent}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors
@@ -683,6 +753,15 @@ export default function DocumentPageLayout({
         onSelect={(scenario, overwrite) => {
           void handleScenarioSelect(scenario, overwrite)
         }}
+      />
+
+      <PreviewModal
+        open={previewOpen}
+        htmlContent={previewHtml}
+        error={previewError}
+        onClose={() => setPreviewOpen(false)}
+        onDownloadHtml={downloadHtmlPreview}
+        onDownloadPdf={downloadPdfPreview}
       />
 
       <DefaultsModal
