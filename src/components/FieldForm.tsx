@@ -40,11 +40,12 @@ function FieldError({ show }: { show: boolean }) {
 }
 
 function FieldInput({ fieldId, label, path, attr, wide, fill, disabled, required, _order }: FieldProps) {
-  const { tree, activeFieldId, setActiveFieldId, updateField, safeMode, validationErrors } = useDocument()
+  const { tree, activeFieldId, setActiveFieldId, updateField, safeMode, validationErrors, loadedFieldIds } = useDocument()
   const currentValue = findNodeById(tree, fieldId)?.value ?? ''
   const isActive = activeFieldId === fieldId && !disabled
   const hasError = validationErrors.some((e) => e.fieldId === fieldId)
   const showStar = safeMode && required
+  const showLoaded = loadedFieldIds.has(fieldId) && currentValue !== ''
   const w = fill ? 'w-full' : wide ? 'w-48' : 'w-36'
 
   return (
@@ -75,6 +76,8 @@ function FieldInput({ fieldId, label, path, attr, wide, fill, disabled, required
               ? 'border-red-500 ring-1 ring-red-300 bg-white'
               : isActive
               ? 'border-blue-400 ring-1 ring-blue-300 bg-white'
+              : showLoaded
+              ? 'border-green-500 ring-1 ring-green-200 bg-white'
               : 'border-gray-300 bg-white hover:border-gray-400 focus:border-blue-400 focus:ring-1 focus:ring-blue-300'
           }`}
         />
@@ -97,11 +100,12 @@ function FieldInput({ fieldId, label, path, attr, wide, fill, disabled, required
 }
 
 function SearchableSelect({ fieldId, label, path, attr, options, wide, fill, required, _order }: FieldProps) {
-  const { tree, activeFieldId, setActiveFieldId, updateField, safeMode, validationErrors, extraOptions } = useDocument()
+  const { tree, activeFieldId, setActiveFieldId, updateField, safeMode, validationErrors, extraOptions, loadedFieldIds } = useDocument()
   const currentValue = findNodeById(tree, fieldId)?.value ?? ''
   const isActive = activeFieldId === fieldId
   const hasError = validationErrors.some((e) => e.fieldId === fieldId)
   const showStar = safeMode && required
+  const showLoaded = loadedFieldIds.has(fieldId) && currentValue !== ''
 
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
@@ -171,6 +175,8 @@ function SearchableSelect({ fieldId, label, path, attr, options, wide, fill, req
               ? 'border-red-500 ring-1 ring-red-300 bg-white'
               : isActive
               ? 'border-blue-400 ring-1 ring-blue-300 bg-white'
+              : showLoaded
+              ? 'border-green-500 ring-1 ring-green-200 bg-white'
               : 'border-gray-300 bg-white hover:border-gray-400'
           }`}
         >
@@ -229,11 +235,12 @@ function SearchableSelect({ fieldId, label, path, attr, options, wide, fill, req
 type CalendarView = 'calendar' | 'months' | 'years'
 
 function DatePicker({ fieldId, label, path, attr, wide, fill, required, _order }: FieldProps) {
-  const { tree, activeFieldId, setActiveFieldId, updateField, safeMode, validationErrors } = useDocument()
+  const { tree, activeFieldId, setActiveFieldId, updateField, safeMode, validationErrors, loadedFieldIds } = useDocument()
   const currentValue = findNodeById(tree, fieldId)?.value ?? ''
   const isActive = activeFieldId === fieldId
   const hasError = validationErrors.some((e) => e.fieldId === fieldId)
   const showStar = safeMode && required
+  const showLoaded = loadedFieldIds.has(fieldId) && currentValue !== ''
 
   const [open, setOpen] = useState(false)
   const [view, setView] = useState<CalendarView>('calendar')
@@ -335,6 +342,8 @@ function DatePicker({ fieldId, label, path, attr, wide, fill, required, _order }
             ? 'border-red-500 ring-1 ring-red-300 bg-white'
             : isActive || open
             ? 'border-blue-400 ring-1 ring-blue-300 bg-white'
+            : showLoaded
+            ? 'border-green-500 ring-1 ring-green-200 bg-white'
             : 'border-gray-300 bg-white hover:border-gray-400'
         }`}
       >
@@ -472,11 +481,12 @@ function DatePicker({ fieldId, label, path, attr, wide, fill, required, _order }
 }
 
 function NumberInput({ fieldId, label, path, attr, wide, fill, required, _order }: FieldProps) {
-  const { tree, activeFieldId, setActiveFieldId, updateField, safeMode, validationErrors } = useDocument()
+  const { tree, activeFieldId, setActiveFieldId, updateField, safeMode, validationErrors, loadedFieldIds } = useDocument()
   const currentValue = findNodeById(tree, fieldId)?.value ?? ''
   const isActive = activeFieldId === fieldId
   const hasError = validationErrors.some((e) => e.fieldId === fieldId)
   const showStar = safeMode && required
+  const showLoaded = loadedFieldIds.has(fieldId) && currentValue !== ''
   const w = fill ? 'w-full' : wide ? 'w-48' : 'w-36'
 
   return (
@@ -508,6 +518,8 @@ function NumberInput({ fieldId, label, path, attr, wide, fill, required, _order 
               ? 'border-red-500 ring-1 ring-red-300 bg-white'
               : isActive
               ? 'border-blue-400 ring-1 ring-blue-300 bg-white'
+              : showLoaded
+              ? 'border-green-500 ring-1 ring-green-200 bg-white'
               : 'border-gray-300 bg-white hover:border-gray-400 focus:border-blue-400 focus:ring-1 focus:ring-blue-300'
           }`}
         />
@@ -614,7 +626,7 @@ function DurationMeasureInput({
   attrKey = 'unitCode',
   _order,
 }: FieldProps) {
-  const { tree, activeFieldId, setActiveFieldId, updateField, safeMode, validationErrors, extraOptions } = useDocument()
+  const { tree, activeFieldId, setActiveFieldId, updateField, safeMode, validationErrors, extraOptions, loadedFieldIds } = useDocument()
   const node = findNodeById(tree, fieldId)
   const storedAmount = node?.value ?? ''
   const storedUnit = node?.attr?.[attrKey] ?? ''
@@ -622,6 +634,7 @@ function DurationMeasureInput({
   const isActive = activeFieldId === fieldId
   const hasError = validationErrors.some((e) => e.fieldId === fieldId)
   const showStar = safeMode && required
+  const showLoaded = loadedFieldIds.has(fieldId) && (storedAmount !== '' || storedUnit !== '')
   const opts: SelectOption[] = [...(options ?? []), ...(extraOptions[fieldId] ?? [])]
 
   const displayUnit = storedUnit || localUnit
@@ -658,6 +671,7 @@ function DurationMeasureInput({
   const borderActive = 'border-blue-400 ring-1 ring-blue-300'
   const borderIdle = 'border-gray-300 hover:border-gray-400'
   const borderError = 'border-red-500 ring-1 ring-red-300'
+  const borderLoaded = 'border-green-500 ring-1 ring-green-200'
 
   return (
     <div data-field-id={fieldId}>
@@ -677,7 +691,7 @@ function DurationMeasureInput({
           onChange={(e) => handleUnitChange(e.target.value)}
           onFocus={() => setActiveFieldId(fieldId)}
           className={`w-16 shrink-0 rounded-l border border-r-0 px-1 py-1 text-xs bg-white outline-none appearance-none text-center cursor-pointer transition-all ${
-            hasError ? borderError : isActive ? borderActive : borderIdle
+            hasError ? borderError : isActive ? borderActive : showLoaded ? borderLoaded : borderIdle
           }`}
         >
           <option value="">—</option>
@@ -694,7 +708,7 @@ function DurationMeasureInput({
             onChange={(e) => handleAmountChange(e.target.value)}
             className={`w-full rounded-r border px-2 py-1 text-xs outline-none transition-all bg-white ${
               hasValue ? 'pr-5' : ''
-            } ${hasError ? borderError : isActive ? borderActive : borderIdle}`}
+            } ${hasError ? borderError : isActive ? borderActive : showLoaded ? borderLoaded : borderIdle}`}
           />
           {hasValue && (
             <span
@@ -778,11 +792,12 @@ function TimeSpinner({ value, max, onChange, inputRef, nextRef }: TimeSpinnerPro
 }
 
 function TimePicker({ fieldId, label, path, attr, wide, fill, required, _order }: FieldProps) {
-  const { tree, activeFieldId, setActiveFieldId, updateField, safeMode, validationErrors } = useDocument()
+  const { tree, activeFieldId, setActiveFieldId, updateField, safeMode, validationErrors, loadedFieldIds } = useDocument()
   const currentValue = findNodeById(tree, fieldId)?.value ?? ''
   const isActive = activeFieldId === fieldId
   const hasError = validationErrors.some((e) => e.fieldId === fieldId)
   const showStar = safeMode && required
+  const showLoaded = loadedFieldIds.has(fieldId) && currentValue !== ''
 
   const [open, setOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement | null>(null)
@@ -853,6 +868,8 @@ function TimePicker({ fieldId, label, path, attr, wide, fill, required, _order }
             ? 'border-red-500 ring-1 ring-red-300 bg-white'
             : isActive || open
             ? 'border-blue-400 ring-1 ring-blue-300 bg-white'
+            : showLoaded
+            ? 'border-green-500 ring-1 ring-green-200 bg-white'
             : 'border-gray-300 bg-white hover:border-gray-400'
         }`}
       >

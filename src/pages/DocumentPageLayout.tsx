@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useDocument } from '../context/DocumentContext'
 import { treeToXml } from '../core/xmlSerializer'
 import { parseXmlToTree } from '../core/xmlParser'
-import { applyFieldUpdate } from '../core/treeManager'
+import { applyFieldUpdate, findNodeById } from '../core/treeManager'
+import CheckIcon from '../components/CheckIcon'
 import {
   findUniqueName,
   listExistingNames,
@@ -171,6 +172,7 @@ export default function DocumentPageLayout({
     loadTree,
     loadCounter,
     extraOptions,
+    loadedFieldIds,
   } = useDocument()
   const [activeScenario, setActiveScenario] = useState<FillScenario | null>(null)
   const [chooserOpen, setChooserOpen] = useState(false)
@@ -286,6 +288,14 @@ export default function DocumentPageLayout({
   const rootNodes = tree.children ? Object.values(tree.children) : []
   const hasRoot = rootNodes.length > 0
   const hasContent = hasRoot && Object.keys(rootNodes[0]?.children || {}).length > 0
+
+  const loadedTotal = useMemo(() => {
+    let n = 0
+    for (const id of loadedFieldIds) {
+      if ((findNodeById(tree, id)?.value ?? '') !== '') n += 1
+    }
+    return n
+  }, [loadedFieldIds, tree])
 
   function handleDownload() {
     if (safeMode) {
@@ -718,6 +728,12 @@ export default function DocumentPageLayout({
             {safeMode && validationErrors.length > 0 && (
               <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-red-100 text-red-700 border border-red-200">
                 {validationErrors.length} eksik alan
+              </span>
+            )}
+            {loadedTotal > 0 && (
+              <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-blue-100 text-blue-700 border border-blue-200 flex items-center gap-1">
+                <CheckIcon className="w-3 h-3" />
+                {loadedTotal} XML'den geldi
               </span>
             )}
           </div>

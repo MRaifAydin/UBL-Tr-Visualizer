@@ -104,6 +104,7 @@ export interface DocumentContextValue {
   loadTree: (tree: Tree, extraOptions?: Record<string, SelectOption[]>) => void
   loadCounter: number
   extraOptions: Record<string, SelectOption[]>
+  loadedFieldIds: Set<string>
 }
 
 export function isFieldDefinition(item: GroupItem): item is FieldDefinition {

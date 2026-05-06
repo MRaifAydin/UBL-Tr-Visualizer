@@ -159,6 +159,27 @@ export function findNodeById(tree: Tree, fieldId: string): TreeNode | null {
   return _find(tree as TreeNode, fieldId)
 }
 
+/**
+ * Tree'yi recursive gezerek `fieldId` ve `value` taşıyan tüm yaprak node'ları
+ * toplar. XML yüklendikten sonra hangi alanların dolduğunu listelemek için
+ * kullanılır.
+ */
+export function collectLeafFieldIds(tree: Tree): { fieldId: string; value: string }[] {
+  const out: { fieldId: string; value: string }[] = []
+  _collect(tree as TreeNode, out)
+  return out
+}
+
+function _collect(node: TreeNode, out: { fieldId: string; value: string }[]): void {
+  if (node.fieldId !== undefined) {
+    out.push({ fieldId: node.fieldId, value: node.value ?? '' })
+  }
+  if (!node.children) return
+  for (const key of Object.keys(node.children)) {
+    _collect(node.children[key], out)
+  }
+}
+
 function _find(node: TreeNode, fieldId: string): TreeNode | null {
   if (node.fieldId === fieldId) return node
   if (!node.children) return null

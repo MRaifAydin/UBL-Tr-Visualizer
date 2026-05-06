@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react'
-import { findNodeById, findOrCreateNodeById, removeNodeById, removeSubtree } from '../core/treeManager'
+import { collectLeafFieldIds, findNodeById, findOrCreateNodeById, removeNodeById, removeSubtree } from '../core/treeManager'
 import { MODULES } from '../modules'
 import type { DocumentContextValue, FieldAttr, ModuleConfig, SelectOption, Tree, ValidationError } from '../types'
 
@@ -14,6 +14,7 @@ interface DocSlice {
   validationActive: boolean
   loadCounter: number
   extraOptions: Record<string, SelectOption[]>
+  loadedFieldIds: Set<string>
 }
 
 const initialStates: Record<string, DocSlice> = Object.fromEntries(
@@ -26,6 +27,7 @@ const initialStates: Record<string, DocSlice> = Object.fromEntries(
       validationActive: false,
       loadCounter: 0,
       extraOptions: {},
+      loadedFieldIds: new Set<string>(),
     } as DocSlice,
   ]),
 )
@@ -191,6 +193,10 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
 
   const loadTree = useCallback(
     (newTree: Tree, newExtraOptions: Record<string, SelectOption[]> = {}) => {
+      const loaded = new Set<string>()
+      for (const { fieldId, value } of collectLeafFieldIds(newTree)) {
+        if (value !== '') loaded.add(fieldId)
+      }
       setStates((prev) => ({
         ...prev,
         [docType]: {
@@ -201,6 +207,7 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
           validationActive: false,
           loadCounter: prev[docType].loadCounter + 1,
           extraOptions: newExtraOptions,
+          loadedFieldIds: loaded,
         },
       }))
     },
@@ -215,7 +222,7 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
     }))
   }, [docType])
 
-  const { tree, activeFieldId, validationErrors, loadCounter, extraOptions } = states[docType]
+  const { tree, activeFieldId, validationErrors, loadCounter, extraOptions, loadedFieldIds } = states[docType]
   const safeMode = safeModeMap[docType] ?? false
 
   const value: DocumentContextValue = {
@@ -236,6 +243,7 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
     loadTree,
     loadCounter,
     extraOptions,
+    loadedFieldIds,
   }
 
   return <DocumentContext.Provider value={value}>{children}</DocumentContext.Provider>

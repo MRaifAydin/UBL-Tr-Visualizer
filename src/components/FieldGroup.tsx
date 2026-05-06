@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useDocument } from '../context/DocumentContext'
+import { findNodeById } from '../core/treeManager'
+import CheckIcon from './CheckIcon'
 
 const DEPTH_STYLES = [
   { container: 'bg-white border border-gray-200',          label: 'text-gray-400',    arrow: 'text-gray-400' },
@@ -40,13 +42,23 @@ export default function FieldGroup({
   validationFieldIds,
 }: FieldGroupProps) {
   const [open, setOpen] = useState(defaultOpen)
-  const { validationErrors } = useDocument()
+  const { tree, validationErrors, loadedFieldIds } = useDocument()
 
   const errorCount = useMemo(() => {
     if (!validationFieldIds || validationFieldIds.length === 0) return 0
     const idSet = new Set(validationFieldIds)
     return validationErrors.reduce((n, e) => (idSet.has(e.fieldId) ? n + 1 : n), 0)
   }, [validationErrors, validationFieldIds])
+
+  const loadedCount = useMemo(() => {
+    if (!validationFieldIds || validationFieldIds.length === 0) return 0
+    let n = 0
+    for (const id of validationFieldIds) {
+      if (!loadedFieldIds.has(id)) continue
+      if ((findNodeById(tree, id)?.value ?? '') !== '') n += 1
+    }
+    return n
+  }, [validationFieldIds, loadedFieldIds, tree])
 
   // Hata sayısı arttığında (yeni validation veya yeni eksik) grubu otomatik aç.
   // Kullanıcı sonra manuel kapatabilir; aynı sayıda tekrar açma yapılmaz.
@@ -76,6 +88,12 @@ export default function FieldGroup({
           {hasError && (
             <span className="px-1.5 py-px rounded bg-red-100 text-red-700 border border-red-200 text-[9px] font-bold normal-case tracking-normal">
               {errorCount} eksik
+            </span>
+          )}
+          {loadedCount > 0 && (
+            <span className="px-1.5 py-px rounded bg-blue-100 text-blue-700 border border-blue-200 text-[9px] font-bold normal-case tracking-normal flex items-center gap-0.5">
+              <CheckIcon className="w-2.5 h-2.5" />
+              {loadedCount} XML
             </span>
           )}
         </p>
