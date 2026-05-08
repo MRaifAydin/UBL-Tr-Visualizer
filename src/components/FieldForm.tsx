@@ -547,11 +547,45 @@ interface NoteEntry {
 }
 
 function NotesList({ fieldId, label, path, attr }: FieldProps) {
-  const { tree, updateField, removeField, setActiveFieldId, config } = useDocument()
+  const { tree, docType, activeFieldId, updateField, removeField, setActiveFieldId, config } = useDocument()
   const [notes, setNotes] = useState<NoteEntry[]>([])
   const counter = useRef(0)
 
   const anchorOrder = config.fieldDefinitions.findIndex((f) => f.fieldId === fieldId)
+
+  useEffect(() => {
+    const parentSegments = path.slice(0, -1)
+    const tag = path[path.length - 1]
+
+    let node: { children?: Record<string, { children?: Record<string, unknown> }> } | undefined = tree
+    for (const seg of parentSegments) {
+      const next = node?.children?.[seg]
+      if (!next) {
+        setNotes([])
+        counter.current = 0
+        return
+      }
+      node = next as typeof node
+    }
+    if (!node?.children) {
+      setNotes([])
+      counter.current = 0
+      return
+    }
+
+    const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const re = new RegExp(`^${escape(tag)}__${escape(fieldId)}-(\\d+)$`)
+
+    const found: { n: number; id: string }[] = []
+    for (const key of Object.keys(node.children)) {
+      const m = key.match(re)
+      if (m) found.push({ n: Number(m[1]), id: `${fieldId}-${m[1]}` })
+    }
+    found.sort((a, b) => a.n - b.n)
+
+    setNotes(found.map(({ n, id }) => ({ id, order: anchorOrder + n * 0.01 })))
+    counter.current = found.length === 0 ? 0 : Math.max(...found.map((f) => f.n))
+  }, [docType])
 
   function addNote() {
     counter.current += 1
@@ -592,14 +626,19 @@ function NotesList({ fieldId, label, path, attr }: FieldProps) {
       <div className="flex flex-col gap-1">
         {notes.map(({ id, order }) => {
           const value = findNodeById(tree, id)?.value ?? ''
+          const isActive = activeFieldId === id
           return (
-            <div key={id} className="flex items-center gap-1">
+            <div key={id} data-field-id={id} className="flex items-center gap-1">
               <input
                 type="text"
                 value={value}
                 onFocus={() => setActiveFieldId(id)}
                 onChange={(e) => changeNote(id, order, e.target.value)}
-                className="w-44 rounded border border-gray-300 px-2 py-1 text-xs outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-300 bg-white"
+                className={`w-44 rounded border px-2 py-1 text-xs outline-none bg-white ${
+                  isActive
+                    ? 'border-blue-400 ring-1 ring-blue-300'
+                    : 'border-gray-300 focus:border-blue-400 focus:ring-1 focus:ring-blue-300'
+                }`}
               />
               <button
                 type="button"

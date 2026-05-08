@@ -71,9 +71,13 @@ export default function FieldGroup({
   }, [errorCount, collapsible])
 
   // XML'den bir alan tıklandığında activeFieldId bu grubun altındaysa otomatik aç.
+  // notes-list alanları runtime'da `<fieldId>-<n>` ID'sine sahip olur — onları da yakala.
   useEffect(() => {
     if (!collapsible || !activeFieldId || !validationFieldIds) return
-    if (validationFieldIds.includes(activeFieldId)) setOpen(true)
+    const matches =
+      validationFieldIds.includes(activeFieldId) ||
+      validationFieldIds.some((id) => new RegExp(`^${id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}-\\d+$`).test(activeFieldId))
+    if (matches) setOpen(true)
   }, [activeFieldId, validationFieldIds, collapsible])
 
   const isOpen = !collapsible || open
