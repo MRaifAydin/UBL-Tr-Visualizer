@@ -71,14 +71,16 @@ function readInvoiceMetaFromXml(xml: string): { id: string; issueDate: string } 
   return { id, issueDate }
 }
 
-function scrollToFieldId(fieldId: string) {
+function scrollToFieldId(fieldId: string, opts: { focus?: boolean } = {}) {
   // Açılması gereken kapalı gruplar için iki frame bekle (FieldGroup auto-expand sonrası DOM hazır olur)
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
-      const el = document.querySelector(`[data-field-id="${CSS.escape(fieldId)}"]`)
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      }
+      const el = document.querySelector<HTMLElement>(
+        `[data-field-id="${CSS.escape(fieldId)}"]`,
+      )
+      if (!el) return
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      if (opts.focus) el.focus({ preventScroll: true })
     })
   })
 }
@@ -165,6 +167,7 @@ export default function DocumentPageLayout({
     config,
     activeFieldId,
     setActiveFieldId,
+    focusRequest,
     safeMode,
     toggleSafeMode,
     validationErrors,
@@ -284,6 +287,12 @@ export default function DocumentPageLayout({
     const t = setTimeout(() => setSavedBanner(null), 2000)
     return () => clearTimeout(t)
   }, [savedBanner])
+
+  // XML kolonundan bir node tıklandığında form'da o alana scroll + focus.
+  useEffect(() => {
+    if (!focusRequest) return
+    scrollToFieldId(focusRequest.fieldId, { focus: true })
+  }, [focusRequest])
 
   const rootNodes = tree.children ? Object.values(tree.children) : []
   const hasRoot = rootNodes.length > 0

@@ -10,6 +10,7 @@ const DEFAULT_DOC_TYPE = Object.keys(MODULES)[0]
 interface DocSlice {
   tree: Tree
   activeFieldId: string | null
+  focusRequest: { fieldId: string; nonce: number } | null
   validationErrors: ValidationError[]
   validationActive: boolean
   loadCounter: number
@@ -23,6 +24,7 @@ const initialStates: Record<string, DocSlice> = Object.fromEntries(
     {
       tree: {},
       activeFieldId: null,
+      focusRequest: null,
       validationErrors: [],
       validationActive: false,
       loadCounter: 0,
@@ -78,6 +80,24 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
         ...prev,
         [docType]: { ...prev[docType], activeFieldId: id },
       }))
+    },
+    [docType],
+  )
+
+  const requestFieldFocus = useCallback(
+    (id: string) => {
+      setStates((prev) => {
+        const slice = prev[docType]
+        const nextNonce = (slice.focusRequest?.nonce ?? 0) + 1
+        return {
+          ...prev,
+          [docType]: {
+            ...slice,
+            activeFieldId: id,
+            focusRequest: { fieldId: id, nonce: nextNonce },
+          },
+        }
+      })
     },
     [docType],
   )
@@ -203,6 +223,7 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
           ...prev[docType],
           tree: newTree,
           activeFieldId: null,
+          focusRequest: null,
           validationErrors: [],
           validationActive: false,
           loadCounter: prev[docType].loadCounter + 1,
@@ -222,7 +243,7 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
     }))
   }, [docType])
 
-  const { tree, activeFieldId, validationErrors, loadCounter, extraOptions, loadedFieldIds } = states[docType]
+  const { tree, activeFieldId, focusRequest, validationErrors, loadCounter, extraOptions, loadedFieldIds } = states[docType]
   const safeMode = safeModeMap[docType] ?? false
 
   const value: DocumentContextValue = {
@@ -234,6 +255,8 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
     removeSubtree: removeSubtreeAtPath,
     activeFieldId,
     setActiveFieldId,
+    focusRequest,
+    requestFieldFocus,
     config: MODULES[docType],
     safeMode,
     toggleSafeMode,

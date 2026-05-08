@@ -42,7 +42,7 @@ export default function FieldGroup({
   validationFieldIds,
 }: FieldGroupProps) {
   const [open, setOpen] = useState(defaultOpen)
-  const { tree, validationErrors, loadedFieldIds } = useDocument()
+  const { tree, validationErrors, loadedFieldIds, activeFieldId } = useDocument()
 
   const errorCount = useMemo(() => {
     if (!validationFieldIds || validationFieldIds.length === 0) return 0
@@ -69,6 +69,12 @@ export default function FieldGroup({
     }
     prevErrorCount.current = errorCount
   }, [errorCount, collapsible])
+
+  // XML'den bir alan tıklandığında activeFieldId bu grubun altındaysa otomatik aç.
+  useEffect(() => {
+    if (!collapsible || !activeFieldId || !validationFieldIds) return
+    if (validationFieldIds.includes(activeFieldId)) setOpen(true)
+  }, [activeFieldId, validationFieldIds, collapsible])
 
   const isOpen = !collapsible || open
   const style = DEPTH_STYLES[Math.min(depth, DEPTH_STYLES.length - 1)]

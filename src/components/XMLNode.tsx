@@ -1,10 +1,24 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
+import { useDocument } from '../context/DocumentContext'
 import type { TreeNode } from '../types'
 
 function containsFieldId(node: TreeNode, fieldId: string): boolean {
   if (node.fieldId === fieldId) return true
   if (!node.children) return false
   return Object.values(node.children).some((child) => containsFieldId(child, fieldId))
+}
+
+function getFirstLeafFieldId(node: TreeNode): string | undefined {
+  if (node.fieldId) return node.fieldId
+  if (!node.children) return undefined
+  const sorted = Object.values(node.children).sort(
+    (a, b) => (a._order ?? Infinity) - (b._order ?? Infinity),
+  )
+  for (const child of sorted) {
+    const id = getFirstLeafFieldId(child)
+    if (id) return id
+  }
+  return undefined
 }
 
 interface XMLNodeProps {
@@ -20,6 +34,7 @@ export default function XMLNode({
   depth = 0,
   collapseSignal = 0,
 }: XMLNodeProps) {
+  const { requestFieldFocus } = useDocument()
   const [manualOpen, setManualOpen] = useState(true)
   const headerRef = useRef<HTMLDivElement | null>(null)
 
@@ -71,17 +86,26 @@ export default function XMLNode({
     >
       <div
         ref={isActive ? headerRef : null}
-        className={`flex items-center gap-1 py-0.5 flex-wrap ${hasChildren ? 'cursor-pointer select-none' : ''}`}
-        onClick={() => { if (hasChildren) setManualOpen((o) => !o) }}
+        className={`flex items-center gap-1 py-0.5 flex-wrap select-none ${
+          hasChildren ? 'cursor-pointer' : ''
+        }`}
+        onClick={() => {
+          if (hasChildren) setManualOpen((o) => !o)
+        }}
       >
         <span className="w-3 text-xs text-gray-400 shrink-0">
           {hasChildren ? (isOpen ? '▾' : '▸') : ''}
         </span>
 
         <span
-          className={`font-mono text-sm ${
+          className={`font-mono text-sm cursor-pointer rounded px-0.5 ${
             isActive ? 'text-blue-600 font-semibold' : 'text-gray-600'
-          }`}
+          } ${isActive || isAncestor ? '' : 'hover:bg-amber-50'}`}
+          onClick={(e) => {
+            e.stopPropagation()
+            const targetId = node.fieldId ?? getFirstLeafFieldId(node)
+            if (targetId) requestFieldFocus(targetId)
+          }}
         >
           &lt;{node.tag}
           {xmlAttrs.map(([k, v]) => (

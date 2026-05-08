@@ -95,6 +95,8 @@ export interface DocumentContextValue {
   removeSubtree: (path: string[]) => void
   activeFieldId: string | null
   setActiveFieldId: (id: string | null) => void
+  focusRequest: { fieldId: string; nonce: number } | null
+  requestFieldFocus: (fieldId: string) => void
   config: ModuleConfig
   safeMode: boolean
   toggleSafeMode: () => void

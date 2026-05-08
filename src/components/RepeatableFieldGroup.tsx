@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useDocument } from '../context/DocumentContext'
 import FieldGroup from './FieldGroup'
-import { renderGroupChildren } from './FieldForm'
+import { collectFieldIdsInGroup, renderGroupChildren } from './FieldForm'
 import type {
   FieldDefinition,
   FieldGroupConfig,
@@ -36,6 +36,19 @@ export default function RepeatableFieldGroup({ group, depth }: RepeatableFieldGr
   const groupIdx = config.fieldGroups.findIndex((g) => g.title === group.title)
   const anchorOrder = (groupIdx >= 0 ? groupIdx : config.fieldGroups.length) * 1000
 
+  const transformedInstances = useMemo(
+    () =>
+      instances.map((idx, position) =>
+        transformGroup(group, marker, idx, anchorOrder + position * INSTANCE_STEP, { offset: 0 }),
+      ),
+    [instances, group, marker, anchorOrder],
+  )
+
+  const allInstanceFieldIds = useMemo(
+    () => transformedInstances.flatMap((t) => collectFieldIdsInGroup(t)),
+    [transformedInstances],
+  )
+
   function addInstance() {
     const idx = nextIdx.current
     nextIdx.current += 1
@@ -61,6 +74,7 @@ export default function RepeatableFieldGroup({ group, depth }: RepeatableFieldGr
       collapsible
       defaultOpen={!!group.defaultOpen}
       depth={depth}
+      validationFieldIds={allInstanceFieldIds}
     >
       <div className="col-span-4 flex flex-col gap-2.5">
         <button
@@ -79,13 +93,7 @@ export default function RepeatableFieldGroup({ group, depth }: RepeatableFieldGr
         )}
 
         {instances.map((idx, position) => {
-          const transformed = transformGroup(
-            group,
-            marker,
-            idx,
-            anchorOrder + position * INSTANCE_STEP,
-            { offset: 0 },
-          )
+          const transformed = transformedInstances[position]
           return (
             <FieldGroup
               key={idx}
@@ -95,6 +103,7 @@ export default function RepeatableFieldGroup({ group, depth }: RepeatableFieldGr
               collapsible
               defaultOpen
               depth={depth + 1}
+              validationFieldIds={collectFieldIdsInGroup(transformed)}
               headerExtra={
                 <button
                   type="button"
