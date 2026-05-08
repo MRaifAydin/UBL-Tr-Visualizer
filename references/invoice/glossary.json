@@ -27,5 +27,12 @@
   "cbc:RegistrationDate": "Kayıt Tarihi",
   "cbc:SoleProprietorshipIndicator": "Şahıs Şirketi Göstergesi",
   "cbc:CorporateStockAmount": "Ödenmiş Sermaye",
-  "cbc:FullyPaidSharesIndicator": "Halka Açıklık Göstergesi"
+  "cbc:FullyPaidSharesIndicator": "Halka Açıklık Göstergesi",
+  "cac:GoodsItem": "Eşya Bilgisi",
+  "cbc:RequiredCustomsID": "GTİP No",
+  "cac:ShipmentStage": "Taşıma Aşaması",
+  "cbc:TransportModeCode": "Taşıma Gönderim Şekli",
+  "cac:TransportHandlingUnit": "Taşıma Kabı",
+  "cac:ActualPackage": "Paket Bilgisi",
+  "cbc:PackagingTypeCode": "Paket/Kap Cinsi"
 }

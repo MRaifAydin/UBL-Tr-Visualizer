@@ -207,6 +207,83 @@
         "Parasal Toplamlar",
         "Mal/Hizmet Kalemleri"
       ]
+    },
+    {
+      "profileId": "IHRACAT",
+      "label": "İhracat",
+      "description": "İhracat Faturası profili için Schematron'a uygun tipik örnek.",
+      "fieldOverrides": {
+        "invoice-id": "GIB2016000000016",
+        "invoice-uuid": "1063118D-EF14-4E3D-B941-08C8060A040C",
+        "invoice-issue-date": "2016-05-11",
+        "invoice-type-code": "ISTISNA",
+        "invoice-notes": "Sicil No: 1 İşletme Merkezi: 1",
+        "supplier-party-party-id": "1111111111",
+        "supplier-party-party-name": "AAA A.Ş.",
+        "supplier-party-postal-citysub": "-",
+        "supplier-party-postal-city": "Ankara",
+        "supplier-party-tax-scheme-name": "Kızılbey",
+        "supplier-party-contact-email": "a@a.com.tr",
+        "customer-party-party-id": "1460415308",
+        "customer-party-party-name": "Gümrük ve Ticaret Bakanlığı Gümrükler Genel Müdürlüğü- Bilgi İşlem Dairesi Başkanlığı",
+        "customer-party-postal-city": "Ankara",
+        "customer-party-tax-scheme-name": "Ulus",
+        "buyer-party-party-id": "EXPORT",
+        "buyer-party-party-name": "Farthing Purchasing Consortium",
+        "buyer-party-postal-city": "Bridgtow",
+        "buyer-party-postal-country-name": "Great Britain",
+        "buyer-party-legal-name": "Farthing Purchasing Consortium",
+        "buyer-party-legal-company": "175 269 2355",
+        "payment-means-code": "42",
+        "tax-amount": "0",
+        "tax-sub-taxable": "1000",
+        "tax-sub-amount": "0",
+        "tax-sub-percent": "0",
+        "tax-sub-calc-seq": "1",
+        "tax-sub-cat-exempt-code": "301",
+        "tax-sub-cat-exempt-reason": "11/1-a Mal ihracatı",
+        "tax-sub-scheme-name": "KDV",
+        "tax-sub-scheme-type": "0015",
+        "lmt-line-ext": "1000",
+        "lmt-tax-excl": "1000",
+        "lmt-tax-incl": "1000",
+        "lmt-allowance-total": "0",
+        "lmt-payable": "1000",
+        "iline-id": "1",
+        "iline-note": "Package Brand: ADDR",
+        "iline-quantity": "1",
+        "iline-line-ext": "1000",
+        "iline-tax-amount": "0",
+        "iline-tax-sub-taxable": "1000",
+        "iline-tax-sub-amount": "0",
+        "iline-tax-sub-percent": "0",
+        "iline-tax-scheme-name": "KDV",
+        "iline-tax-scheme-type": "0015",
+        "iline-item-name": "Dana Karaciğeri",
+        "iline-price-amount": "1000",
+        "iline-delivery-addr-street": "Avon Way",
+        "iline-delivery-addr-building": "Thereabouts",
+        "iline-delivery-addr-bnum": "56A",
+        "iline-delivery-addr-city": "Bridgtow",
+        "iline-delivery-addr-postal": "ZZ99 1ZZ",
+        "iline-delivery-addr-country-name": "Great Britain",
+        "iline-delivery-terms-id": "CIF",
+        "iline-delivery-shipment-goods-customs-id": "020622000000",
+        "iline-delivery-shipment-stage-mode": "1",
+        "iline-delivery-shipment-thu-package-id": "UACU2451999",
+        "iline-delivery-shipment-thu-package-qty": "1",
+        "iline-delivery-shipment-thu-package-type": "CN"
+      },
+      "groupTitles": [
+        "Belge Genel Bilgileri",
+        "Satıcı",
+        "Alıcı",
+        "Mal/Hizmet Alıcı",
+        "Ödeme Şekli",
+        "Toplam Vergi",
+        "Parasal Toplamlar",
+        "Mal/Hizmet Kalemleri"
+      ]
     }
   ],
   "_meta": {
@@ -219,7 +296,8 @@
     "sampleFiles": [
       "TemelFaturaOrnegi.xml",
       "TicariFaturaOrnegi.xml",
-      "YOLCUBERABER.xml"
+      "YOLCUBERABER.xml",
+      "IHRACAT.xml"
     ],
     "unmappedPaths": [
       "?xml-stylesheet@href",
@@ -350,6 +428,12 @@
         "test": "TaxExemptionReasonCode = '555' kullanım kısıtı (TEMELFATURA/TICARIFATURA/EARSIVFATURA)",
         "reason": "complex-negative-test",
         "messageHint": "555 vergi muafiyet kodu yalnızca ISTISNA/IHRACKAYITLI fatura tiplerinde kullanılabilir"
+      },
+      {
+        "ruleId": "Main:IHRACAT-PARTYTYPE",
+        "test": "../cac:BuyerCustomerParty/cac:Party/cac:PartyIdentification/cbc:ID='EXPORT' and schemeID='PARTYTYPE'",
+        "reason": "scheme-id-attribute-locked",
+        "messageHint": "BuyerCustomerParty PartyIdentification için schemeID='PARTYTYPE' attribute'u config'de elle ayarlanamıyor; senaryo 'EXPORT' değerini buyer-party-party-id alanına yazıyor ama schemeID alanın varsayılanını (VKN/TCKN) kullanır. Doğru çıktı için /alan-ekle ile schemeID seçeneğini opsiyonelleştirmek gerekebilir."
       }
     ]
   }

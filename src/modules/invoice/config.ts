@@ -92,6 +92,47 @@ const PAYMENT_MEANS_CODE_OPTIONS = [
   { value: 'ZZZ', label: 'Diğer' },
 ]
 
+const TRANSPORT_MODE_OPTIONS = [
+  { value: '1', label: 'Denizyolu' },
+  { value: '2', label: 'Demiryolu' },
+  { value: '3', label: 'Karayolu' },
+  { value: '4', label: 'Havayolu' },
+  { value: '5', label: 'Posta' },
+  { value: '6', label: 'Çok Araçlı' },
+  { value: '7', label: 'Sabit Taşıma Tesisleri' },
+  { value: '8', label: 'İç Su Taşımacılığı' },
+]
+
+const PACKAGING_TYPE_OPTIONS = [
+  { value: 'BA', label: 'Varil' },
+  { value: 'BE', label: 'Bohça' },
+  { value: 'BG', label: 'Torba' },
+  { value: 'BH', label: 'Demet' },
+  { value: 'BI', label: 'Çöp Kutusu' },
+  { value: 'BJ', label: 'Kova' },
+  { value: 'BK', label: 'Sepet' },
+  { value: 'BX', label: 'Kutu' },
+  { value: 'CB', label: 'Bira Kasası' },
+  { value: 'CH', label: 'Sandık' },
+  { value: 'CI', label: 'Teneke Kutu' },
+  { value: 'CK', label: 'Fıçı' },
+  { value: 'CN', label: 'Konteyner' },
+  { value: 'CR', label: 'Kasa' },
+  { value: 'DK', label: 'Karton Kasa' },
+  { value: 'DR', label: 'Bidon' },
+  { value: 'EC', label: 'Plastik Torba' },
+  { value: 'FC', label: 'Meyve Kasası' },
+  { value: 'JR', label: 'Kavanoz' },
+  { value: 'LV', label: 'Liftvan' },
+  { value: 'NE', label: 'Ambalajsız' },
+  { value: 'SA', label: 'Çuval' },
+  { value: 'SU', label: 'Bavul' },
+  { value: 'TN', label: 'Teneke' },
+  { value: 'VG', label: 'Dökme Gaz' },
+  { value: 'VL', label: 'Dökme Sıvı' },
+  { value: 'VO', label: 'Dökme Katı' },
+]
+
 function makeAddressGroup(prefix: string, pathBase: string[]): FieldGroupConfig {
   return {
     title: 'Adres',
@@ -470,6 +511,29 @@ function makeDeliveryGroup(title: string, prefix: string, pathBase: string[]): F
         ],
         subgroups: [
           makeAddressGroup(`${prefix}-shipment-return-addr`, [...pathBase, 'cac:Shipment', 'cac:ReturnAddress']),
+          {
+            title: 'Eşya Bilgisi',
+            wrap: true,
+            fields: [
+              { fieldId: `${prefix}-shipment-goods-customs-id`, label: 'GTİP No', path: [...pathBase, 'cac:Shipment', 'cac:GoodsItem', 'cbc:RequiredCustomsID'], attr: 'value' },
+            ],
+          },
+          {
+            title: 'Taşıma Aşaması',
+            wrap: true,
+            fields: [
+              { fieldId: `${prefix}-shipment-stage-mode`, label: 'Taşıma Gönderim Şekli', path: [...pathBase, 'cac:Shipment', 'cac:ShipmentStage', 'cbc:TransportModeCode'], attr: 'value', type: 'select', options: TRANSPORT_MODE_OPTIONS },
+            ],
+          },
+          {
+            title: 'Taşıma Kabı',
+            wrap: true,
+            fields: [
+              { fieldId: `${prefix}-shipment-thu-package-id`,   label: 'Kap Numarası',   path: [...pathBase, 'cac:Shipment', 'cac:TransportHandlingUnit', 'cac:ActualPackage', 'cbc:ID'],                attr: 'value' },
+              { fieldId: `${prefix}-shipment-thu-package-qty`,  label: 'Kap Adedi',      path: [...pathBase, 'cac:Shipment', 'cac:TransportHandlingUnit', 'cac:ActualPackage', 'cbc:Quantity'],          attr: 'value', type: 'number' },
+              { fieldId: `${prefix}-shipment-thu-package-type`, label: 'Paket/Kap Cinsi', path: [...pathBase, 'cac:Shipment', 'cac:TransportHandlingUnit', 'cac:ActualPackage', 'cbc:PackagingTypeCode'], attr: 'value', type: 'select', options: PACKAGING_TYPE_OPTIONS },
+            ],
+          },
         ],
       },
     ],
