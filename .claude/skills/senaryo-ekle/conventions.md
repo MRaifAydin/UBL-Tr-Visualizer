@@ -358,3 +358,48 @@ npx tsx -e '
 ```
 
 `config.ts` doğrudan `invoiceConfig` veya benzer bir export sunuyorsa skill o yapıdan `fieldDefinitions`'a ulaşır. Skill her çağrıda config dosyasını okur (cache yok).
+
+---
+
+## 11. Audit script — `scripts/audit_scenarios.ts`
+
+Senaryo yazma sonrası **zorunlu doğrulama adımı** (skill workflow B6.5).
+
+```bash
+npx tsx scripts/audit_scenarios.ts
+```
+
+### Yaptığı iş
+
+1. `references/<modül>/samples/*.xml` örneklerini parse eder (`@xmldom/xmldom`).
+2. `scenarios.generated.json`'u okur, her senaryonun `id`'sini ilgili sample dosyasıyla eşleştirir.
+3. Config'den fieldId↔path haritası türetir (`flattenFields` + `path.join('/')`).
+4. Her sample leaf path için:
+   - Eşleşen fieldId aktif `groupTitles`'da var mı?
+   - `fieldOverrides` ilgili indekste sample değerini içeriyor mu? (array → instance bazlı)
+   - `fieldAttrOverrides` sample'daki tüm attribute'ları yazıyor mu? (config default + override merge)
+5. Bulduğu mismatch'leri kategorize eder.
+
+### Rapor etiketleri
+
+| Etiket | Anlam | Eylem |
+|---|---|---|
+| `✓ TAM EŞLEŞME` | Senaryo sample ile birebir uyumlu | — |
+| `MISSING_INSTANCE[i]` | Sample'da i. instance var, scenario'da yok | Override ekle (array uzunluğunu artır) |
+| `VALUE_MISMATCH[i]` | Sample değeri scenario değerinden farklı | Override değerini düzelt |
+| `ATTR_MISMATCH[i]` | Sample attribute scenario default'undan farklı | `fieldAttrOverrides` ekle |
+| `MISSING_OVERRIDE` | Sample'da değer var, scenario'da yok | `fieldOverrides`'a ekle |
+| `NO_GROUP` | Field aktif `groupTitles` altında değil | `groupTitles`'a uygun grubu ekle |
+| `UNMAPPED` | Sample'da var ama config'de fieldId yok | `/alan-ekle` ile config'e ekle (kapsam dışı) |
+
+### Kurulum
+
+Script proje köküne `scripts/audit_scenarios.ts` olarak commit'lenmiş. devDependency'ler:
+- `@xmldom/xmldom` — XML parser (Node.js'de DOMParser yok)
+- `tsx` — TypeScript runner
+
+İlk çağrıda yoksa: `npm install --save-dev @xmldom/xmldom tsx`.
+
+### Skill workflow entegrasyonu
+
+`SKILL.md` B6.5 adımı: senaryo yazma sonrası `npx tsx scripts/audit_scenarios.ts` çalıştır, çıktıyı kullanıcıya özetle. `MISSING_INSTANCE`/`VALUE_MISMATCH`/`ATTR_MISMATCH`/`NO_GROUP` etiketleri **düzeltilmesi zorunlu**; `UNMAPPED` kapsam-dışı (raporla geç).

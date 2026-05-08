@@ -158,9 +158,16 @@ Her hedef senaryo için:
    - `_meta.schematronFiles`, `_meta.sampleFiles`
    - `_meta.unmappedPaths`, `_meta.skippedAsserts`
 4. `npx tsc --noEmit` çalıştır → hata varsa kullanıcıya göster ve düzelt.
-5. **Bitiş mesajı:**
-   > Üretildi: N senaryo. `npm run dev` → Senaryolar listesinde görebilirsin.
-   > Eşleşmeyen path: M (raporda detaylı liste). `/alan-ekle` ile config'e ekleyebilirsin.
+5. **Audit doğrulaması (zorunlu):** `npx tsx scripts/audit_scenarios.ts` çalıştır.
+   - Script her sample XML'i karşı senaryoyla karşılaştırır; eksik/yanlış değerleri ve attribute'ları rapor eder.
+   - Çıktıyı kullanıcıya özetle: hangi senaryolar `✓ TAM EŞLEŞME`, hangilerinde `MISSING_INSTANCE`/`VALUE_MISMATCH`/`ATTR_MISMATCH`/`UNMAPPED`/`NO_GROUP` var.
+   - **Zorunlu eylem:** `MISSING_INSTANCE`, `VALUE_MISMATCH`, `ATTR_MISMATCH`, `NO_GROUP` etiketlerini düzelt (override ekle, groupTitles güncelle).
+   - **Kapsam dışı (raporla, atla):** `UNMAPPED` (config'de fieldId yok — `/alan-ekle` gerekli) ve multi-field repeatable group instance'ları (örn. TICARIFATURA InvoiceLine 2-8 — şu an mimari destek yok).
+   - Script proje köküne `scripts/audit_scenarios.ts` olarak kurulu; `@xmldom/xmldom` + `tsx` devDependency'leri gerektirir.
+6. **Bitiş mesajı:**
+   > Üretildi: N senaryo. Audit: K senaryo TAM EŞLEŞME, M senaryoda kapsam-dışı sorun.
+   > `npm run dev` → Senaryolar listesinde görebilirsin.
+   > Eşleşmeyen path: P (raporda detaylı liste). `/alan-ekle` ile config'e ekleyebilirsin.
 
 ### B7. Edge case'ler
 
