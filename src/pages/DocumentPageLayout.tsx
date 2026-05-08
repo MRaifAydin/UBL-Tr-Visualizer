@@ -606,6 +606,14 @@ export default function DocumentPageLayout({
           attr = { [field.attrKey]: field.options[0].value }
         }
 
+        // notes-list: tree anahtar konvansiyonu `cbc:Note__<fieldId>-N` (xmlParser
+        // ve NotesList bileşeniyle birebir aynı). Suffix'siz yazarsak NotesList
+        // regex'i eşleşmez, form boş görünür.
+        if (field.type === 'notes-list') {
+          applyFieldUpdate(workingTree, `${field.fieldId}-1`, field.path, value, attr, order)
+          return
+        }
+
         // Tree'ye render-tarafı (suffix'li) fieldId ile yaz — input bu fieldId
         // üzerinden findNodeById yaptığı için aksi halde değer ekrana basılmaz.
         applyFieldUpdate(workingTree, field.fieldId, field.path, value, attr, order)
