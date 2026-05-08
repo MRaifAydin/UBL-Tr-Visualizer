@@ -327,7 +327,7 @@ export default function DocumentPageLayout({
     setPreviewHtml('')
     setPreviewOpen(true)
     try {
-      const xsltText = await loadSelectedXsltText()
+      const xsltText = originalEmbeddedXslt ?? (await loadSelectedXsltText())
       if (!xsltText) throw new Error('Aktif XSLT bulunamadı')
       const html = transformXmlWithXslt(xml, xsltText)
       setPreviewHtml(html)
