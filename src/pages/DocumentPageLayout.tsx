@@ -572,10 +572,76 @@ export default function DocumentPageLayout({
         // requiredOnly senaryolarda yalnızca XSD'ye göre zorunlu alanlar yazılır.
         if (scenario.requiredOnly && !field.required) return
 
+        const overrideValueRaw = scenario.fieldOverrides?.[originalFieldId]
+        const attrRawAny = scenario.fieldAttrOverrides?.[originalFieldId]
+        const hasAttrOverride = attrRawAny !== undefined
+
+        // strictMode: yalnızca explicit fieldOverrides veya fieldAttrOverrides'da
+        // listelenmiş alanlar yazılır; geri kalanı atla (groupDefaults + autoFieldDefault
+        // çağrılmaz). Sample'ı birebir yansıtan generated senaryolar için.
+        if (
+          scenario.strictMode &&
+          overrideValueRaw === undefined &&
+          !hasAttrOverride
+        )
+          return
+
+        const naturalIdx = config.fieldDefinitions.findIndex(
+          (f) => f.fieldId === originalFieldId,
+        )
+        const baseOrder = naturalIdx >= 0 ? naturalIdx : anchorOrder + idx * 0.0001
+
+        // Repeatable instance desteği: fieldOverrides array ise her elemanı ayrı
+        // instance olarak yaz. collectGroupFields prepared.field'i marker#0 ile
+        // hazırlamıştı; her i için marker#0 → marker#i ve son `--0` → `--i`.
+        if (Array.isArray(overrideValueRaw)) {
+          const baseFieldId = field.fieldId.endsWith('--0')
+            ? field.fieldId.slice(0, -3)
+            : field.fieldId
+          overrideValueRaw.forEach((entryVal, i) => {
+            const value =
+              typeof entryVal === 'function' ? entryVal() : entryVal
+            if (value === '') return
+            const newPath = field.path.map((seg) =>
+              /^.+#0$/.test(seg) ? seg.replace(/#0$/, `#${i}`) : seg,
+            )
+            const newFieldId = `${baseFieldId}--${i}`
+            if (
+              !overwrite &&
+              readValueAtPath(newPath, newFieldId) !== ''
+            )
+              return
+
+            let attr: FieldAttr = field.attr
+            if (
+              field.type === 'duration-measure' &&
+              field.attrKey &&
+              field.options?.[0]
+            ) {
+              attr = { [field.attrKey]: field.options[0].value }
+            }
+            const attrEntry: Record<string, string> | undefined = Array.isArray(
+              attrRawAny,
+            )
+              ? (attrRawAny as Record<string, string>[])[i]
+              : (attrRawAny as Record<string, string> | undefined)
+            if (attrEntry) {
+              attr = { ...(typeof attr === 'object' ? attr : {}), ...attrEntry }
+            }
+            applyFieldUpdate(
+              workingTree,
+              newFieldId,
+              newPath,
+              value,
+              attr,
+              baseOrder + i * 0.0001,
+            )
+          })
+          return
+        }
+
         // Override haritalarında orijinal fieldId ile lookup; auto fallback.
-        const entry =
-          scenario.fieldOverrides?.[originalFieldId] ??
-          groupDefault?.values[originalFieldId]
+        const entry = overrideValueRaw ?? groupDefault?.values[originalFieldId]
 
         const value =
           entry !== undefined
@@ -587,12 +653,7 @@ export default function DocumentPageLayout({
         if (value === '') return // disabled field veya hesaplanamadı
         if (!overwrite && readValueAtPath(field.path, field.fieldId) !== '') return
 
-        // _order: doğal fieldDefinitions index'i varsa onu kullan; repeatable
-        // içindeki field'lar fieldDefinitions'ta olmadığı için anchor + offset.
-        const naturalIdx = config.fieldDefinitions.findIndex(
-          (f) => f.fieldId === originalFieldId,
-        )
-        const order = naturalIdx >= 0 ? naturalIdx : anchorOrder + idx * 0.0001
+        const order = baseOrder
 
         // duration-measure: amount + unit attribute; field.attr config'de 'value'
         // diye gözükse de runtime'da unit'i attr olarak yazmak gerek (FieldForm
@@ -604,6 +665,17 @@ export default function DocumentPageLayout({
           field.options?.[0]
         ) {
           attr = { [field.attrKey]: field.options[0].value }
+        }
+        const attrOverrideObj: Record<string, string> | undefined = Array.isArray(
+          attrRawAny,
+        )
+          ? (attrRawAny as Record<string, string>[])[0]
+          : (attrRawAny as Record<string, string> | undefined)
+        if (attrOverrideObj) {
+          attr = {
+            ...(typeof attr === 'object' ? attr : {}),
+            ...attrOverrideObj,
+          }
         }
 
         // notes-list: tree anahtar konvansiyonu `cbc:Note__<fieldId>-N` (xmlParser

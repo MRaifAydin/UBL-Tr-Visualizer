@@ -202,27 +202,59 @@ Attribute örneği: `Invoice/cbc:PayableAmount/@currencyID` → key `Invoice/cbc
 
 ---
 
-## 6. fieldOverrides yazma kuralı
+## 6. fieldOverrides ve fieldAttrOverrides yazma kuralı
 
-Her hedef profil için:
+Her hedef senaryo için:
 
 ```
-combinedFieldIds = (schematronRequiredFieldIds[profile] ∪ commonRequiredFieldIds ∪ sampleFieldIds[profile])
+combinedFieldIds = (schematronRequiredFieldIds[profile] ∪ commonRequiredFieldIds ∪ sampleFieldIds[scenario])
+
+fieldOverrides = {}
+fieldAttrOverrides = {}
+fieldOverrides['invoice-profile-id'] = <senaryonun ait olduğu ProfileID>   // her zaman açıkça yaz
 
 for each fieldId in combinedFieldIds:
-  sampleValue = sampleValues[profile][fieldId]
+  sampleValue = sampleValues[scenario][fieldId]
+  sampleAttrs = sampleAttributes[scenario][fieldId]   // örn. { schemeID: 'KUNYENO', unitCode: 'KWH' }
   groupDefaultValue = invoiceGroupDefaults[<groupOf(fieldId)>][fieldId]
+  field = configFields[fieldId]
 
+  # Element text override
   if sampleValue && sampleValue !== groupDefaultValue:
     fieldOverrides[fieldId] = sampleValue
-  else:
-    # groupDefault zaten doğru değeri verir, atla
-    skip
+
+  # Attribute override (şemaID, unitCode, currencyID, characterSetCode, vb.)
+  for each (attrName, attrValue) in sampleAttrs:
+    # default attribute değeri — config field'ında attrKey + options[0] varsa
+    defaultAttr = field.options?.[0]?.value (eğer field.attrKey === attrName)
+    if attrValue && attrValue !== defaultAttr:
+      fieldAttrOverrides[fieldId] ??= {}
+      fieldAttrOverrides[fieldId][attrName] = attrValue
 ```
 
-`profileId` özel değer:
-- `fieldOverrides['invoice-profile-id']` skill tarafından **JSON'a yazılmaz** — `defaults.ts`'teki merge mantığı ProfileID'yi otomatik ekler.
-- Sample XML'de `<cbc:ProfileID>` farklı bir değer çıksa bile profile bilgisi dosya adı/argument'tan gelir; sample'daki ProfileID kullanıcıya raporlanır (uyumsuzluk kontrolü).
+**`fieldAttrOverrides` mekaniği:**
+- Anahtar: fieldId. Değer: `{ attrName: attrValue }` map'i. Bir alan birden fazla attribute taşıyabilir (örn. EmbeddedDocumentBinaryObject 4 attribute ile).
+- `applyScenario` ([DocumentPageLayout.tsx](src/pages/DocumentPageLayout.tsx)) varsayılan attr (config'in attrKey + options[0] kombinasyonu) üzerine merge eder. Plain text alanlar (config'de `attr: 'value'`) için override attr objesini sıfırdan oluşturur.
+- Sample XML'de görünen attribute config'in default option[0]'ı ile aynıysa **fieldAttrOverrides'a yazma** (gereksiz tekrar) — applyScenario default'u zaten yazıyor.
+- GIB Schematron kuralları belirli schemeID değerlerini zorunlu tutar (örn. `INCOTERMS`, `PARTYTYPE`, `KUNYENO`, `ESURaporID`, `ARACIKURUMVKN`). Sample'dan gelen attribute'ları korumak GIB uyumluluğu için kritik.
+
+**`invoice-profile-id` özel notu:**
+- ProfileID artık **özel statüde değil** — `fieldOverrides` içinde sıradan bir alan olarak yer alır. Skill her senaryo için açıkça yazmalı (`defaults.ts` tarafında otomatik enjeksiyon **yok**, eski davranış kaldırıldı).
+- Aynı ProfileID için birden fazla senaryo (varyant) yazılabilir — örn. `enerji-sarj` ve `enerji-sarjanlik` her ikisi de `"invoice-profile-id": "ENERJI"` taşır, farkı `invoice-type-code`, dönem değerleri vb. üzerinden gelir.
+- Sample XML'de `<cbc:ProfileID>` görünenle senaryonun atadığı ProfileID farklıysa kullanıcıya raporlanır.
+
+**Repeatable instance (array değer):**
+- Sample XML'de aynı parent altında aynı tag birden fazla kez geçiyorsa (örn. `cac:PartyIdentification` 3 kez), repeatable group → fieldOverride değeri **array** olabilir.
+- `"customer-party-party-id": ["VKN_DEĞERİ", "PLAKA_DEĞERİ", "ARACKIMLIKNO_DEĞERİ"]` → 3 ayrı `cac:PartyIdentification` instance'ı.
+- `fieldAttrOverrides` aynı paralel array olabilir: `[{schemeID:"VKN"}, {schemeID:"PLAKA"}, {schemeID:"ARACKIMLIKNO"}]`.
+- `applyScenario` array gördüğünde her elemanı ayrı instance'a yazar (path'te `marker#i`, fieldId'de `--i`).
+- Tek-marker repeatable group'lar (PartyIdentification, PartyLegalEntity, AdditionalItemIdentification, vb.) için çalışır. Nested repeatable kapsam dışı.
+
+**`strictMode` (kritik):**
+- Generated senaryolar varsayılan olarak `"strictMode": true` ile yazılır.
+- `applyScenario` strictMode etkin olduğunda **yalnız** `fieldOverrides` veya `fieldAttrOverrides`'da explicit listelenmiş alanları yazar; geri kalan tüm fieldId'ler için `groupDefaults` ve `autoFieldDefault` çağrısı atlanır → sample'da olmayan alanlar XML'e basılmaz.
+- Sample'da olan her alanı senaryoya açıkça eklemek **zorunlu** — strictMode placeholder kurtarmaz. Skill, sample XML'i parse edip her gözlemlenen değeri override map'ine yazmalı.
+- Compliance kritik: GIB e-fatura validasyonu sample'da olmayan alanları reddedebilir. strictMode bu nedenle generated senaryolar için varsayılan olmalı.
 
 ---
 
@@ -230,24 +262,41 @@ for each fieldId in combinedFieldIds:
 
 ```json
 {
-  "profiles": [
+  "scenarios": [
     {
-      "profileId": "TICARIFATURA",
+      "id": "ticarifatura",
       "label": "Ticari Fatura",
       "description": "Ticari Fatura profili için Schematron'a uygun tipik örnek.",
       "fieldOverrides": {
+        "invoice-profile-id": "TICARIFATURA",
         "supplier-party-party-id": "1234567890",
         "customer-party-party-id": "9876543210"
       },
       "groupTitles": null
+    },
+    {
+      "id": "enerji-sarj",
+      "label": "Enerji - Şarj (Haftalık)",
+      "description": "Enerji profili için haftalık şarj örneği.",
+      "fieldOverrides": {
+        "invoice-profile-id": "ENERJI",
+        "invoice-type-code": "SARJ",
+        "additional-docref-id": "B0E502A8-..."
+      },
+      "fieldAttrOverrides": {
+        "additional-docref-id": { "schemeID": "ESURaporID" },
+        "iline-quantity":       { "unitCode": "KWH" }
+      },
+      "strictMode": true,
+      "groupTitles": ["Belge Genel Bilgileri", "Fatura Dönemi"]
     }
   ],
   "_meta": {
-    "generatedAt": "2026-05-06",
-    "schematronFiles": ["UBL-TR-CommonRules.sch", "TICARIFATURA.sch"],
-    "sampleFiles": ["TICARIFATURA.xml"],
+    "generatedAt": "2026-05-09",
+    "schematronFiles": ["UBL-TR_Main_Schematron.xml"],
+    "sampleFiles": ["TICARIFATURA.xml", "SARJ.xml"],
     "unmappedPaths": [
-      { "path": "Invoice/cac:Foo/cbc:Bar", "profile": "TICARIFATURA", "source": "schematron" }
+      "Invoice/cac:Foo/cbc:Bar"
     ],
     "skippedAsserts": [
       { "ruleId": "ProfileCheck", "test": "string-length(cbc:ID) > 0", "reason": "complex-test", "messageHint": "ID boş olamaz" }
@@ -256,8 +305,9 @@ for each fieldId in combinedFieldIds:
 }
 ```
 
-`label`: `config.ts`'deki ProfileID option'unun `label` field'ından alınır (hardcode etme).
-`description`: skill default cümle veya kullanıcı isterse override.
+`id`: Lowercase, alfanumerik + tire. Senaryolar arası benzersiz. Aynı ProfileID için birden fazla senaryo varsa varyant suffix kullan (`<profileId>-<varyant>`, örn. `enerji-sarj`).
+`label`: İnsan-okur. ProfileID + varyant ifadesi içerebilir (örn. `"Enerji - Şarj (Haftalık)"`); `config.ts`'deki ProfileID option'unun `label` field'ı temel başlangıç noktasıdır.
+`description`: Kısa cümle, parantezsiz.
 `groupTitles`: varsayılan `null` (tüm gruplar). Hariç tutulan grup varsa `string[]` olarak yazılır.
 
 ---

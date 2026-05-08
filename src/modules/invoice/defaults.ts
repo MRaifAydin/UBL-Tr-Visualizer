@@ -27,13 +27,38 @@ export interface FillScenario {
   promptUser: boolean
   /** İçerilecek grup başlıkları. undefined → tüm groupDefaults girdileri. */
   groupTitles?: string[]
-  /** groupDefaults değerlerinin üzerine binen field-level override'lar. */
-  fieldOverrides?: Record<string, FieldDefaultValue>
+  /**
+   * groupDefaults değerlerinin üzerine binen field-level override'lar.
+   * Tek değer veya array (repeatable instance için):
+   *   "customer-party-party-id": "1234567890"           // tek instance
+   *   "customer-party-party-id": ["A", "B", "C"]        // 3 instance
+   */
+  fieldOverrides?: Record<string, FieldDefaultValue | FieldDefaultValue[]>
+  /**
+   * Field-level XML attribute override'ları. Anahtar: fieldId.
+   * Tek attr objesi veya array (repeatable instance için):
+   *   "fid": { schemeID: "VKN" }                                    // tek instance
+   *   "fid": [{ schemeID: "VKN" }, { schemeID: "PLAKA" }]            // 2 instance
+   * applyScenario default attr (örn. options[0]) üzerine merge eder; plain text
+   * alanlar için attr objesi sıfırdan oluşur.
+   */
+  fieldAttrOverrides?: Record<
+    string,
+    Record<string, string> | Record<string, string>[]
+  >
   /**
    * true → applyScenario yalnızca `field.required === true` alanları yazar;
    * isteğe bağlı kardeşler (aynı grupta olsalar bile) atlanır.
    */
   requiredOnly?: boolean
+  /**
+   * true → applyScenario yalnızca `fieldOverrides` veya `fieldAttrOverrides`'da
+   * **explicit** olarak listelenmiş alanları yazar; diğer fieldId'ler için
+   * `groupDefaults` ve `autoFieldDefault` çağrılmaz, alan tamamen atlanır.
+   * Generated profil senaryoları için: `true` (sample'ı birebir yansıtmak için).
+   * "Tümünü Doldur" gibi demo senaryoları için: `false` (mevcut davranış).
+   */
+  strictMode?: boolean
   /**
    * Ara ekrandaki ayrımı belirler:
    *  - 'manual'   → Kendim Seçeceğim → DefaultsModal (grup checkbox listesi)
@@ -198,29 +223,37 @@ export const invoiceGroupDefaults: GroupDefaults[] = [
 export const invoiceExcludedGroups: string[] = ['UBL Eklentileri', 'Mali Mühür-İmza']
 
 /**
- * `/senaryo-ekle` skill'inin ürettiği profil bazlı senaryolar.
- * Schematron + örnek XML'den çıkarılan profil-özgü zorunlu alanlar ve tipik
- * değerler `scenarios.generated.json` üzerinden okunur ve FillScenario'ya
- * dönüştürülür. ProfileID otomatik olarak fieldOverrides'a eklenir.
+ * `/senaryo-ekle` skill'inin ürettiği senaryolar.
+ * Schematron + örnek XML'den çıkarılan tipik değerler `scenarios.generated.json`
+ * üzerinden okunur ve FillScenario'ya dönüştürülür. ProfileID dahil tüm alan
+ * değerleri JSON'daki `fieldOverrides` içinde açıkça yer alır — özel statüsü
+ * yoktur.
  */
-interface GeneratedProfile {
-  profileId: string
+interface GeneratedScenario {
+  id: string
   label: string
   description?: string
-  fieldOverrides: Record<string, string>
+  fieldOverrides: Record<string, string | string[]>
+  fieldAttrOverrides?: Record<
+    string,
+    Record<string, string> | Record<string, string>[]
+  >
   groupTitles?: string[] | null
+  strictMode?: boolean
 }
 
 const profileScenarios: FillScenario[] = (
-  (scenariosData.profiles ?? []) as unknown as GeneratedProfile[]
-).map((p) => ({
-  id: `profile-${p.profileId.toLowerCase()}`,
-  label: p.label,
-  description: p.description ?? `${p.label} profili için tipik değerlerle örnek belge.`,
+  (scenariosData.scenarios ?? []) as unknown as GeneratedScenario[]
+).map((s) => ({
+  id: `scenario-${s.id}`,
+  label: s.label,
+  description: s.description,
   promptUser: false,
   kind: 'scenario',
-  groupTitles: p.groupTitles ?? undefined,
-  fieldOverrides: { 'invoice-profile-id': p.profileId, ...p.fieldOverrides },
+  groupTitles: s.groupTitles ?? undefined,
+  fieldOverrides: s.fieldOverrides,
+  fieldAttrOverrides: s.fieldAttrOverrides,
+  strictMode: s.strictMode,
 }))
 
 export const invoiceFillScenarios: FillScenario[] = [
