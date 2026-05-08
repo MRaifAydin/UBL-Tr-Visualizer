@@ -209,6 +209,84 @@
       ]
     },
     {
+      "profileId": "HKS",
+      "label": "HKS (Hal Kayıt)",
+      "description": "HKS profili için Schematron'a uygun tipik örnek.",
+      "fieldOverrides": {
+        "invoice-id": "0012020000000010",
+        "invoice-uuid": "BC57ED0F-E5CB-4B87-8CD6-3802FA7A3DDD",
+        "invoice-issue-date": "2020-01-01",
+        "invoice-notes": "Sicil No: sicil 34\nİşletme Merkezi: ankara merkez iban:876987689768976897689768976",
+        "additional-docref-id": "29k5889kyq1001",
+        "additional-docref-issue-date": "2020-01-01",
+        "additional-docref-type": "XSLT",
+        "supplier-party-website": "http://www.gib.gov.tr",
+        "supplier-party-party-id": "1111111157",
+        "supplier-party-party-name": "Geliştirme ortamı test kullanıcısı A.Ş. Ltd. Şti.",
+        "supplier-party-postal-room": "A102",
+        "supplier-party-postal-street": "Etlik Cad.",
+        "supplier-party-postal-building": "Gelir İdaresi Ek. Hizmet Binası",
+        "supplier-party-postal-bnum": "16",
+        "supplier-party-postal-citysub": "Dışkapı",
+        "supplier-party-postal-city": "Ankara",
+        "supplier-party-postal-postal": "06110",
+        "supplier-party-postal-region": "ad",
+        "supplier-party-tax-scheme-name": "Dışkapı",
+        "supplier-party-contact-email": "efatura@gib.gov.tr",
+        "customer-party-website": "http://www.as.com",
+        "customer-party-party-id": "1111111157",
+        "customer-party-party-name": "Test",
+        "customer-party-postal-room": "12",
+        "customer-party-postal-street": "as",
+        "customer-party-postal-building": "as",
+        "customer-party-postal-bnum": "12",
+        "customer-party-postal-citysub": "aaa",
+        "customer-party-postal-city": "Ankara",
+        "customer-party-postal-postal": "06000",
+        "customer-party-postal-region": "asas",
+        "customer-party-tax-scheme-name": "23 Temmuz",
+        "customer-party-contact-email": "aa@as.com",
+        "tax-amount": "80.00",
+        "tax-sub-taxable": "1000.00",
+        "tax-sub-amount": "80.00",
+        "tax-sub-calc-seq": "1",
+        "tax-sub-percent": "8",
+        "tax-scheme-name": "KDV",
+        "tax-scheme-type": "0015",
+        "lmt-line-ext": "1000.00",
+        "lmt-tax-excl": "1000.00",
+        "lmt-tax-incl": "1080.00",
+        "lmt-allowance-total": "0.00",
+        "lmt-payable": "1080.00",
+        "iline-id": "1",
+        "iline-quantity": "100",
+        "iline-line-ext": "1000",
+        "iline-ac-charge-indicator": "false",
+        "iline-ac-multiplier": "0",
+        "iline-ac-amount": "0",
+        "iline-ac-base-amount": "1000",
+        "iline-tax-amount": "80.00",
+        "iline-tax-sub-taxable": "1000.00",
+        "iline-tax-sub-amount": "80",
+        "iline-tax-sub-calc-seq": "1",
+        "iline-tax-sub-percent": "8",
+        "iline-tax-scheme-name": "KDV",
+        "iline-tax-scheme-type": "0015",
+        "iline-item-name": "elma",
+        "iline-item-add-id": "1231231231231231123",
+        "iline-price-amount": "10"
+      },
+      "groupTitles": [
+        "Belge Genel Bilgileri",
+        "Diğer İlişkili Belgeler",
+        "Satıcı",
+        "Alıcı",
+        "Toplam Vergi",
+        "Parasal Toplamlar",
+        "Mal/Hizmet Kalemleri"
+      ]
+    },
+    {
       "profileId": "IHRACAT",
       "label": "İhracat",
       "description": "İhracat Faturası profili için Schematron'a uygun tipik örnek.",
@@ -287,7 +365,7 @@
     }
   ],
   "_meta": {
-    "generatedAt": "2026-05-08",
+    "generatedAt": "2026-05-09",
     "schematronFiles": [
       "UBL-TR_Codelist.xml",
       "UBL-TR_Common_Schematron.xml",
@@ -297,7 +375,8 @@
       "TemelFaturaOrnegi.xml",
       "TicariFaturaOrnegi.xml",
       "YOLCUBERABER.xml",
-      "IHRACAT.xml"
+      "IHRACAT.xml",
+      "HKS-Ornek1.xml"
     ],
     "unmappedPaths": [
       "?xml-stylesheet@href",
@@ -434,6 +513,12 @@
         "test": "../cac:BuyerCustomerParty/cac:Party/cac:PartyIdentification/cbc:ID='EXPORT' and schemeID='PARTYTYPE'",
         "reason": "scheme-id-attribute-locked",
         "messageHint": "BuyerCustomerParty PartyIdentification için schemeID='PARTYTYPE' attribute'u config'de elle ayarlanamıyor; senaryo 'EXPORT' değerini buyer-party-party-id alanına yazıyor ama schemeID alanın varsayılanını (VKN/TCKN) kullanır. Doğru çıktı için /alan-ekle ile schemeID seçeneğini opsiyonelleştirmek gerekebilir."
+      },
+      {
+        "ruleId": "Common:HKSInvioceCheck",
+        "test": "count(cac:InvoiceLine/cac:Item/cac:AdditionalItemIdentification/cbc:ID[@schemeID='KUNYENO' and string-length(.)=19]) = count(cac:InvoiceLine)",
+        "reason": "scheme-id-attribute-locked",
+        "messageHint": "HKS profilinde her InvoiceLine için Item/AdditionalItemIdentification/cbc:ID@schemeID='KUNYENO' ve 19 karakter zorunludur. Senaryo 19 karakterli künye numarasını iline-item-add-id alanına yazıyor; ancak schemeID='KUNYENO' attribute'u config'de sabit ayarlanamıyor. Geçerli HKS XML için /alan-ekle ile bu attribute'un opsiyonelleştirilmesi gerekir."
       }
     ]
   }
