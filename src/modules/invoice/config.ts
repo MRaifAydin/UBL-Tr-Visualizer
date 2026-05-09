@@ -11,6 +11,7 @@ import {
   makeDeliveryGroup,
   makeDocumentReferenceGroup,
   makePartyGroup,
+  makeTaxTotalGroup,
 } from '../shared/factories'
 import requiredJson from './required.generated.json'
 
@@ -87,71 +88,6 @@ function makeExchangeRateGroup(title: string, prefix: string, pathBase: string[]
       { fieldId: `${prefix}-date`,   label: 'Kur Tarihi',              path: [...pathBase, 'cbc:Date'],               attr: 'value', type: 'date' },
     ],
   }
-}
-
-function makeTaxTotalGroup(
-  title: string,
-  prefix: string,
-  instanceMarker: string,
-  basePath: string[],
-  addLabel: string,
-  repeatable: boolean = true,
-): FieldGroupConfig {
-  const base: FieldGroupConfig = {
-    title,
-    fullWidth: true,
-    items: [
-      {
-        fieldId: `${prefix}-amount`,
-        label: 'Vergi Tutarı',
-        path: [...basePath, 'cbc:TaxAmount'],
-        attr: 'value',
-        type: 'duration-measure',
-        attrKey: 'currencyID',
-        options: CURRENCY_OPTIONS,
-      },
-      {
-        title: 'Vergi Ara Toplamı',
-        fullWidth: true,
-        wrap: true,
-        repeatable: true,
-        instanceMarker: 'cac:TaxSubtotal',
-        addLabel: 'Yeni Vergi Ara Toplamı Ekle',
-        items: [
-          { fieldId: `${prefix}-sub-taxable`,    label: 'Matrah',                         path: [...basePath, 'cac:TaxSubtotal', 'cbc:TaxableAmount'],                attr: 'value', type: 'duration-measure', attrKey: 'currencyID', options: CURRENCY_OPTIONS },
-          { fieldId: `${prefix}-sub-amount`,     label: 'Vergi Tutarı',                   path: [...basePath, 'cac:TaxSubtotal', 'cbc:TaxAmount'],                    attr: 'value', type: 'duration-measure', attrKey: 'currencyID', options: CURRENCY_OPTIONS },
-          { fieldId: `${prefix}-sub-calc-seq`,   label: 'Hesaplama Sırası',               path: [...basePath, 'cac:TaxSubtotal', 'cbc:CalculationSequenceNumeric'],   attr: 'value', type: 'number' },
-          { fieldId: `${prefix}-sub-trx-amount`, label: 'İşlem Para Birimi Vergi Tutarı', path: [...basePath, 'cac:TaxSubtotal', 'cbc:TransactionCurrencyTaxAmount'], attr: 'value', type: 'duration-measure', attrKey: 'currencyID', options: CURRENCY_OPTIONS },
-          { fieldId: `${prefix}-sub-percent`,    label: 'Vergi Oranı',                    path: [...basePath, 'cac:TaxSubtotal', 'cbc:Percent'],                     attr: 'value', type: 'number' },
-          { fieldId: `${prefix}-sub-base-unit`,  label: 'Birim Ölçü',                     path: [...basePath, 'cac:TaxSubtotal', 'cbc:BaseUnitMeasure'],             attr: 'value', disabled: true },
-          { fieldId: `${prefix}-sub-perunit`,    label: 'Birim Başına Tutar',             path: [...basePath, 'cac:TaxSubtotal', 'cbc:PerUnitAmount'],               attr: 'value', type: 'duration-measure', attrKey: 'currencyID', options: CURRENCY_OPTIONS },
-          {
-            title: 'Vergi Türü',
-            wrap: true,
-            fields: [
-              { fieldId: `${prefix}-cat-name`,          label: 'Adı',                        path: [...basePath, 'cac:TaxSubtotal', 'cac:TaxCategory', 'cbc:Name'],                    attr: 'value' },
-              { fieldId: `${prefix}-cat-exempt-code`,   label: 'Vergi Muafiyet Nedeni Kodu', path: [...basePath, 'cac:TaxSubtotal', 'cac:TaxCategory', 'cbc:TaxExemptionReasonCode'], attr: 'value' },
-              { fieldId: `${prefix}-cat-exempt-reason`, label: 'Vergi Muafiyet Nedeni',      path: [...basePath, 'cac:TaxSubtotal', 'cac:TaxCategory', 'cbc:TaxExemptionReason'],     attr: 'value' },
-            ],
-            subgroups: [
-              {
-                title: 'Vergi Bilgileri',
-                wrap: true,
-                fields: [
-                  { fieldId: `${prefix}-scheme-id`,   label: 'Sıra Numarası',   path: [...basePath, 'cac:TaxSubtotal', 'cac:TaxCategory', 'cac:TaxScheme', 'cbc:ID'],          attr: 'value' },
-                  { fieldId: `${prefix}-scheme-name`, label: 'Vergi Adı',       path: [...basePath, 'cac:TaxSubtotal', 'cac:TaxCategory', 'cac:TaxScheme', 'cbc:Name'],        attr: 'value' },
-                  { fieldId: `${prefix}-scheme-type`, label: 'Vergi Tipi Kodu', path: [...basePath, 'cac:TaxSubtotal', 'cac:TaxCategory', 'cac:TaxScheme', 'cbc:TaxTypeCode'], attr: 'value', disabled: true },
-                ],
-              },
-            ],
-          },
-        ],
-      },
-    ],
-  }
-  return repeatable
-    ? { ...base, repeatable: true, instanceMarker, addLabel }
-    : base
 }
 
 export const fieldGroups: FieldGroupConfig[] = [
