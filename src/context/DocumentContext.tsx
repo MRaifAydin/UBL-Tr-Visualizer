@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react'
 import { collectLeafFieldIds, findNodeById, findOrCreateNodeById, removeNodeById, removeSubtree } from '../core/treeManager'
 import { MODULES } from '../modules'
+import { parseDocTypeFromPath, pathFromDocType, readInitialDocType } from '../lib/urlDocType'
 import type { DocumentContextValue, FieldAttr, ModuleConfig, SelectOption, Tree, ValidationError } from '../types'
 
 const DocumentContext = createContext<DocumentContextValue | null>(null)
@@ -62,7 +63,7 @@ function computeRequiredErrors(tree: Tree, config: ModuleConfig): ValidationErro
 }
 
 export function DocumentProvider({ children }: { children: ReactNode }) {
-  const [docType, setDocType] = useState<string>(DEFAULT_DOC_TYPE)
+  const [docType, setDocType] = useState<string>(() => readInitialDocType())
   const [states, setStates] = useState<Record<string, DocSlice>>(initialStates)
   const [safeModeMap, setSafeModeMap] = useState<Record<string, boolean>>(() => readSafeModeFromStorage())
 
@@ -70,6 +71,10 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
     if (!MODULES[type]) {
       console.warn(`Bilinmeyen belge tipi: ${type}`)
       return
+    }
+    const nextPath = pathFromDocType(type)
+    if (window.location.pathname !== nextPath) {
+      window.history.pushState({}, '', nextPath)
     }
     setDocType(type)
   }, [])
@@ -242,6 +247,25 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
       [docType]: { ...prev[docType], validationErrors: [], validationActive: false },
     }))
   }, [docType])
+
+  // Tarayıcı geri/ileri butonları için URL → docType senkronizasyonu
+  useEffect(() => {
+    function handlePopState() {
+      const next = parseDocTypeFromPath(window.location.pathname) ?? DEFAULT_DOC_TYPE
+      setDocType(next)
+    }
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
+
+  // İlk mount'ta URL geçersizse (örn. /foo) düzelt — replaceState history'yi kirletmez
+  useEffect(() => {
+    const expected = pathFromDocType(docType)
+    if (window.location.pathname !== expected) {
+      window.history.replaceState({}, '', expected)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const { tree, activeFieldId, focusRequest, validationErrors, loadCounter, extraOptions, loadedFieldIds } = states[docType]
   const safeMode = safeModeMap[docType] ?? false

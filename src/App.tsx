@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, type ReactNode } from 'react'
 import { useDocument } from './context/DocumentContext'
+import { pathFromDocType } from './lib/urlDocType'
 import DespatchPage from './pages/DespatchPage'
 import InvoicePage from './pages/InvoicePage'
 
@@ -67,11 +68,17 @@ export default function App() {
         </div>
 
         {Object.entries(SIDEBAR_ITEMS).map(([key, { label, icon }]) => (
-          <button
+          <a
             key={key}
+            href={pathFromDocType(key)}
             title={label}
-            onClick={() => setDocType(key)}
-            className={`w-11 h-11 rounded-xl flex flex-col items-center justify-center gap-0.5 transition-colors ${
+            onClick={(e) => {
+              // Modifier'lı tıklama (yeni sekme/pencere) tarayıcıya bırakılır
+              if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return
+              e.preventDefault()
+              setDocType(key)
+            }}
+            className={`w-11 h-11 rounded-xl flex flex-col items-center justify-center gap-0.5 transition-colors no-underline ${
               docType === key
                 ? 'bg-blue-600 text-white'
                 : 'text-gray-400 hover:bg-gray-700 hover:text-white'
@@ -79,7 +86,7 @@ export default function App() {
           >
             {icon}
             <span className="text-[9px] font-medium leading-none">{label}</span>
-          </button>
+          </a>
         ))}
 
         <div className="mt-auto relative" ref={modalRef}>

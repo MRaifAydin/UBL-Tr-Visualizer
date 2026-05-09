@@ -24,6 +24,7 @@ src/
   types.ts                                 — Merkezi tip tanımları (Tree, FieldDefinition, ModuleConfig, vb.)
   vite-env.d.ts                            — Vite tip referansları (CSS importları, env vars)
   context/DocumentContext.tsx              — Global state (tree, activeFieldId, validation, safeMode, loadTree, ...)
+  lib/urlDocType.ts                        — URL ↔ docType dönüşümü (pathname tabanlı routing)
   core/treeManager.ts                      — Tree CRUD (findOrCreateNodeById, removeNodeById, removeSubtree)
   core/xmlSerializer.ts                    — Tree → XML string dönüşümü
   core/xmlParser.ts                        — XML string → Tree (DOMParser tabanlı; unknownPaths + extraOptions raporu)
@@ -50,6 +51,7 @@ src/
 - **Path adresleme:** Bir alan `path: string[]` ile tanımlanır (kök dahil değil; örn. `['cac:AccountingSupplierParty', 'cac:Party', 'cbc:WebsiteURI']`). `path` + `fieldId` birlikte kanonik adrestir; `treeManager` tüm CRUD işlemlerini bu ikisi üzerinden yapar.
 - **Veri akışı:** Config → FieldForm (render) → updateField (context) → treeManager (CRUD) → XMLNode (görselleştirme) / xmlSerializer (indirme)
 - **XML I/O:** `xmlSerializer` tree'yi indirilebilir XML'e çevirir; `xmlParser` yüklenen XML'i tree'ye dönüştürür. Parser, config'e bağlı bir `pathMap` üzerinden tanıdığı path'leri tree'ye yazar; tanımadıklarını `unknownPaths` listesine düşürür ve `<select>` alanlarındaki tanınmayan değerler `extraOptions`'a eklenerek kaybolmaz.
+- **URL routing:** Native History API kullanılır (router kütüphanesi yok). Aktif belge tipi URL'in ilk segmenti olur (`/invoice`, `/despatch`). `src/lib/urlDocType.ts` `MODULES` üzerinden parse/format yapar; `DocumentContext` mount'ta URL'den okur, sekme değişiminde `pushState`, geçersiz path'i `replaceState` ile düzeltir, `popstate` ile geri/ileri tuşlarını destekler. Yeni modül eklemek için ekstra routing işi yok — `MODULES`'a kaydetmek yeterli. Cloudflare Pages dahil static hosting için `public/_redirects` (`/* /index.html 200`) SPA fallback sağlar.
 - **Tipler:** Tüm domain tipleri `src/types.ts`'te merkezi tutulur. Yeni alan tipleri eklerken önce burayı güncelle.
 
 ### Tip ve alan konvansiyonları (`types.ts`)
