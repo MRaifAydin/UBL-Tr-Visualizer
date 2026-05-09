@@ -10,9 +10,55 @@ import { readFileSync } from 'node:fs'
 import { DOMParser } from '@xmldom/xmldom'
 import type { FieldDefinition } from '../src/types'
 import { isFieldDefinition } from '../src/types'
-import { fieldGroups, fieldDefinitions } from '../src/modules/invoice/config'
+import * as invoiceModule from '../src/modules/invoice/config'
+import * as despatchModule from '../src/modules/despatch/config'
 
-const invoiceConfig = { fieldGroups, fieldDefinitions }
+type ModuleKey = 'invoice' | 'despatch'
+
+interface ModuleProfile {
+  rootTag: string
+  fieldGroups: typeof invoiceModule.fieldGroups
+  samplesDir: string
+  scenariosPath: string
+  samples: Record<string, string>
+}
+
+const MODULE_PROFILES: Record<ModuleKey, ModuleProfile> = {
+  invoice: {
+    rootTag: 'Invoice',
+    fieldGroups: invoiceModule.fieldGroups,
+    samplesDir: 'references/invoice/samples',
+    scenariosPath: 'src/modules/invoice/scenarios.generated.json',
+    samples: {
+      temelfatura: 'TemelFaturaOrnegi.xml',
+      ticarifatura: 'TicariFaturaOrnegi.xml',
+      yolcuberaberfatura: 'YOLCUBERABER.xml',
+      ihracat: 'IHRACAT.xml',
+      'enerji-sarj': 'SARJ.xml',
+      'enerji-sarjanlik': 'SARJANLIK.xml',
+    },
+  },
+  despatch: {
+    rootTag: 'DespatchAdvice',
+    fieldGroups: despatchModule.fieldGroups,
+    samplesDir: 'references/despatch/samples',
+    scenariosPath: 'src/modules/despatch/scenarios.generated.json',
+    samples: {
+      'temelirsaliye-matbu': 'Irsaliye-Matbudan.xml',
+      'temelirsaliye-katalog-kontrat': 'Irsaliye-Ornek1.xml',
+      'temelirsaliye-kismi-teslim': 'Irsaliye-Ornek2.xml',
+      'temelirsaliye-cok-taraf': 'Irsaliye-Ornek3.xml',
+    },
+  },
+}
+
+const moduleArg = (process.argv.find(a => a.startsWith('--module='))?.split('=')[1] ?? 'invoice') as ModuleKey
+if (!MODULE_PROFILES[moduleArg]) {
+  console.error(`Unknown module: ${moduleArg}. Use --module=invoice or --module=despatch`)
+  process.exit(1)
+}
+const profile = MODULE_PROFILES[moduleArg]
+console.log(`Auditing module: ${moduleArg} (root: ${profile.rootTag})`)
 
 type LeafEntry = { path: string; value: string; attrs: Record<string, string> }
 
@@ -37,7 +83,7 @@ function flattenFields(group: any, out: FieldDefinition[] = []): FieldDefinition
 }
 
 const allFields: FieldDefinition[] = []
-for (const g of invoiceConfig.fieldGroups) flattenFields(g, allFields)
+for (const g of profile.fieldGroups) flattenFields(g, allFields)
 
 // fieldId → key (path string)
 function fieldKey(f: FieldDefinition): string {
@@ -83,17 +129,9 @@ function extractLeaves(xml: string): LeafEntry[] {
   return leaves
 }
 
-const SAMPLES_DIR = 'references/invoice/samples'
-const SCENARIOS_PATH = 'src/modules/invoice/scenarios.generated.json'
-
-const SAMPLES: Record<string, string> = {
-  temelfatura: 'TemelFaturaOrnegi.xml',
-  ticarifatura: 'TicariFaturaOrnegi.xml',
-  yolcuberaberfatura: 'YOLCUBERABER.xml',
-  ihracat: 'IHRACAT.xml',
-  'enerji-sarj': 'SARJ.xml',
-  'enerji-sarjanlik': 'SARJANLIK.xml',
-}
+const SAMPLES_DIR = profile.samplesDir
+const SCENARIOS_PATH = profile.scenariosPath
+const SAMPLES = profile.samples
 
 const scenariosFile = JSON.parse(readFileSync(SCENARIOS_PATH, 'utf-8'))
 const byId: Record<string, any> = {}
@@ -121,7 +159,7 @@ for (const [sid, fname] of Object.entries(SAMPLES)) {
   // Pre-build set of fieldIds available in active groups
   const activeGroupFields = new Set<string>()
   for (const title of groupTitles) {
-    const grp = invoiceConfig.fieldGroups.find(g => g.title === title)
+    const grp = profile.fieldGroups.find(g => g.title === title)
     if (!grp) continue
     const f: FieldDefinition[] = []
     flattenFields(grp, f)
@@ -134,8 +172,8 @@ for (const [sid, fname] of Object.entries(SAMPLES)) {
   const sampleInstances: Record<string, Array<{ value: string; attrs: Record<string, string> }>> = {}
   for (const leaf of leaves) {
     const parts = leaf.path.split('/')
-    const rootStripped = parts[0] === 'Invoice' || parts[0].endsWith(':Invoice') ? parts.slice(1) : parts
-    const key = ['Invoice', ...rootStripped].join('/')
+    const rootStripped = parts[0] === profile.rootTag || parts[0].endsWith(`:${profile.rootTag}`) ? parts.slice(1) : parts
+    const key = [profile.rootTag, ...rootStripped].join('/')
     if (!sampleInstances[key]) sampleInstances[key] = []
     sampleInstances[key].push({ value: leaf.value, attrs: leaf.attrs })
   }
@@ -144,8 +182,8 @@ for (const [sid, fname] of Object.entries(SAMPLES)) {
   const checkedKeys = new Set<string>()
   for (const leaf of leaves) {
     const parts = leaf.path.split('/')
-    const rootStripped = parts[0] === 'Invoice' || parts[0].endsWith(':Invoice') ? parts.slice(1) : parts
-    const key = ['Invoice', ...rootStripped].join('/')
+    const rootStripped = parts[0] === profile.rootTag || parts[0].endsWith(`:${profile.rootTag}`) ? parts.slice(1) : parts
+    const key = [profile.rootTag, ...rootStripped].join('/')
     if (checkedKeys.has(key)) continue
     checkedKeys.add(key)
 
@@ -205,8 +243,8 @@ for (const [sid, fname] of Object.entries(SAMPLES)) {
   const sampleFieldIds = new Set<string>()
   for (const leaf of leaves) {
     const parts = leaf.path.split('/')
-    const rootStripped = parts[0] === 'Invoice' || parts[0].endsWith(':Invoice') ? parts.slice(1) : parts
-    const key = ['Invoice', ...rootStripped].join('/')
+    const rootStripped = parts[0] === profile.rootTag || parts[0].endsWith(`:${profile.rootTag}`) ? parts.slice(1) : parts
+    const key = [profile.rootTag, ...rootStripped].join('/')
     const cands = pathToFieldIds.get(key) ?? []
     for (const c of cands) sampleFieldIds.add(c.fieldId)
   }

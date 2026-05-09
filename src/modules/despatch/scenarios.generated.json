@@ -1,3 +1,749 @@
 {
-  "scenarios": []
+  "scenarios": [
+    {
+      "id": "temelirsaliye-matbu",
+      "label": "Temel İrsaliye - Matbu Fatura",
+      "description": "Matbu fatura referansı taşıyan temel irsaliye örneği",
+      "fieldOverrides": {
+        "desp-profile-id": "TEMELIRSALIYE",
+        "desp-id": "GIB2016000000011",
+        "desp-copy-indicator": "false",
+        "desp-uuid": "F47AC10B-58CC-4372-A567-0E02B2C3D479",
+        "desp-issue-date": "2016-08-14",
+        "desp-issue-time": "09:00:00",
+        "desp-type-code": "MATBUDAN",
+        "desp-notes": "Mallar teslim edildi..",
+        "desp-order-ref-id": "GIB2016000000033",
+        "desp-order-ref-issue-date": "2016-08-14",
+        "desp-add-doc-ref-id": "A-963403",
+        "desp-add-doc-ref-issue-date": "2016-08-10",
+        "desp-add-doc-ref-type": "MATBU",
+        "desp-add-doc-ref-description": "Matbu belgesi",
+        "desp-supplier-website": "http://www.aaa.com.tr/",
+        "desp-supplier-party-id": "1288331521",
+        "desp-supplier-party-name": "AAA Anonim Şirketi",
+        "desp-supplier-postal-id": "1234567890",
+        "desp-supplier-postal-street": "Papatya Caddesi Yasemin Sokak",
+        "desp-supplier-postal-bnum": "21",
+        "desp-supplier-postal-citysub": "Beşiktaş",
+        "desp-supplier-postal-city": "İstanbul",
+        "desp-supplier-postal-postal": "34100",
+        "desp-supplier-postal-country-name": "Türkiye",
+        "desp-supplier-loc-id": "Depo Şube",
+        "desp-supplier-loc-addr-id": "1234567895",
+        "desp-supplier-loc-addr-street": "Ihlamur Mahallesi Selvi Caddesi Sedir Sokak",
+        "desp-supplier-loc-addr-bnum": "79/A",
+        "desp-supplier-loc-addr-citysub": "Balgat",
+        "desp-supplier-loc-addr-city": "Ankara",
+        "desp-supplier-loc-addr-postal": "06800",
+        "desp-supplier-loc-addr-country-name": "Türkiye",
+        "desp-supplier-tax-scheme-name": "Büyük Mükellefler",
+        "desp-supplier-contact-tel": "(212) 925 51515",
+        "desp-supplier-contact-fax": "(212) 925505015",
+        "desp-supplier-contact-email": "aa@aaa.com.tr",
+        "desp-customer-website": "http://www.bbb.com.tr/",
+        "desp-customer-party-id": [
+          "9205121120",
+          "120010751"
+        ],
+        "desp-customer-party-name": "BBB Limited  Şirketi",
+        "desp-customer-postal-id": "1234567890",
+        "desp-customer-postal-street": "Ihlamur Mahallesi Selvi Caddesi Sedir Sokak",
+        "desp-customer-postal-bnum": "75/A",
+        "desp-customer-postal-citysub": "Kızılay",
+        "desp-customer-postal-city": "Ankara",
+        "desp-customer-postal-postal": "06100",
+        "desp-customer-postal-country-name": "Türkiye",
+        "desp-customer-tax-scheme-name": "Çankaya",
+        "desp-customer-contact-tel": "(312) 621 1112",
+        "desp-customer-contact-fax": "(312) 621 1011",
+        "desp-customer-contact-email": "bb@bbb.com.tr",
+        "desp-stage-road-plate": "06DR4077",
+        "desp-stage-driver-first": [
+          "Mehmet",
+          "Mustafa"
+        ],
+        "desp-stage-driver-family": [
+          "Öztürk",
+          "Öztürk"
+        ],
+        "desp-stage-driver-title": [
+          "Şoför",
+          "Şoför"
+        ],
+        "desp-stage-driver-tckn": [
+          "14922266699",
+          "14922266600"
+        ],
+        "desp-delivery-carrier-party-id": "1288331523",
+        "desp-delivery-carrier-party-name": "CCC Lojistik Anonim Şirketi",
+        "desp-delivery-carrier-postal-citysub": "Osmancık",
+        "desp-delivery-carrier-postal-city": "Çorum",
+        "desp-delivery-carrier-postal-country-name": "Türkiye",
+        "desp-delivery-despatch-actual-date": "2016-08-14",
+        "desp-delivery-despatch-actual-time": "09:00:00",
+        "desp-line-id": [
+          "1",
+          "2",
+          "3",
+          "4"
+        ],
+        "desp-line-delivered-qty": [
+          "20",
+          "12",
+          "12",
+          "2"
+        ],
+        "desp-line-olr-line-id": [
+          "1",
+          "2",
+          "3",
+          "4"
+        ],
+        "desp-line-item-name": [
+          "Masa Üstü Bilgisayar",
+          "Notebook Bilgisayar",
+          "Notebook Çantası",
+          "Yazıcı"
+        ],
+        "desp-line-item-seller-id": [
+          "PNC1234",
+          "PNC1235",
+          "PNC1236",
+          "PNC1237"
+        ]
+      },
+      "fieldAttrOverrides": {
+        "desp-supplier-party-id": {
+          "schemeID": "VKN"
+        },
+        "desp-customer-party-id": [
+          {
+            "schemeID": "VKN"
+          },
+          {
+            "schemeID": "MUSTERINO"
+          }
+        ],
+        "desp-stage-road-plate": {
+          "schemeID": "PLAKA"
+        },
+        "desp-delivery-carrier-party-id": {
+          "schemeID": "VKN"
+        },
+        "desp-line-delivered-qty": [
+          {
+            "unitCode": "C62"
+          },
+          {
+            "unitCode": "C62"
+          },
+          {
+            "unitCode": "C62"
+          },
+          {
+            "unitCode": "C62"
+          }
+        ]
+      },
+      "groupTitles": [
+        "Belge Genel Bilgileri",
+        "Sipariş Bilgileri",
+        "Diğer Belge Referansları",
+        "Gönderen (Satıcı)",
+        "Alıcı",
+        "Taşıma Evresi",
+        "Teslimat",
+        "İrsaliye Satırı"
+      ],
+      "strictMode": true
+    },
+    {
+      "id": "temelirsaliye-katalog-kontrat",
+      "label": "Temel İrsaliye - Katalog ve Kontrat Referanslı",
+      "description": "Katalog ve kontrat döküman referanslarıyla zenginleştirilmiş sevk irsaliyesi",
+      "fieldOverrides": {
+        "desp-profile-id": "TEMELIRSALIYE",
+        "desp-id": "GIB2016000000011",
+        "desp-copy-indicator": "false",
+        "desp-uuid": "F47AC10B-58CC-4372-A567-0E02B2C3D479",
+        "desp-issue-date": "2016-08-14",
+        "desp-issue-time": "09:00:00",
+        "desp-type-code": "SEVK",
+        "desp-notes": "Mallar teslim edildi..",
+        "desp-order-ref-id": "GIB2016000000033",
+        "desp-order-ref-issue-date": "2016-08-14",
+        "desp-add-doc-ref-id": [
+          "GIB2016000000011",
+          "GIB2016000000078"
+        ],
+        "desp-add-doc-ref-issue-date": [
+          "2016-08-10",
+          "2016-08-11"
+        ],
+        "desp-add-doc-ref-type": [
+          "Katalog",
+          "Kontrat"
+        ],
+        "desp-add-doc-ref-description": [
+          "Katalog belgesi",
+          "Kontrat belgesi"
+        ],
+        "desp-supplier-website": "http://www.aaa.com.tr/",
+        "desp-supplier-party-id": "1288331521",
+        "desp-supplier-party-name": "AAA Anonim Şirketi",
+        "desp-supplier-postal-id": "1234567890",
+        "desp-supplier-postal-street": "Papatya Caddesi Yasemin Sokak",
+        "desp-supplier-postal-bnum": "21",
+        "desp-supplier-postal-citysub": "Beşiktaş",
+        "desp-supplier-postal-city": "İstanbul",
+        "desp-supplier-postal-postal": "34100",
+        "desp-supplier-postal-country-name": "Türkiye",
+        "desp-supplier-loc-id": "Depo Şube",
+        "desp-supplier-loc-addr-id": "1234567895",
+        "desp-supplier-loc-addr-street": "Ihlamur Mahallesi Selvi Caddesi Sedir Sokak",
+        "desp-supplier-loc-addr-bnum": "79/A",
+        "desp-supplier-loc-addr-citysub": "Balgat",
+        "desp-supplier-loc-addr-city": "Ankara",
+        "desp-supplier-loc-addr-postal": "06800",
+        "desp-supplier-loc-addr-country-name": "Türkiye",
+        "desp-supplier-tax-scheme-name": "Büyük Mükellefler",
+        "desp-supplier-contact-tel": "(212) 925 51515",
+        "desp-supplier-contact-fax": "(212) 925505015",
+        "desp-supplier-contact-email": "aa@aaa.com.tr",
+        "desp-customer-website": "http://www.bbb.com.tr/",
+        "desp-customer-party-id": [
+          "9205121120",
+          "120010751"
+        ],
+        "desp-customer-party-name": "BBB Limited  Şirketi",
+        "desp-customer-postal-id": "1234567890",
+        "desp-customer-postal-street": "Ihlamur Mahallesi Selvi Caddesi Sedir Sokak",
+        "desp-customer-postal-bnum": "75/A",
+        "desp-customer-postal-citysub": "Kızılay",
+        "desp-customer-postal-city": "Ankara",
+        "desp-customer-postal-postal": "06100",
+        "desp-customer-postal-country-name": "Türkiye",
+        "desp-customer-tax-scheme-name": "Çankaya",
+        "desp-customer-contact-tel": "(312) 621 1112",
+        "desp-customer-contact-fax": "(312) 621 1011",
+        "desp-customer-contact-email": "bb@bbb.com.tr",
+        "desp-stage-road-plate": "06DR4077",
+        "desp-stage-driver-first": [
+          "Mehmet",
+          "Mustafa"
+        ],
+        "desp-stage-driver-family": [
+          "Öztürk",
+          "Öztürk"
+        ],
+        "desp-stage-driver-title": [
+          "Şoför",
+          "Şoför"
+        ],
+        "desp-stage-driver-tckn": [
+          "14922266699",
+          "14922266600"
+        ],
+        "desp-delivery-carrier-party-id": "1288331523",
+        "desp-delivery-carrier-party-name": "CCC Lojistik Anonim Şirketi",
+        "desp-delivery-carrier-postal-citysub": "Osmancık",
+        "desp-delivery-carrier-postal-city": "Çorum",
+        "desp-delivery-carrier-postal-country-name": "Türkiye",
+        "desp-delivery-despatch-actual-date": "2016-08-14",
+        "desp-delivery-despatch-actual-time": "09:00:00",
+        "desp-line-id": [
+          "1",
+          "2",
+          "3",
+          "4"
+        ],
+        "desp-line-delivered-qty": [
+          "20",
+          "12",
+          "12",
+          "2"
+        ],
+        "desp-line-olr-line-id": [
+          "1",
+          "2",
+          "3",
+          "4"
+        ],
+        "desp-line-item-name": [
+          "Masa Üstü Bilgisayar",
+          "Notebook Bilgisayar",
+          "Notebook Çantası",
+          "Yazıcı"
+        ],
+        "desp-line-item-seller-id": [
+          "PNC1234",
+          "PNC1235",
+          "PNC1236",
+          "PNC1237"
+        ]
+      },
+      "fieldAttrOverrides": {
+        "desp-supplier-party-id": {
+          "schemeID": "VKN"
+        },
+        "desp-customer-party-id": [
+          {
+            "schemeID": "VKN"
+          },
+          {
+            "schemeID": "MUSTERINO"
+          }
+        ],
+        "desp-stage-road-plate": {
+          "schemeID": "PLAKA"
+        },
+        "desp-delivery-carrier-party-id": {
+          "schemeID": "VKN"
+        },
+        "desp-line-delivered-qty": [
+          {
+            "unitCode": "C62"
+          },
+          {
+            "unitCode": "C62"
+          },
+          {
+            "unitCode": "C62"
+          },
+          {
+            "unitCode": "C62"
+          }
+        ]
+      },
+      "groupTitles": [
+        "Belge Genel Bilgileri",
+        "Sipariş Bilgileri",
+        "Diğer Belge Referansları",
+        "Gönderen (Satıcı)",
+        "Alıcı",
+        "Taşıma Evresi",
+        "Teslimat",
+        "İrsaliye Satırı"
+      ],
+      "strictMode": true
+    },
+    {
+      "id": "temelirsaliye-kismi-teslim",
+      "label": "Temel İrsaliye - Kısmi Teslimat",
+      "description": "Bekleyen miktar ve neden alanları içeren kısmi teslimat irsaliyesi",
+      "fieldOverrides": {
+        "desp-profile-id": "TEMELIRSALIYE",
+        "desp-id": "GIB2016000000012",
+        "desp-copy-indicator": "false",
+        "desp-uuid": "F47AC10B-58CC-4372-A567-0E02B2C3D479",
+        "desp-issue-date": "2016-08-14",
+        "desp-issue-time": "09:00:00",
+        "desp-type-code": "SEVK",
+        "desp-order-ref-id": "GIB2016000000033",
+        "desp-order-ref-issue-date": "2016-08-14",
+        "desp-supplier-website": "http://www.aaa.com.tr/",
+        "desp-supplier-party-id": "1288331521",
+        "desp-supplier-party-name": "AAA Anonim Şirketi",
+        "desp-supplier-postal-id": "1234567890",
+        "desp-supplier-postal-street": "Papatya Caddesi Yasemin Sokak",
+        "desp-supplier-postal-bnum": "21",
+        "desp-supplier-postal-citysub": "Beşiktaş",
+        "desp-supplier-postal-city": "İstanbul",
+        "desp-supplier-postal-postal": "34100",
+        "desp-supplier-postal-country-name": "Türkiye",
+        "desp-supplier-loc-id": "Depo Şube",
+        "desp-supplier-loc-addr-id": "1234567895",
+        "desp-supplier-loc-addr-street": "Ihlamur Mahallesi Selvi Caddesi Sedir Sokak",
+        "desp-supplier-loc-addr-bnum": "79/A",
+        "desp-supplier-loc-addr-citysub": "Balgat",
+        "desp-supplier-loc-addr-city": "Ankara",
+        "desp-supplier-loc-addr-postal": "06800",
+        "desp-supplier-loc-addr-country-name": "Türkiye",
+        "desp-supplier-tax-scheme-name": "Büyük Mükellefler",
+        "desp-supplier-contact-tel": "(212) 925 51515",
+        "desp-supplier-contact-fax": "(212) 925505015",
+        "desp-supplier-contact-email": "aa@aaa.com.tr",
+        "desp-customer-website": "http://www.bbb.com.tr/",
+        "desp-customer-party-id": [
+          "9205121120",
+          "120010751"
+        ],
+        "desp-customer-party-name": "BBB Limited Şirketi",
+        "desp-customer-postal-id": "1234567890",
+        "desp-customer-postal-street": "Ihlamur Mahallesi Selvi Caddesi Sedir Sokak",
+        "desp-customer-postal-bnum": "75/A",
+        "desp-customer-postal-citysub": "Kızılay",
+        "desp-customer-postal-city": "Ankara",
+        "desp-customer-postal-postal": "06100",
+        "desp-customer-postal-country-name": "Türkiye",
+        "desp-customer-tax-scheme-name": "Çankaya",
+        "desp-customer-contact-tel": "(312) 621 1112",
+        "desp-customer-contact-fax": "(312) 621 1011",
+        "desp-customer-contact-email": "bb@bbb.com.tr",
+        "desp-stage-road-plate": "06DR4077",
+        "desp-stage-driver-first": [
+          "Mehmet",
+          "Mustafa"
+        ],
+        "desp-stage-driver-family": [
+          "Öztürk",
+          "Öztürk"
+        ],
+        "desp-stage-driver-title": [
+          "Şoför",
+          "Şoför"
+        ],
+        "desp-stage-driver-tckn": [
+          "14922266699",
+          "14922266600"
+        ],
+        "desp-delivery-carrier-party-id": "1288331523",
+        "desp-delivery-carrier-party-name": "CCC Lojistik Anonim Şirketi",
+        "desp-delivery-carrier-postal-citysub": "Osmancık",
+        "desp-delivery-carrier-postal-city": "Çorum",
+        "desp-delivery-carrier-postal-country-name": "Türkiye",
+        "desp-delivery-despatch-actual-date": "2016-08-14",
+        "desp-delivery-despatch-actual-time": "09:00:00",
+        "desp-line-id": [
+          "1",
+          "2",
+          "3",
+          "4"
+        ],
+        "desp-line-delivered-qty": [
+          "10",
+          "10",
+          "12",
+          "2"
+        ],
+        "desp-line-outstanding-qty": [
+          "10",
+          "2"
+        ],
+        "desp-line-outstanding-rsn": [
+          "Ürünlerin 10 tanesi daha sonra\n\t\t\tgönderilecektir.",
+          "Ürünlerin 2 tanesi daha sonra\n\t\t\tgönderilecektir."
+        ],
+        "desp-line-olr-line-id": [
+          "1",
+          "2",
+          "3",
+          "4"
+        ],
+        "desp-line-item-name": [
+          "Masa Üstü Bilgisayar",
+          "Notebook Bilgisayar",
+          "Notebook Çantası",
+          "Yazıcı"
+        ],
+        "desp-line-item-seller-id": [
+          "PNC1234",
+          "PNC1235",
+          "PNC1236",
+          "PNC1237"
+        ]
+      },
+      "fieldAttrOverrides": {
+        "desp-supplier-party-id": {
+          "schemeID": "VKN"
+        },
+        "desp-customer-party-id": [
+          {
+            "schemeID": "VKN"
+          },
+          {
+            "schemeID": "MUSTERINO"
+          }
+        ],
+        "desp-stage-road-plate": {
+          "schemeID": "PLAKA"
+        },
+        "desp-delivery-carrier-party-id": {
+          "schemeID": "VKN"
+        },
+        "desp-line-delivered-qty": [
+          {
+            "unitCode": "C62"
+          },
+          {
+            "unitCode": "C62"
+          },
+          {
+            "unitCode": "C62"
+          },
+          {
+            "unitCode": "C62"
+          }
+        ],
+        "desp-line-outstanding-qty": [
+          {
+            "unitCode": "C62"
+          },
+          {
+            "unitCode": "C62"
+          }
+        ]
+      },
+      "groupTitles": [
+        "Belge Genel Bilgileri",
+        "Sipariş Bilgileri",
+        "Gönderen (Satıcı)",
+        "Alıcı",
+        "Taşıma Evresi",
+        "Teslimat",
+        "İrsaliye Satırı"
+      ],
+      "strictMode": true
+    },
+    {
+      "id": "temelirsaliye-cok-taraf",
+      "label": "Temel İrsaliye - Çok Taraflı",
+      "description": "Asıl satıcı, asıl alıcı ve sevk eden müşteri tarafları içeren çok-taraflı irsaliye",
+      "fieldOverrides": {
+        "desp-profile-id": "TEMELIRSALIYE",
+        "desp-id": "GIB2016000000013",
+        "desp-copy-indicator": "false",
+        "desp-uuid": "F47AC10B-58CC-4372-A567-0E02B2C3D479",
+        "desp-issue-date": "2016-08-14",
+        "desp-issue-time": "09:00:00",
+        "desp-type-code": "SEVK",
+        "desp-order-ref-id": "GIB2016000000033",
+        "desp-order-ref-issue-date": "2016-08-14",
+        "desp-supplier-website": "http://www.aaa.com.tr/",
+        "desp-supplier-party-id": "1288331521",
+        "desp-supplier-party-name": "AAA Anonim Şirketi",
+        "desp-supplier-postal-id": "1234567890",
+        "desp-supplier-postal-street": "Papatya Caddesi Yasemin Sokak",
+        "desp-supplier-postal-bnum": "21",
+        "desp-supplier-postal-citysub": "Beşiktaş",
+        "desp-supplier-postal-city": "İstanbul",
+        "desp-supplier-postal-postal": "34100",
+        "desp-supplier-postal-country-name": "Türkiye",
+        "desp-supplier-loc-id": "Depo Şube",
+        "desp-supplier-loc-addr-id": "1234567895",
+        "desp-supplier-loc-addr-street": "Ihlamur Mahallesi Selvi Caddesi Sedir Sokak",
+        "desp-supplier-loc-addr-bnum": "79/A",
+        "desp-supplier-loc-addr-citysub": "Balgat",
+        "desp-supplier-loc-addr-city": "Ankara",
+        "desp-supplier-loc-addr-postal": "06800",
+        "desp-supplier-loc-addr-country-name": "Türkiye",
+        "desp-supplier-tax-scheme-name": "Büyük Mükellefler",
+        "desp-supplier-contact-tel": "(212) 925 51515",
+        "desp-supplier-contact-fax": "(212) 925505015",
+        "desp-supplier-contact-email": "aa@aaa.com.tr",
+        "desp-customer-website": "http://www.bbb.com.tr/",
+        "desp-customer-party-id": [
+          "9205121120",
+          "120010751"
+        ],
+        "desp-customer-party-name": "BBB Limited Şirketi",
+        "desp-customer-postal-id": "1234567890",
+        "desp-customer-postal-street": "Ihlamur Mahallesi Selvi Caddesi Sedir Sokak",
+        "desp-customer-postal-bnum": "75/A",
+        "desp-customer-postal-citysub": "Kızılay",
+        "desp-customer-postal-city": "Ankara",
+        "desp-customer-postal-postal": "06100",
+        "desp-customer-postal-country-name": "Türkiye",
+        "desp-customer-tax-scheme-name": "Çankaya",
+        "desp-customer-contact-tel": "(312) 621 1112",
+        "desp-customer-contact-fax": "(312) 621 1011",
+        "desp-customer-contact-email": "bb@bbb.com.tr",
+        "desp-buyer-website": "http://www.ccc.com.tr/",
+        "desp-buyer-party-id": [
+          "9215121131",
+          "120010753"
+        ],
+        "desp-buyer-party-name": "CCC Limited Şirketi",
+        "desp-buyer-postal-id": "1234547810",
+        "desp-buyer-postal-street": "Papatya Mahallesi Çınar Caddesi Çam Sokak",
+        "desp-buyer-postal-bnum": "74/A",
+        "desp-buyer-postal-citysub": "Balgat",
+        "desp-buyer-postal-city": "Ankara",
+        "desp-buyer-postal-postal": "06100",
+        "desp-buyer-postal-country-name": "Türkiye",
+        "desp-buyer-tax-scheme-name": "Çankaya",
+        "desp-buyer-contact-tel": "(312) 621 1114",
+        "desp-buyer-contact-fax": "(312) 621 1015",
+        "desp-buyer-contact-email": "cc@ccc.com.tr",
+        "desp-seller-website": "http://www.ddd.com.tr/",
+        "desp-seller-party-id": [
+          "9205121232",
+          "120010754"
+        ],
+        "desp-seller-party-name": "DDD Limited Şirketi",
+        "desp-seller-postal-id": "1234527790",
+        "desp-seller-postal-street": "Ada Mahallesi Meşe Caddesi Gül Sokak",
+        "desp-seller-postal-bnum": "73/A",
+        "desp-seller-postal-citysub": "Çukurambar",
+        "desp-seller-postal-city": "Ankara",
+        "desp-seller-postal-postal": "06100",
+        "desp-seller-postal-country-name": "Türkiye",
+        "desp-seller-tax-scheme-name": "Çankaya",
+        "desp-seller-contact-tel": "(312) 555 1114",
+        "desp-seller-contact-fax": "(312) 555 1013",
+        "desp-seller-contact-email": "dd@ddd.com.tr",
+        "desp-originator-website": "http://www.eee.com.tr/",
+        "desp-originator-party-id": [
+          "9205121283",
+          "122010756"
+        ],
+        "desp-originator-party-name": "EEE Limited Şirketi",
+        "desp-originator-postal-id": "1534566790",
+        "desp-originator-postal-street": "Sümer Mahallesi Kale Caddesi Başak Sokak",
+        "desp-originator-postal-bnum": "72/A",
+        "desp-originator-postal-citysub": "Küçükesat",
+        "desp-originator-postal-city": "Ankara",
+        "desp-originator-postal-postal": "06100",
+        "desp-originator-postal-country-name": "Türkiye",
+        "desp-originator-tax-scheme-name": "Çankaya",
+        "desp-originator-contact-tel": "(312) 444 1115",
+        "desp-originator-contact-fax": "(312) 444 1014",
+        "desp-originator-contact-email": "dd@ddd.com.tr",
+        "desp-stage-road-plate": "06DR4077",
+        "desp-stage-driver-first": "Mehmet",
+        "desp-stage-driver-family": "Öztürk",
+        "desp-stage-driver-title": "Şoför",
+        "desp-stage-driver-tckn": "14922266699",
+        "desp-delivery-carrier-party-id": "1288331523",
+        "desp-delivery-carrier-party-name": "CCC Lojistik Anonim Şirketi",
+        "desp-delivery-carrier-postal-citysub": "Osmancık",
+        "desp-delivery-carrier-postal-city": "Çorum",
+        "desp-delivery-carrier-postal-country-name": "Türkiye",
+        "desp-delivery-despatch-actual-date": "2016-08-14",
+        "desp-delivery-despatch-actual-time": "09:00:00",
+        "desp-line-id": [
+          "1",
+          "2",
+          "3",
+          "4"
+        ],
+        "desp-line-delivered-qty": [
+          "20",
+          "12",
+          "12",
+          "2"
+        ],
+        "desp-line-olr-line-id": [
+          "1",
+          "2",
+          "3",
+          "4"
+        ],
+        "desp-line-item-name": [
+          "Masa Üstü Bilgisayar",
+          "Notebook Bilgisayar",
+          "Notebook Çantası",
+          "Yazıcı"
+        ],
+        "desp-line-item-seller-id": [
+          "PNC1234",
+          "PNC1235",
+          "PNC1236",
+          "PNC1237"
+        ]
+      },
+      "fieldAttrOverrides": {
+        "desp-supplier-party-id": {
+          "schemeID": "VKN"
+        },
+        "desp-customer-party-id": [
+          {
+            "schemeID": "VKN"
+          },
+          {
+            "schemeID": "MUSTERINO"
+          }
+        ],
+        "desp-buyer-party-id": [
+          {
+            "schemeID": "VKN"
+          },
+          {
+            "schemeID": "MUSTERINO"
+          }
+        ],
+        "desp-seller-party-id": [
+          {
+            "schemeID": "VKN"
+          },
+          {
+            "schemeID": "MUSTERINO"
+          }
+        ],
+        "desp-originator-party-id": [
+          {
+            "schemeID": "VKN"
+          },
+          {
+            "schemeID": "MUSTERINO"
+          }
+        ],
+        "desp-stage-road-plate": {
+          "schemeID": "PLAKA"
+        },
+        "desp-delivery-carrier-party-id": {
+          "schemeID": "VKN"
+        },
+        "desp-line-delivered-qty": [
+          {
+            "unitCode": "C62"
+          },
+          {
+            "unitCode": "C62"
+          },
+          {
+            "unitCode": "C62"
+          },
+          {
+            "unitCode": "C62"
+          }
+        ]
+      },
+      "groupTitles": [
+        "Belge Genel Bilgileri",
+        "Sipariş Bilgileri",
+        "Gönderen (Satıcı)",
+        "Alıcı",
+        "Asıl Alıcı (Müşteri)",
+        "Asıl Satıcı",
+        "Sevk Eden Müşteri",
+        "Taşıma Evresi",
+        "Teslimat",
+        "İrsaliye Satırı"
+      ],
+      "strictMode": true
+    }
+  ],
+  "_meta": {
+    "generatedAt": "2026-05-09",
+    "schematronFiles": [
+      "UBL-TR_Common_Schematron.xml",
+      "UBL-TR_Main_Schematron.xml"
+    ],
+    "sampleFiles": [
+      "Irsaliye-Matbudan.xml",
+      "Irsaliye-Ornek1.xml",
+      "Irsaliye-Ornek2.xml",
+      "Irsaliye-Ornek3.xml"
+    ],
+    "unmappedPaths": [
+      "DespatchAdvice/cac:DespatchLine/cac:Shipment/cac:GoodsItem/cac:InvoiceLine/cac:Price/cbc:PriceAmount",
+      "DespatchAdvice/cac:DespatchLine/cac:Shipment/cac:GoodsItem/cac:InvoiceLine/cbc:InvoicedQuantity",
+      "DespatchAdvice/cac:DespatchLine/cac:Shipment/cac:GoodsItem/cac:InvoiceLine/cbc:LineExtensionAmount",
+      "DespatchAdvice/cac:DespatchSupplierParty/cac:DespatchContact/cbc:Name",
+      "DespatchAdvice/cac:Shipment/cac:GoodsItem/cbc:ValueAmount",
+      "DespatchAdvice/cac:Shipment/cac:TransportHandlingUnit/cac:TransportEquipment/cbc:ID",
+      "DespatchAdvice/cac:Signature/cac:DigitalSignatureAttachment/cac:ExternalReference/cbc:URI",
+      "DespatchAdvice/cac:Signature/cac:SignatoryParty/cac:PartyIdentification/cbc:ID",
+      "DespatchAdvice/cac:Signature/cac:SignatoryParty/cac:PostalAddress/cac:Country/cbc:Name",
+      "DespatchAdvice/cac:Signature/cac:SignatoryParty/cac:PostalAddress/cbc:BuildingNumber",
+      "DespatchAdvice/cac:Signature/cac:SignatoryParty/cac:PostalAddress/cbc:CityName",
+      "DespatchAdvice/cac:Signature/cac:SignatoryParty/cac:PostalAddress/cbc:CitySubdivisionName",
+      "DespatchAdvice/cac:Signature/cac:SignatoryParty/cac:PostalAddress/cbc:PostalZone",
+      "DespatchAdvice/cac:Signature/cac:SignatoryParty/cac:PostalAddress/cbc:StreetName",
+      "DespatchAdvice/cac:Signature/cbc:ID"
+    ],
+    "skippedAsserts": []
+  }
 }
