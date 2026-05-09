@@ -49,9 +49,8 @@ const MODULE_CONFIGS: Record<string, ModuleExtractConfig> = {
       'Invoice/cbc:CustomizationID',
     ],
   },
-  // Modül adı 'despatch' (src/modules/despatch) — XSD dizini Türkçe (references/irsaliye)
   despatch: {
-    xsdDir: resolve(__dirname, '../references/irsaliye/xsd'),
+    xsdDir: resolve(__dirname, '../references/despatch/xsd'),
     outputPath: resolve(__dirname, '../src/modules/despatch/required.generated.json'),
     rootElement: 'DespatchAdvice',
     filePrefixMap: {
