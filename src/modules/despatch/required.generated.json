@@ -1,3 +1,36 @@
 {
-  "requiredPaths": []
+  "requiredPaths": [
+    "DespatchAdvice/cac:DeliveryCustomerParty",
+    "DespatchAdvice/cac:DeliveryCustomerParty/cac:Party",
+    "DespatchAdvice/cac:DeliveryCustomerParty/cac:Party/cac:PartyIdentification",
+    "DespatchAdvice/cac:DeliveryCustomerParty/cac:Party/cac:PartyIdentification/cbc:ID",
+    "DespatchAdvice/cac:DeliveryCustomerParty/cac:Party/cac:PostalAddress",
+    "DespatchAdvice/cac:DeliveryCustomerParty/cac:Party/cac:PostalAddress/cac:Country",
+    "DespatchAdvice/cac:DeliveryCustomerParty/cac:Party/cac:PostalAddress/cac:Country/cbc:Name",
+    "DespatchAdvice/cac:DeliveryCustomerParty/cac:Party/cac:PostalAddress/cbc:CityName",
+    "DespatchAdvice/cac:DeliveryCustomerParty/cac:Party/cac:PostalAddress/cbc:CitySubdivisionName",
+    "DespatchAdvice/cac:DespatchLine",
+    "DespatchAdvice/cac:DespatchLine/cac:Item",
+    "DespatchAdvice/cac:DespatchLine/cac:Item/cbc:Name",
+    "DespatchAdvice/cac:DespatchLine/cac:OrderLineReference",
+    "DespatchAdvice/cac:DespatchLine/cac:OrderLineReference/cbc:LineID",
+    "DespatchAdvice/cac:DespatchLine/cbc:ID",
+    "DespatchAdvice/cac:DespatchSupplierParty",
+    "DespatchAdvice/cac:DespatchSupplierParty/cac:Party",
+    "DespatchAdvice/cac:DespatchSupplierParty/cac:Party/cac:PartyIdentification",
+    "DespatchAdvice/cac:DespatchSupplierParty/cac:Party/cac:PartyIdentification/cbc:ID",
+    "DespatchAdvice/cac:DespatchSupplierParty/cac:Party/cac:PostalAddress",
+    "DespatchAdvice/cac:DespatchSupplierParty/cac:Party/cac:PostalAddress/cac:Country",
+    "DespatchAdvice/cac:DespatchSupplierParty/cac:Party/cac:PostalAddress/cac:Country/cbc:Name",
+    "DespatchAdvice/cac:DespatchSupplierParty/cac:Party/cac:PostalAddress/cbc:CityName",
+    "DespatchAdvice/cac:DespatchSupplierParty/cac:Party/cac:PostalAddress/cbc:CitySubdivisionName",
+    "DespatchAdvice/cac:Shipment",
+    "DespatchAdvice/cac:Shipment/cbc:ID",
+    "DespatchAdvice/cbc:CopyIndicator",
+    "DespatchAdvice/cbc:ID",
+    "DespatchAdvice/cbc:IssueDate",
+    "DespatchAdvice/cbc:IssueTime",
+    "DespatchAdvice/cbc:ProfileID",
+    "DespatchAdvice/cbc:UUID"
+  ]
 }

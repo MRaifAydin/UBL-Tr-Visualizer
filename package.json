@@ -7,7 +7,10 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "extract-required": "tsx scripts/extractRequiredFromXsd.ts"
+    "extract-required": "tsx scripts/extractRequiredFromXsd.ts",
+    "extract-required:invoice": "tsx scripts/extractRequiredFromXsd.ts invoice",
+    "extract-required:despatch": "tsx scripts/extractRequiredFromXsd.ts despatch",
+    "extract-required:all": "tsx scripts/extractRequiredFromXsd.ts all"
   },
   "dependencies": {
     "dexie": "^4.4.2",
